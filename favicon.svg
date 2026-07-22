@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <!-- Placeholder mark: replace with the real Antasphere brand favicon when it exists. -->
+  <style>
+    .ink { fill: #15161A; }
+    .ring { stroke: #0891B2; }
+    @media (prefers-color-scheme: dark) {
+      .ink { fill: #FFFFFF; }
+      .ring { stroke: #47CBFF; }
+    }
+  </style>
+  <circle class="ink" cx="64" cy="64" r="38"/>
+  <ellipse class="ring" cx="64" cy="64" rx="56" ry="20" fill="none" stroke-width="9" transform="rotate(-20 64 64)"/>
+</svg>

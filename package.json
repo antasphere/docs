@@ -1,0 +1,13 @@
+{
+  "name": "antasphere-docs",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "sync": "node sync/sync.mjs",
+    "dev": "mint dev",
+    "check": "mint broken-links"
+  },
+  "devDependencies": {
+    "yaml": "^2.5.0"
+  }
+}

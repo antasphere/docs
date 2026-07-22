@@ -1,0 +1,5 @@
+drafts/
+*.draft.mdx
+sync/
+node_modules/
+.tool-checkouts/

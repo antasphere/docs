@@ -1,0 +1,78 @@
+name: Sync docs
+
+on:
+  repository_dispatch:
+    types: [tool-release]
+  workflow_dispatch:
+  schedule:
+    - cron: "17 5 * * *" # daily safety net; no-ops when nothing changed
+
+concurrency:
+  group: docs-sync
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: prod
+
+      - name: Mint tool-repo token
+        id: app
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.DOCS_SYNC_APP_ID }}
+          private-key: ${{ secrets.DOCS_SYNC_APP_KEY }}
+          owner: antasphere
+          repositories: hub,slideless
+
+      - uses: actions/checkout@v4
+        with:
+          repository: antasphere/hub
+          ref: prod
+          token: ${{ steps.app.outputs.token }}
+          path: .tool-checkouts/hub
+          fetch-depth: 0
+          fetch-tags: true
+
+      - uses: actions/checkout@v4
+        with:
+          repository: antasphere/slideless
+          ref: prod
+          token: ${{ steps.app.outputs.token }}
+          path: .tool-checkouts/slideless
+          fetch-depth: 0
+          fetch-tags: true
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+
+      - run: npm ci
+
+      - name: Run sync
+        run: node sync/sync.mjs
+        env:
+          TOOL_CHECKOUT_ANTASPHERE: ${{ github.workspace }}/.tool-checkouts/hub
+          TOOL_CHECKOUT_SLIDELESS: ${{ github.workspace }}/.tool-checkouts/slideless
+
+      - name: Link check
+        run: npx --yes mint broken-links
+
+      - name: Commit and push
+        run: |
+          rm -rf .tool-checkouts
+          git config user.name "antasphere-docs-sync[bot]"
+          git config user.email "docs-sync@antasphere.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "Nothing changed."
+          else
+            git commit -m "chore(sync): update docs from tool repos"
+            git push origin prod
+          fi

@@ -1,0 +1,19 @@
+# Source manifest for the docs sync. One entry per tool.
+# Onboarding tool 3 = add an entry here + a docs/nav.yml in its repo,
+# and add the repo to the antasphere-docs-sync GitHub App installation.
+#
+# localPath: sibling checkout used by local runs, relative to this repo's root.
+# In CI, TOOL_CHECKOUT_<SLUG-UPPERCASED> env vars override it.
+site:
+  domain: docs.antasphere.com
+tools:
+  - slug: antasphere
+    repo: antasphere/hub
+    branch: prod
+    localPath: ../hub
+    icon: circle-user
+  - slug: slideless
+    repo: antasphere/slideless
+    branch: prod
+    localPath: ../../products/slideless/slideless
+    icon: presentation-screen

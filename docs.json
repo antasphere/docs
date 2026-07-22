@@ -1,0 +1,49 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "mint",
+  "name": "Antasphere Documentation",
+  "colors": {
+    "primary": "#0891B2",
+    "light": "#47CBFF",
+    "dark": "#15161A"
+  },
+  "fonts": {
+    "heading": {
+      "family": "Satoshi",
+      "weight": 700,
+      "source": "https://cdn.fontshare.com/wf/BNPRT3ODDLFBWCXYJT3DHQD5HQ6KXIUF/TQZKMSQ7LSXFQXBNSJKXWQR3KMBNHYXW/SATOSHI-BOLD.woff2",
+      "format": "woff2"
+    },
+    "body": {
+      "family": "Geist"
+    }
+  },
+  "background": {
+    "color": {
+      "light": "#FDFCFB",
+      "dark": "#101114"
+    }
+  },
+  "favicon": "/favicon.svg",
+  "logo": {
+    "light": "/logo/light.svg",
+    "dark": "/logo/dark.svg",
+    "href": "https://account.antasphere.com"
+  },
+  "appearance": {
+    "default": "system"
+  },
+  "navigation": {
+    "products": []
+  },
+  "navbar": {
+    "primary": {
+      "type": "button",
+      "label": "Open Antasphere",
+      "href": "https://account.antasphere.com"
+    }
+  },
+  "contextual": {
+    "options": ["copy", "view", "claude", "cursor", "mcp"]
+  }
+}

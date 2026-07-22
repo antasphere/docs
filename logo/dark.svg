@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 128" role="img" aria-label="Antasphere">
+  <!-- Placeholder wordmark: replace with the real Antasphere logo when it exists. -->
+  <circle cx="56" cy="64" r="32" fill="#FFFFFF"/>
+  <ellipse cx="56" cy="64" rx="48" ry="18" fill="none" stroke="#47CBFF" stroke-width="7" transform="rotate(-20 56 64)"/>
+  <text x="124" y="86" font-family="Satoshi, Geist, ui-sans-serif, system-ui, sans-serif" font-size="62" font-weight="700" letter-spacing="-1" fill="#FFFFFF">Antasphere</text>
+</svg>
