@@ -11,7 +11,7 @@
     "heading": {
       "family": "Satoshi",
       "weight": 700,
-      "source": "https://cdn.fontshare.com/wf/BNPRT3ODDLFBWCXYJT3DHQD5HQ6KXIUF/TQZKMSQ7LSXFQXBNSJKXWQR3KMBNHYXW/SATOSHI-BOLD.woff2",
+      "source": "/fonts/Satoshi-Bold.woff2",
       "format": "woff2"
     },
     "body": {
@@ -34,7 +34,119 @@
     "default": "system"
   },
   "navigation": {
-    "products": []
+    "products": [
+      {
+        "product": "Antasphere",
+        "description": "One account for every Antasphere tool: sign in once, connected everywhere.",
+        "icon": "circle-user",
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": [
+              "antasphere/index"
+            ]
+          },
+          {
+            "group": "Agents & CLI",
+            "pages": [
+              "antasphere/agents/cli",
+              "antasphere/agents/mcp-connector"
+            ]
+          },
+          {
+            "group": "Self-hosting",
+            "pages": [
+              "antasphere/self-hosting/install",
+              "antasphere/self-hosting/reverse-proxy",
+              "antasphere/self-hosting/deployment-profiles",
+              "antasphere/self-hosting/upgrade"
+            ]
+          },
+          {
+            "group": "Operations",
+            "pages": [
+              "antasphere/operations/backup-restore",
+              "antasphere/operations/scaling"
+            ]
+          },
+          {
+            "group": "Security",
+            "pages": [
+              "antasphere/security/security"
+            ]
+          },
+          {
+            "group": "Reference",
+            "pages": [
+              "antasphere/reference/env-reference"
+            ]
+          },
+          {
+            "group": "Changelog",
+            "pages": [
+              "antasphere/changelog"
+            ]
+          }
+        ]
+      },
+      {
+        "product": "Slideless",
+        "description": "Versioned, shareable live links for what your agents build — push decks from a CLI or MCP agent, share them with a secret URL.",
+        "icon": "presentation-screen",
+        "groups": [
+          {
+            "group": "Getting started",
+            "pages": [
+              "slideless/index",
+              "slideless/getting-started/connect-an-agent",
+              "slideless/getting-started/antasphere-account"
+            ]
+          },
+          {
+            "group": "Agents",
+            "pages": [
+              "slideless/agents/cli",
+              "slideless/agents/mcp-connector"
+            ]
+          },
+          {
+            "group": "Self-hosting",
+            "pages": [
+              "slideless/self-hosting/install",
+              "slideless/self-hosting/reverse-proxy",
+              "slideless/self-hosting/deployment-profiles",
+              "slideless/self-hosting/upgrade"
+            ]
+          },
+          {
+            "group": "Operations",
+            "pages": [
+              "slideless/operations/backup-restore",
+              "slideless/operations/scaling"
+            ]
+          },
+          {
+            "group": "Security",
+            "pages": [
+              "slideless/security/security",
+              "slideless/security/viewer-security-model"
+            ]
+          },
+          {
+            "group": "Reference",
+            "pages": [
+              "slideless/reference/env-reference"
+            ]
+          },
+          {
+            "group": "Changelog",
+            "pages": [
+              "slideless/changelog"
+            ]
+          }
+        ]
+      }
+    ]
   },
   "navbar": {
     "primary": {
@@ -44,6 +156,12 @@
     }
   },
   "contextual": {
-    "options": ["copy", "view", "claude", "cursor", "mcp"]
+    "options": [
+      "copy",
+      "view",
+      "claude",
+      "cursor",
+      "mcp"
+    ]
   }
 }

@@ -188,8 +188,9 @@ function transformPage(tool, docsDir, relNoExt, fileMap) {
           return `](${fileMap.get(resolved)}${anchor})`;
         }
       );
-      // MDX hazards: bare tag-like "<x" or autolinks, and bare "{" in prose.
-      const tag = text.match(/<([A-Za-z!/]|https?:)/);
+      // MDX hazards: any bare "<" glued to a following character (MDX starts
+      // JSX-tag parsing on it, whatever the character), and bare "{" in prose.
+      const tag = text.match(/(?<!\\)<(?=\S)/);
       if (tag) {
         fail(
           `[${tool.slug}] ${relNoExt}.md:${i + 1} bare "<" would parse as JSX/autolink: ${line.trim().slice(0, 80)}`

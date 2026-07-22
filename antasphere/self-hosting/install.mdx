@@ -1,0 +1,60 @@
+---
+title: "Install"
+description: "Run your own Antasphere hub instance with Docker: a one-liner for a fresh VPS, or a manual clone-and-compose on any machine. Both paths end with the first-boot wizard in the…"
+---
+
+{/* GENERATED from antasphere/hub docs/self-hosting/install.md — edit there, then run `npm run sync`. */}
+
+Run your own Antasphere hub instance with Docker: a one-liner for a fresh
+VPS, or a manual clone-and-compose on any machine. Both paths end with the
+first-boot wizard in the browser.
+
+## One-liner (fresh VPS)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/antasphere/hub/prod/install.sh | \
+  sudo bash -s -- --domain account.antasphere.com
+```
+
+Installs git + Docker if missing, clones to `/opt/antasphere`, generates
+secrets into `.env` (mode 600), starts the stack, and configures UFW
+(22/80/443; 3000 only when no `--domain` is given). With a domain, finish by
+wiring the reverse proxy ([reverse-proxy.md](/antasphere/self-hosting/reverse-proxy)) and setting
+`TRUST_PROXY=true` in `.env`.
+
+## Manual (any machine with Docker)
+
+```bash
+git clone https://github.com/antasphere/hub.git hub
+cd hub
+./setup.sh            # generates .env secrets, pulls images, starts
+open http://localhost:3000
+```
+
+`setup.sh` is idempotent: with an existing `.env` it just (re)starts.
+
+## First boot
+
+The dashboard shows the setup wizard: instance name + owner account. When a
+`SETUP_TOKEN` is set, the wizard requires it — this stops a stranger racing
+you to own a freshly exposed instance. `setup.sh` and the one-liner installer
+always generate one; on a hand-written `.env` without it, setup is
+first-come-first-served, so **set `SETUP_TOKEN` on any internet-reachable
+host**. Setup runs exactly once; afterwards the endpoint answers `410 Gone`.
+
+Teammates join via invitations (Members → Invite). Every invitation yields a
+copyable accept link — SMTP is never required. To also send invitation
+emails, configure an email driver in `.env`
+([env-reference.md](/antasphere/reference/env-reference)).
+
+## What's running
+
+| Service | Image                    | Data                                                  |
+| ------- | ------------------------ | ----------------------------------------------------- |
+| `app`   | `ghcr.io/antasphere/hub` | `app_data` volume → `/data` (files, generated secret) |
+| `db`    | `pgvector/pgvector:pg17` | `pg_data` volume                                      |
+
+The app container is stateless by design — all state lives in Postgres and
+the `/data` volume. Migrations apply automatically at boot under an advisory
+lock; set `AUTO_MIGRATE=false` to run them manually (the instance then
+refuses readiness while behind).

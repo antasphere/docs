@@ -1,0 +1,85 @@
+---
+title: "Changelog"
+description: "Release history, sourced from antasphere/hub release tags."
+---
+
+{/* GENERATED — edit the entry files under sync/changelog/antasphere/, then run `npm run sync`. */}
+
+<Update label="v0.4.0" description="2026-07-15">
+
+hub 0.4.0 — seamless first-party experience (consent-skip, hint cookie, RP-logout, tools-used, tool-aware auth pages, authorize-resume fix)
+
+### Features
+
+- toolInfo() — the /tool-info contract mapping (route-coverage guard)
+- tool-aware signup/verified branding off the registry (ADR 015 WI-5)
+- public GET /tool-info + scope-containment and authorize-resume pins (ADR 015 WI-5/WI-6 server)
+- the ant_sso_hint parent-domain hint cookie (ADR 015 WI-4)
+- tool-usage recording seam + advisory tool_first_login + /me tools[] (ADR 015 WI-3)
+- migration 0020 user_tool_usage (ADR 015 WI-2)
+- registry tool clients go consent-free first party (ADR 015 WI-1)
+
+### Fixes
+
+- install the oauth-provider client plugin — the authorize-resume dead-end (ADR 015 WI-6)
+- forward SSO_HINT_COOKIE_DOMAIN into the container
+
+</Update>
+<Update label="v0.3.0" description="2026-07-15">
+
+hub 0.3.0 — user-scoped cleanup release
+
+### Breaking
+
+- migration 0019 revokes the dormant accounts:status service keys
+- the H3 exchange JWT goes fully user-scoped (Phase 6 cleanup)
+- access tokens carry only user-level claims (Phase 6 cleanup)
+- delete the accounts:status endpoints + scope (Phase 6 cleanup)
+
+</Update>
+<Update label="v0.2.0" description="2026-07-15">
+
+hub 0.2.0 — user-scoped live federation
+
+### Breaking
+
+- consent flip to org-free, user-scoped OAuth grants (Stage B, Phase 3)
+
+### Features
+
+- H3 mints the tool client an offline grant, returned as hubRefreshToken (Stage B, Phase 4)
+- optional per-call workspace argument on tools (Stage B, Phase 3)
+- org default in the CLI; default marker + set-as-default + key pin in the dashboard
+- user-scoped key surfaces + default organization
+- ONE shared workspace-selection helper; selector threaded into every credential path
+- migration 0017 — user-scoped credentials (api_keys optional pin + user_settings)
+
+### Fixes
+
+- close three user-scoped-credential corners (Stage A double-check)
+- orgs schema gains status + isDefault (belongs with the API-surfaces commit)
+
+</Update>
+<Update label="cli-v0.1.2" description="2026-07-13" tags={["CLI"]}>
+
+release @antasphere/cli 0.1.2 — antasphere org list/use
+
+### Features
+
+- antasphere org list/use — the cross-tool exchange target
+
+### Fixes
+
+- refuse tool-token mint for an unverified subject email (P5 residual)
+
+</Update>
+<Update label="v0.1.0" description="2026-07-13">
+
+First image release — the Antasphere hub OIDC IdP (tool registry, accounts:status, /sso/tool-token)
+
+</Update>
+<Update label="cli-v0.1.1" description="2026-07-12" tags={["CLI"]}>
+
+release @antasphere/cli 0.1.1 — consume cli-core ^0.2.0
+
+</Update>
