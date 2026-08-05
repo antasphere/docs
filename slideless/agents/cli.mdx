@@ -149,6 +149,8 @@ slideless push ./deck                            # next push = version 2 of the 
 slideless pull <id> ./out                        # byte-exact download of the latest version
 slideless pull <id> ./out --at 1                 # …or any pinned version
 slideless pull-annotations [id] [--version N] [--status open|resolved] [--out notes.json]
+slideless annotation resolve <id> <annotationId> # mark a note resolved
+slideless annotation reopen <id> <annotationId>  # …and flip it back open
 slideless dev ./deck --port 4173 --no-open       # local preview, no backend
 ```
 
@@ -193,16 +195,24 @@ reloads the browser. No backend, no credentials.
 slideless share <id> --name "Alice"                       # prints the /v/{secret} URL — shown ONCE
 slideless share <id> --to-version 2 --annotator \
                      --expires 2026-12-31T23:59:59Z --password hunter22
+slideless share <id> --annotator --badge-position top-left  # move the notes button (8 slots;
+                                                            # remembered as the deck default)
 slideless unshare <id> --token <tokenId>                  # revoke one link
 slideless unshare <id>                                    # revoke ALL active links
 slideless share-email <id> --to a@x.com b@x.com [--message "…"]  # one personal token per address, emailed
 slideless pin <id> <tokenId> --to-version 1               # freeze a recipient on v1
 slideless pin <id> <tokenId> --latest                     # follow the latest again
+slideless tokens <id> [--all]                             # list links + access stats (opens, last opened)
 ```
 
 Secrets are stored hash-only server-side: the URL printed at creation is
 never retrievable again (`share-email` mints and mails a fresh secret per
 send).
+
+Access stats count entry loads only, de-duplicated per browser within a
+short window (`VIEW_DEDUPE_WINDOW_MINUTES`, default 10 min) — so one human
+open is one count, while cookie-less fetches (CLI, curl) count each time.
+"Last opened" is the last counted open.
 
 ## Collaborators
 
@@ -216,6 +226,7 @@ slideless uninvite <id> <collaboratorId>           # revoke the grant
 ```bash
 slideless list [--all]        # presentations, newest first
 slideless get <id>            # metadata
+slideless versions <id> [--all]  # version history, newest first (numbers line up with pull --at)
 slideless delete <id>         # soft delete (links stop resolving)
 slideless instance            # public discovery — no key needed
 slideless files list|upload|download|rm

@@ -110,6 +110,12 @@
             ]
           },
           {
+            "group": "Sharing & review",
+            "pages": [
+              "slideless/sharing/annotations"
+            ]
+          },
+          {
             "group": "Self-hosting",
             "pages": [
               "slideless/self-hosting/install",
