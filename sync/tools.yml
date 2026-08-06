@@ -15,5 +15,5 @@ tools:
   - slug: slideless
     repo: antasphere/slideless
     branch: prod
-    localPath: ../../products/slideless/slideless
+    localPath: ../tools/slideless/slideless
     icon: presentation-screen
