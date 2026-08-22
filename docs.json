@@ -2,33 +2,35 @@
   "$schema": "https://mintlify.com/docs.json",
   "theme": "mint",
   "name": "Antasphere Documentation",
+  "description": "Documentation for the Antasphere tool ecosystem: one account, every tool.",
   "colors": {
-    "primary": "#0891B2",
-    "light": "#47CBFF",
-    "dark": "#15161A"
-  },
-  "fonts": {
-    "heading": {
-      "family": "Satoshi",
-      "weight": 700,
-      "source": "/fonts/Satoshi-Bold.woff2",
-      "format": "woff2"
-    },
-    "body": {
-      "family": "Geist"
-    }
+    "primary": "#3E6E8C",
+    "light": "#7FA9C2",
+    "dark": "#3E6E8C"
   },
   "background": {
     "color": {
-      "light": "#FDFCFB",
-      "dark": "#101114"
+      "light": "#F7F6F4",
+      "dark": "#1A1918"
+    }
+  },
+  "fonts": {
+    "heading": {
+      "family": "Sentient",
+      "weight": 300,
+      "source": "/fonts/Sentient-Light.woff2",
+      "format": "woff2"
+    },
+    "body": {
+      "family": "Onest",
+      "weight": 400
     }
   },
   "favicon": "/favicon.svg",
   "logo": {
     "light": "/logo/light.svg",
     "dark": "/logo/dark.svg",
-    "href": "https://account.antasphere.com"
+    "href": "https://antasphere.com"
   },
   "appearance": {
     "default": "system"
@@ -160,6 +162,15 @@
       "label": "Open Antasphere",
       "href": "https://account.antasphere.com"
     }
+  },
+  "footer": {
+    "socials": {
+      "website": "https://antasphere.com",
+      "linkedin": "https://www.linkedin.com/company/antasphere"
+    }
+  },
+  "search": {
+    "prompt": "Search the documentation"
   },
   "contextual": {
     "options": [
