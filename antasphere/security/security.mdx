@@ -16,6 +16,11 @@ keep.
   and (when configured) social sign-in all mint accounts — each behind its
   rate-limit wall, each ending in a verified mailbox before the first
   password sign-in, each auto-provisioned with a personal organization.
+  A password sign-up activates only through an explicit confirmation: the
+  mail asks "did you create this account?", a bare click on its link
+  activates nothing, and "this wasn't me" removes the unrequested account —
+  so an account someone else created on your address, with a password of
+  their choosing, can never go live on your say-so alone.
   `SETUP_TOKEN` still gates the first-boot wizard against squatters.
 - **Optional per-user 2FA (TOTP + backup codes).** Any
   member can enroll from the account page: password-gated enrollment issues
@@ -44,6 +49,27 @@ keep.
   API keys can carry an optional TTL set at mint; expiry is enforced
   fail-closed at resolution (an expired key answers the same 401 as a
   revoked one) and a nightly sweep normalizes expired keys to revoked.
+- **Bounded standing grants.** The CLI token exchange REPLACES a tool's
+  standing offline grant instead of accumulating one per login, records
+  which key minted it, and `antasphere logout` revokes the grants its key
+  minted. A nightly 03:00 sweep drops expired OAuth refresh grants; the
+  exchange also sits behind its own per-user rate wall
+  (`SSO_EXCHANGE_RATE_LIMIT_PER_HOUR`).
+- **Revocable grants, per-client audiences, an audited OIDC surface.** The
+  Connected applications page lists every standing grant and can disconnect
+  one: the grant is deleted at the hub and the tool's next refresh is
+  refused (already-issued access tokens run out their 15 minutes). An
+  operator can revoke a user's grants or suspend an organization through
+  the superadmin surface (`/admin/oauth-grants/revoke`,
+  `/admin/workspaces/set-status`, audited). A tool's credential can only
+  mint tokens audienced at the hub or at that tool — never at another
+  tool's endpoint. Every decision on the authorize, token, registration,
+  consent and revocation endpoints lands in the audit log, and a refresh
+  that timed out just after the hub rotated it is re-armed for one minute
+  instead of destroying the user's grants (a retired successor presented
+  later still tears them down). Signing out of the hub ends the hub session
+  and, through the tools' front-channel logout, their sessions — it does
+  not revoke standing grants; disconnecting does.
 - **Safe serving of uploads.** Browser-renderable ACTIVE content (HTML, SVG,
   XML) is always `Content-Disposition: attachment` — user content never
   renders on the app origin. Everything carries `nosniff`; HTML we serve is
@@ -69,13 +95,21 @@ keep.
   `EntitlementService.getRequestQuota`. Buckets share the auth-limiter
   backend: Redis across replicas when `REDIS_URL` is set, per-replica memory
   otherwise, failing OPEN to the in-memory insurance limiter on a Redis
-  outage (availability over throttling — authz stays fail-closed). Limited
+  outage (availability over throttling — authz stays fail-closed; the
+  takeover is logged, see `REDIS_URL` in the env reference). Limited
   requests answer `429` + `Retry-After`; the handled `2xx` and `429`
   responses carry `RateLimit-*`/`X-RateLimit-*` so agents can self-throttle
   (a downstream `403` from the scope gate consumed a point but is not
   stamped). Public
   discovery, setup, and the auth surfaces keep their own walls and are never
-  double-limited.
+  double-limited. Better Auth's own built-in rate limiter is switched OFF:
+  it is per-replica memory keyed on `x-forwarded-for` alone (with no proxy
+  header it degenerates to one global per-path bucket per replica), every
+  path its special rules cover already has a hub wall, and its generic
+  100-per-10-s bucket on the remaining `/auth/*` paths (`get-session`,
+  `sign-out`, …) was that same global bucket — a self-denial lever, not a
+  protection. Those paths are cheap session reads with no hub wall of their
+  own; any per-IP flood control for them belongs to the reverse proxy.
 - **Secrets hygiene.** One zod env schema is the only secrets entry point;
   the auto-generated secret lands in `/data` mode 0600; pino redacts
   passwords, tokens, cookies, and connection strings. Rotating `AUTH_SECRET`
@@ -127,16 +161,80 @@ keep.
   are unaffected). The fresh-session (under 24 h) no-password `/delete-user`
   window is a Better Auth default: blocked cross-site by that Origin guard
   and by SameSite=Lax, it is only self-triggerable. The custom `/api/v1`
-  routes rely on **SameSite=Lax cookies alone** (no per-request Origin
-  symmetry check) — every current browser blocks cross-site POSTs with Lax
-  cookies; adding Origin symmetry there is a known defense-in-depth item.
+  routes are covered by a **cross-site gate of their own**
+  (`middleware/cross-site.ts`, PRDCT-1375): every unsafe method under
+  `/api/v1` is refused when `Sec-Fetch-Site` says `cross-site`, or when an
+  `Origin` arrives that is not `PUBLIC_BASE_URL` (the origin the request was
+  served on — reconstructed from `Host` — counts only under
+  `TRUST_REQUEST_ORIGIN=true`, the preview/dev opt-in; by default a `Host`
+  the ingress forwards never mints trust).
+  Three exemptions, each deliberate on an identity provider: safe methods;
+  any request carrying `Authorization` (API keys and OAuth bearers are not
+  ambient credentials, and federated tools call this API server-to-server
+  from anywhere); and the wildcard-CORS OAuth endpoints listed in
+  `middleware/oauth-public.ts` (token, register, introspect, revoke, jwks),
+  which are cookie-less by design and MUST answer any origin. Clients that
+  send neither header (curl, the CLI, the SDK) are untouched.
+- **Nothing user-controlled reaches the log stream or a trace.** The
+  completion log line and the OTel span carry the MATCHED ROUTE PATTERN
+  (`/api/v1/files/:id/content`), never the raw path (`route-label.ts`) — a
+  path segment is where a product eventually puts a capability, and pino
+  redaction cannot help with one opaque string.
+- **`TOOL_REGISTRY` is treated as a secret end to end.** It is on the
+  redaction list (whole value, both the inline and `_FILE` forms), its parse
+  errors report shape only — source, length, position, zod issue paths — and
+  `boot.ts` catches the throw so it is reported through pino instead of
+  reaching stderr with a stack.
+- **Free text is NUL-free at the contract.** `plainText()` /
+  `plainTextTrimmed()` in `@antasphere/contract` refuse NUL and the invisible
+  C0 controls on every user-supplied name/label (org name, API key name,
+  invitation name, setup names, CLI key name, upload filename, the public
+  tool-info lookup key), so a byte Postgres cannot store answers 400 at
+  validation instead of 500 from inside the driver — and the 500 path logged
+  the failing SQL together with its bound parameters. `app.onError` maps
+  SQLSTATE 22021/22P05 to 400 as the backstop.
+- **Request JSON is depth-capped at 100** (`middleware/json-depth.ts`).
+  `JSON.parse` swallows any nesting but `JSON.stringify` is recursive and
+  throws `RangeError` on the shipped `node:22-alpine` (measured on v22.23.1:
+  depth 1000 fine, depth 5000 throws; host Node 25 reproduces neither), so
+  any echo/audit/log of a deep body was an anonymous 500.
+- **The OpenAPI document is a boot-time buffer** (`api/openapi-doc.ts`), not
+  a per-request generation: the generator is synchronous and the endpoint is
+  in `PUBLIC_API_PATHS`, which made it a one-line anonymous event-loop DoS
+  that starved `/healthz`.
+- **Authenticated JSON is `Cache-Control: no-store`**
+  (`middleware/no-store.ts`); public discovery keeps its own directive.
+- **HSTS** rides every response when `PUBLIC_BASE_URL` is https
+  (`HSTS_MAX_AGE`, default 180 days, `0` disables). Browsers ignore HSTS over
+  plain http, so an http self-host is unaffected. This origin issues the
+  fleet's session cookie, so the header is not HTML-only.
+- **`AUTH_SECRET` must look random.** Boot refuses a 32-char secret with
+  fewer than 8 distinct characters, a short repeated pattern, or under 64
+  bits of Shannon entropy — `'x'.repeat(32)` used to pass `min(32)`, and here
+  that is forgeable session/JWKS material for every Antasphere tool. Every
+  URL knob is constrained to http(s): the pinned zod's `z.url()` accepts
+  `javascript:`, and `PUBLIC_BASE_URL` is the OIDC `iss`.
+- **The login wall consumes on FAILURE, not on arrival.** Its email key is
+  read from the request body, so consuming up front let anyone lock any
+  account out by typing its address ten times — and one locked hub account is
+  every Antasphere tool locked. A refused credential still costs a point and
+  an exhausted bucket still 429s before the handler. Residual, stated
+  plainly: an attacker's FAILED guesses still drain a victim's bucket, which
+  is inherent to any per-account brute-force wall.
+- **Dynamic client registration has an off switch**
+  (`OAUTH_DYNAMIC_CLIENT_REGISTRATION`, default `true` = unchanged
+  behaviour). Whether open DCR is right for this authorization server is a
+  live question owned by the OIDC audit, not settled here.
 - **First-party SSO posture.** Registry tool
   clients — and ONLY those — skip the consent screen (`skipConsent` is
   seeded from config; no HTTP surface can obtain the flag: DCR pins
   `skip_consent` to never, and registry clients refuse API mutation as
   trusted clients). The same seeding enables OIDC RP-initiated logout
   (`sid` in their id_tokens; `GET /oauth2/end-session` redirects only to
-  EXACT-match registered post-logout URIs). The `ant_sso_hint` cookie
+  EXACT-match registered post-logout URIs, acts only when the caller's own
+  hub session matches the hint — anything else answers an interactive
+  confirmation page instead of terminating silently — and is rate-limited
+  and audited per invocation). The `ant_sso_hint` cookie
   (`SSO_HINT_COOKIE_DOMAIN`; unset = dormant) is a client-readable,
   client-forgeable UX hint — "probably signed in at the hub" — that no hub
   server code ever reads and nothing security-relevant may depend on: the

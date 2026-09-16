@@ -5,6 +5,28 @@ description: "Release history, sourced from antasphere/hub release tags."
 
 {/* GENERATED — edit the entry files under sync/changelog/antasphere/, then run `npm run sync`. */}
 
+<Update label="v0.5.0" description="2026-08-28">
+
+hub 0.5.0 — OIDC audit series: signing-key durability, end-session caller binding, API-key pin, first-party grant record, OAuth-surface conformance + client lifecycle (PRDCT-1371, 1379-1387, 1392)
+
+### Features
+
+- record first-party grants and surface connected apps (PRDCT-1386)
+
+### Fixes
+
+- the pg pool had no 'error' listener — an idle client's dropped connection was an uncaught exception
+- surface conformance + client lifecycle (PRDCT-1382, PRDCT-1383, PRDCT-1384, PRDCT-1385)
+- signing-key durability + end-session caller binding (PRDCT-1379, PRDCT-1380)
+- make the failure-path rollback real and loud (PRDCT-1392)
+- enforce the one-live-grant invariant under concurrency (PRDCT-1387)
+- bound, attribute, and expire the offline tool grants (PRDCT-1387)
+- honour the workspace pin at request time (PRDCT-1381)
+- config/logging hygiene + HTTP surface hardening (PRDCT-1374, PRDCT-1375)
+- engineer the DR path and the operator deployment defaults (PRDCT-1372)
+- bump the better-auth trio to 1.6.22 — closes GHSA-qq9h-g4jm-xgf3
+
+</Update>
 <Update label="v0.4.0" description="2026-07-15">
 
 hub 0.4.0 — seamless first-party experience (consent-skip, hint cookie, RP-logout, tools-used, tool-aware auth pages, authorize-resume fix)

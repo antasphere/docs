@@ -105,16 +105,30 @@
             ]
           },
           {
+            "group": "Concepts",
+            "pages": [
+              "slideless/concepts/artifact",
+              "slideless/concepts/versions",
+              "slideless/concepts/links",
+              "slideless/concepts/attachments"
+            ]
+          },
+          {
             "group": "Agents",
             "pages": [
               "slideless/agents/cli",
-              "slideless/agents/mcp-connector"
+              "slideless/agents/mcp-connector",
+              "slideless/agents/deck-self-description"
             ]
           },
           {
             "group": "Sharing & review",
             "pages": [
-              "slideless/sharing/annotations"
+              "slideless/sharing/annotations",
+              "slideless/sharing/forms",
+              "slideless/sharing/downloads",
+              "slideless/sharing/embedding",
+              "slideless/sharing/link-analytics"
             ]
           },
           {

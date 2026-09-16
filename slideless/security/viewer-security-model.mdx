@@ -46,7 +46,7 @@ metric toward "unique browsers" rather than "opens".
 Every byte of deck content is served under this exact header set:
 
 ```
-Content-Security-Policy: sandbox allow-scripts allow-forms allow-popups allow-modals allow-downloads
+Content-Security-Policy: sandbox allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox allow-modals allow-downloads
 X-Content-Type-Options: nosniff
 Referrer-Policy: no-referrer
 ```
@@ -58,6 +58,13 @@ credentialed call to the instance's API — verified empirically on Chromium,
 WebKit, and Firefox with a hostile deck and a live owner session in the
 browser. The dashboard's own preview additionally wraps decks in
 a `sandbox` iframe as a second, independent lock.
+
+`allow-popups-to-escape-sandbox` is the one token that reaches outside the
+deck: a window the deck opens (a `window.open`, a link with
+`target="_blank"`) runs as a normal top-level page instead of inheriting the
+deck's opaque origin, so a deck that links out to an application can open it.
+It changes nothing about the deck itself, which still runs without
+`allow-same-origin`.
 
 This is the **safe default**: with zero configuration, a share link on the
 app origin cannot be used to steal a dashboard session.
@@ -76,10 +83,18 @@ VIEWER_BASE_URL=https://usercontent.example.net
 
 Now even a hypothetical header regression cannot expose the dashboard
 session across the real origin boundary — the browser itself separates the
-two worlds. The sandbox headers stay on as defense-in-depth. This is the
-recommended setup for any instance where outsiders routinely open share
-links. (Per-deck subdomains — full storage isolation for interactive
-`app`-kind decks — are the target architecture and remain open.)
+two worlds. The server makes the boundary real rather than cosmetic: the
+viewer hostname serves only decks and the token-authenticated viewer API
+(the dashboard, sign-in and the rest of the API answer 404 there), the app
+hostname redirects deck links across instead of serving them, the app API
+refuses requests carrying the viewer origin — even where it would otherwise
+trust "the origin it is served on" — and the auth layer never counts the
+viewer origin as trusted. The sandbox headers stay on as defense-in-depth.
+This is the recommended setup for any instance where outsiders routinely
+open share links; the proxy recipe is in
+[reverse-proxy.md](/slideless/self-hosting/reverse-proxy). (Per-deck subdomains
+— full storage isolation for interactive `app`-kind decks — are the target
+architecture and remain open.)
 
 ## Who can read a deck at all
 
@@ -93,6 +108,13 @@ Deck reads are **private by construction**, never workspace-wide:
   access immediately.
 - A failed read check answers **404, never 403** — the existence of a deck
   (or a share token) is not probeable.
+- The rule reaches the **raw bytes**, not just the deck endpoints. The
+  generic file surface (`/api/v1/files`, and the blob download under it)
+  applies the same check: a member sees the blobs they uploaded plus those
+  belonging to decks they can read, and nothing else. There is no route on
+  which workspace membership alone yields another deck's content — and a
+  version commit can only reference blobs its author is allowed to read, so
+  one deck's content cannot be re-published from another.
 
 ## The account boundary
 
