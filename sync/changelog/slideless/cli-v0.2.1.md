@@ -4,4 +4,4 @@ date: "2026-07-12"
 channel: cli
 ---
 
-release @antasphere/slideless 0.2.1 — consume cli-core ^0.2.0
+A maintenance release of the `@antasphere/slideless` CLI, picking up a newer build of the shared Antasphere command-line foundation. No change to any command.

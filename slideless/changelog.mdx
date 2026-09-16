@@ -12,175 +12,120 @@ slideless 0.4.1 — the docs pages the site can render
 </Update>
 <Update label="v0.4.0" description="2026-09-16">
 
-slideless 0.4.0 — the deck as an artifact, forms that remember, one-push deploys, and the release command itself
+The deck becomes one thing you can point at: a page of its own, files that travel with each version, forms that remember who answered, and a bar over every share link.
 
-### Features
+### Added
 
-- the image reports its own intrinsic version from package.json (PRDCT-1844)
-- host-gate the mounts on VIEWER_BASE_URL — the viewer origin is a real boundary, never a trust grant (PRDCT-1352)
-- deck-embedded forms — NOT READY TO SHIP, see audit
-- embed snippets from `share` — shared builder with the dashboard (PRDCT-1312)
-- official embeds — script loader + iframe snippet (PRDCT-1312)
-- per-view share-link analytics — events, no IP (PRDCT-1313)
-- metadata + AGENT.md self-description (PRDCT-1311)
-- floating + button for annotate mode; settings-close cursor fix
-- annotation settings dialog — position grid, pins switch, link info
-- controllable notes-button position (8 slots, deck-remembered)
-- live capture preview — provisional pin + target contour
-- pins visibility toggle in the annotation sheet
-- resolvable annotation anchors, sheet overlay, multi-page reach
-- tokens + versions + annotation resolve/reopen (PRDCT-1244, PRDCT-1245, PRDCT-1246)
+- A deck has a page of its own. A push prints its address, `slideless open` reopens it from the folder with no key and no network call, and links are made from it.
+- Files in a `downloads/` folder travel with the version they were pushed with. The recipient takes them one by one or as a zip, and a pinned link keeps offering that version's set.
+- A bar sits over every shared deck: the attachments, the notes, and what the link allows, without leaving the deck.
+- Any HTML form in a deck can be served live on a share link. A named link remembers its respondent, so reopening it brings the previous answers back and every edit is kept as a revision; the owner is mailed when an answer arrives.
+- The confirmation after a submit is a dialog over the form, closable four ways, and it speaks the deck's own language.
+- A deck can be embedded on a website, with a script loader or an iframe snippet built for you.
+- Each share link records its own views: when it was opened, which site drove the visit, and the browser family, with no address stored.
+- A deck describes itself to agents, so an agent that opens a folder knows what it is holding.
 
-### Fixes
+### Changed
 
-- the typecheck rebuilds its generated types, so a restored .svelte-kit cache cannot fail CI (PRDCT-2308) (#40)
-- close verifier-found residuals in the input-robustness + oracle batch
-- close the input-validation 500 family and the account-existence oracle (PRDCT-1358, PRDCT-1437)
-- verifier round-1 findings — pin every deny-list entry, drift guard compares snapshot to the real schema, self-hoist link unlinked, orphan-pass rationale stated honestly (PRDCT-1346, PRDCT-1344)
-- verifier round-2 — a deck path needs a non-empty secret segment (/v// no longer reaches the SPA shell), sign-in hook pinned at its call site (PRDCT-1352)
-- clear the image gate — better-auth 1.6.22, dev toolchain out of the image, Trivy 0 HIGH (PRDCT-1345, PRDCT-1344, PRDCT-1346)
-- verifier round-1 — bare /v never reaches the SPA shell on the viewer host, auth second locks extracted and pinned, X-Forwarded-Host pinned (PRDCT-1352)
-- verifier round-1 LOWs — coarse public /readyz reason, cause-aware remedy, HTML-by-type comment; pin the closure over every mount (PRDCT-1809, PRDCT-1810)
-- adversarial-pass findings — fail-closed sole-owner erasure replay, runtime-authored forms armed, keyed erasure fingerprint, drill Origin (PRDCT-1809, 1810, 1811, 1812)
-- verifier round-1 findings — operator backfill, probe host, data-secret-only archive, TTY-free read-out (PRDCT-1440, 1356)
-- first-boot claim credential, pepper root out of data backups, erasure tombstone, cloud lifecycle (PRDCT-1347, 1440, 1357, 1356)
-- external-bundle detection + one resume probe per page load (PRDCT-1334, 1331 residuals; 1394 moot)
-- the refresh-lock watchdog must outlive probe + presentation (PRDCT-1370 verifier round 1)
-- an unanswered refresh probes before it re-presents, plus the federation drill (PRDCT-1370)
-- signing-key durability across AUTH_SECRET rotation (PRDCT-1379, ADR 023)
-- make the failure-path rollback real and loud (PRDCT-1392)
-- backup.sh fails loud without BACKUP_PASSPHRASE (PRDCT-1348)
-- drop dead share-token 403 contracts; adopt the oracle sweep
-- AUTH-5 second wave — per-deck write routes answer 404 uniformly
-- close the residual share-secret sinks — metrics label, audit fallback (PRDCT-1342)
-- PRDCT-1354 leftovers — AUTH-6 test gap + RACE-7 oracle scope
-- never write .env into a backup in cleartext (PRDCT-1348)
-- reconcile the six merged branches
-- renumber the has_forms migration onto the merged snapshot chain
-- sign in once per file — the habitat suite was spending the whole suite's login budget
-- remove leg 3, close the fragment hijack, stream the injection, fix the runtime in real decks
-- close the minted-credential cross-tenant ATO chain (PRDCT-1354)
-- config/logging hygiene + HTTP surface hardening (PRDCT-1374, PRDCT-1375)
-- engineer the DR path and the operator deployment defaults (PRDCT-1372)
-- close the two arbitrary-write paths, the filesystem-wide dev server and the ReDoS (PRDCT-1353)
-- per-deck authorization on the blob surface (PRDCT-1343, SL-B1)
-- cap the stored Referer host on view events (PRDCT-1313)
-- review follow-ups — sub-page password form, badge coherence, Esc
-- de-dupe share-link view counting per browser window (PRDCT-1243)
+- The version an instance reports is the one baked into the image it runs, so the number a person reads and the build they are running cannot drift apart.
+- A push to production publishes the image and rolls it out unattended, then checks the live instance serves the version that was published.
 
 </Update>
 <Update label="v0.3.0" description="2026-07-15">
 
-slideless 0.3.0 — seamless first-party experience (silent SSO connect, single logout, onboarding, 30d anchored sessions, CLI connect-on-demand via cli-core 0.4.0)
+Being signed in becomes one thing across Antasphere tools: opening Slideless with a live Antasphere session connects you without a click, and signing out anywhere signs you out everywhere.
 
-### Features
+### Added
 
-- consume cli-core 0.3.0 connect-on-demand — context.ts collapses to the seam call
-- SL-6 dashboard seam — dismissible WelcomeBanner off /me.firstRunPending
-- SL-3/SL-4 dashboard — silent auto-connect lattice, branded connecting state, single-logout client, hint-watch
-- ssoLogout + dismissOnboarding methods (contract route-coverage guard)
-- SL-6 tool-local first-run seam — user_onboarding table, /me extras, dismiss route
-- SL-5 cloud sessions are 30d FIXED (non-sliding); oss keeps 365d sliding
-- SL-2 single-logout server leg — hub end-session URL + POST /sso/logout
-- SL-1 server seams — hint-cookie config, strict prompt=none whitelist, cloud /login error landing, discovery auth.sso
+- Silent sign-in on the cloud edition. With a live Antasphere session, opening Slideless connects you straight through, showing a connecting state rather than a login page.
+- Signing out of Slideless ends your Antasphere session too, and signing out of another Antasphere tool ends your Slideless one.
+- A welcome banner on your first visit, dismissible once and gone for good.
 
-### Fixes
+### Changed
 
-- serve the hub-connect cache (user-scoped key per hub profile) + align the FakeHub to the real contract
-- gate D bounds the silent-connect loop even when sessionStorage throws
+- Cloud sessions last 30 days from sign-in and are not extended by use; self-hosted instances keep their own longer, rolling sessions.
+- The cloud login page now reports why a sign-in failed instead of leaving you on a blank screen.
+
+### Fixed
+
+- The CLI caches one connection key per Antasphere account, so switching accounts no longer replays the wrong one.
+- The silent sign-in attempt gives up cleanly in a browser that refuses session storage, instead of retrying in a loop.
 
 </Update>
 <Update label="cli-v0.2.4" description="2026-07-15" tags={["CLI"]}>
 
-slideless 0.3.0 — seamless first-party experience (silent SSO connect, single logout, onboarding, 30d anchored sessions, CLI connect-on-demand via cli-core 0.4.0)
+The CLI release that ships alongside Slideless 0.3.0, tidying up how it holds on to a cloud connection.
 
-### Breaking
+### Fixed
 
-- ADR 019 capstone + supersede banners; the scripted drill; TEMPLATE-FEEDBACK 22 (Phase 6)
-- user-scoped CLI keys + the H3 grant channel — acquireFromConnect replaces the Stage E interim (Phase 4)
-- orphan purge — the LIVE SESSION is the collect/protect discriminator, never the hub link (Phase 4)
-- setup mints the operator USER only — no workspace; /me gains the zero-membership session state (Phase 4)
-- live user-scoped federation — fail-closed login reconcile + live gate; the master-key apparatus deletes (Phase 3)
+- The connection key is cached per Antasphere account, so working with more than one account no longer replays the wrong key against an instance.
 
-### Features
+### Changed
 
-- consume cli-core 0.3.0 connect-on-demand — context.ts collapses to the seam call
-- SL-6 dashboard seam — dismissible WelcomeBanner off /me.firstRunPending
-- SL-3/SL-4 dashboard — silent auto-connect lattice, branded connecting state, single-logout client, hint-watch
-- ssoLogout + dismissOnboarding methods (contract route-coverage guard)
-- SL-6 tool-local first-run seam — user_onboarding table, /me extras, dismiss route
-- SL-5 cloud sessions are 30d FIXED (non-sliding); oss keeps 365d sliding
-- SL-2 single-logout server leg — hub end-session URL + POST /sso/logout
-- SL-1 server seams — hint-cookie config, strict prompt=none whitelist, cloud /login error landing, discovery auth.sso
-- user-scoped federation UI — hub/suspended/default badges, hub_grant_expired steering, /suspended = hub_unavailable only (Phase 5)
-- the per-user hub grant — rotation-safe refresh, encrypted at rest (Phase 2)
-- optional workspace argument on every tool; whoami teaches org-as-parameter
-- user-scoped credentials — the org is a per-request parameter
-- user-scoped credential schema — api_keys pin, is_default, hub_status, grant wipe
-- gate the Google social provider off on cloud (hub-only session entrances)
-- steer `slideless auth login-*` to `antasphere login` on cloud instances
-- hub-only credential minting — close the OTP entrances, open the CLI self-revoke
-
-### Fixes
-
-- serve the hub-connect cache (user-scoped key per hub profile) + align the FakeHub to the real contract
-- gate D bounds the silent-connect loop even when sessionStorage throws
+- Against a cloud instance, `slideless auth login-request` and `login-complete` point you at `antasphere login` rather than attempting a sign-in the instance will refuse.
 
 </Update>
 <Update label="v0.2.0" description="2026-07-15">
 
-slideless 0.2.0 — user-scoped live federation
+On the cloud edition, your credential now identifies you rather than one organization: a single key works across every organization you belong to, and changes made at Antasphere reach Slideless while you work.
 
-### Breaking
+### Added
 
-- ADR 019 capstone + supersede banners; the scripted drill; TEMPLATE-FEEDBACK 22 (Phase 6)
-- user-scoped CLI keys + the H3 grant channel — acquireFromConnect replaces the Stage E interim (Phase 4)
-- orphan purge — the LIVE SESSION is the collect/protect discriminator, never the hub link (Phase 4)
-- setup mints the operator USER only — no workspace; /me gains the zero-membership session state (Phase 4)
-- live user-scoped federation — fail-closed login reconcile + live gate; the master-key apparatus deletes (Phase 3)
+- One CLI key per Antasphere account, valid for every organization. The organization is chosen per command, not baked into the key.
+- Every agent tool takes an optional workspace argument, and `whoami` shows which identity and which workspace a key resolves to.
+- The dashboard shows where a workspace comes from and when an account needs attention, and steers you back to Antasphere when your access there has lapsed.
 
-### Features
+### Changed
 
-- user-scoped federation UI — hub/suspended/default badges, hub_grant_expired steering, /suspended = hub_unavailable only (Phase 5)
-- the per-user hub grant — rotation-safe refresh, encrypted at rest (Phase 2)
-- optional workspace argument on every tool; whoami teaches org-as-parameter
-- user-scoped credentials — the org is a per-request parameter
-- user-scoped credential schema — api_keys pin, is_default, hub_status, grant wipe
+- Removals, role changes and organization suspensions at Antasphere take effect in Slideless within seconds, across the dashboard, the API keys and connected agents alike.
+- First setup of a cloud instance creates the operator's account only, with no workspace attached; the dashboard handles an account that belongs to no workspace yet.
+- When Antasphere cannot be reached, cloud sign-in refuses rather than falling back to a stale answer.
 
 </Update>
 <Update label="cli-v0.2.2" description="2026-07-13" tags={["CLI"]}>
 
-release @antasphere/slideless 0.2.2 — connect-on-demand + org commands
+The CLI stops asking for a Slideless-specific login against a cloud instance: it uses the Antasphere sign-in you already have.
 
-### Features
+### Added
 
-- connect-on-demand — a hub login serves cloud instances
-- P8 — close the local password-reset surface on cloud (the P3 residual)
-- P7 — hide local membership management on hub-origin workspaces; guests lose the guest-forbidden affordances
-- P7 — hub-origin workspaces refuse local membership mutation; /me carries the adaptation signals
-- P6 SSO-first collaborator claim on cloud — guests get hub identities, never local passwords
-- P6 guest capability limits — origin='guest' is a capability boundary (D2, both editions)
+- Against a cloud instance, the CLI exchanges your `antasphere login` credential for an instance key on first use and caches it. Later commands are served from the cache, with no further round trip.
+- Someone invited to a single deck from outside your organization signs in with Antasphere to claim it, and never sets a Slideless password.
 
-### Fixes
+### Changed
 
-- per-org logout — revoke on the minting instance, report a refused self-revoke honestly
-- P7 review — the hub-managed gate mounts ONCE per subtree, making fail-closed true by construction
-- the G1 fallback mints missing memberships, never reactivates cut ones — and pin the OAuth-bearer guest leg
-- G1 cross-request — a grant swept active in an EARLIER request claims as success (claim path only)
+- On a cloud instance there is no local password to set or reset; the dashboard hides membership management and points at Antasphere, where those changes are made.
+
+### Fixed
+
+- `slideless logout` revokes the key on the instance that issued it, and says plainly when an older instance refuses to revoke it rather than reporting a success that did not happen.
+- Claiming a deck invitation no longer reactivates access that was previously cut.
 
 </Update>
 <Update label="v0.1.1" description="2026-07-13">
 
-Patch: install one-liner fetches from prod (docs)
+A documentation fix: the install one-liner now fetches its script from the released branch, so copying the command out of the install page works on a fresh machine.
 
 </Update>
 <Update label="v0.1.0" description="2026-07-13">
 
-First image release — the federated cloud edition (8-phase hub binding + hub-only credential posture)
+The first published Docker image, and the release where one codebase started shipping two editions: self-hosted, which runs entirely on your own machine, and the Antasphere cloud, where you sign in with your Antasphere account.
+
+### Added
+
+- Sign in to the cloud edition with your Antasphere account. The cloud login page offers that one entrance, and your first sign-in creates your Slideless profile automatically.
+- Your Antasphere organizations appear in Slideless as workspaces, with your organization role carried across.
+- People invited to a single deck can claim the invitation by signing in with Antasphere, and get access to that one deck only.
+- Self-hosted instances keep local accounts and never contact Antasphere.
+
+### Changed
+
+- On the cloud edition, `slideless auth login-*` points you at `antasphere login` instead of asking for a Slideless-specific code.
+- `slideless logout` revokes the key it is holding on the server, so logging out no longer leaves a working key behind.
+- An instance's edition is fixed at boot from a closed setting: a typo stops the instance rather than starting it in the wrong mode.
 
 </Update>
 <Update label="cli-v0.2.1" description="2026-07-12" tags={["CLI"]}>
 
-release @antasphere/slideless 0.2.1 — consume cli-core ^0.2.0
+A maintenance release of the `@antasphere/slideless` CLI, picking up a newer build of the shared Antasphere command-line foundation. No change to any command.
 
 </Update>

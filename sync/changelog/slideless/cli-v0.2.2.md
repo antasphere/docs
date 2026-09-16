@@ -4,20 +4,18 @@ date: "2026-07-13"
 channel: cli
 ---
 
-release @antasphere/slideless 0.2.2 — connect-on-demand + org commands
+The CLI stops asking for a Slideless-specific login against a cloud instance: it uses the Antasphere sign-in you already have.
 
-### Features
+### Added
 
-- connect-on-demand — a hub login serves cloud instances
-- P8 — close the local password-reset surface on cloud (the P3 residual)
-- P7 — hide local membership management on hub-origin workspaces; guests lose the guest-forbidden affordances
-- P7 — hub-origin workspaces refuse local membership mutation; /me carries the adaptation signals
-- P6 SSO-first collaborator claim on cloud — guests get hub identities, never local passwords
-- P6 guest capability limits — origin='guest' is a capability boundary (D2, both editions)
+- Against a cloud instance, the CLI exchanges your `antasphere login` credential for an instance key on first use and caches it. Later commands are served from the cache, with no further round trip.
+- Someone invited to a single deck from outside your organization signs in with Antasphere to claim it, and never sets a Slideless password.
 
-### Fixes
+### Changed
 
-- per-org logout — revoke on the minting instance, report a refused self-revoke honestly
-- P7 review — the hub-managed gate mounts ONCE per subtree, making fail-closed true by construction
-- the G1 fallback mints missing memberships, never reactivates cut ones — and pin the OAuth-bearer guest leg
-- G1 cross-request — a grant swept active in an EARLIER request claims as success (claim path only)
+- On a cloud instance there is no local password to set or reset; the dashboard hides membership management and points at Antasphere, where those changes are made.
+
+### Fixed
+
+- `slideless logout` revokes the key on the instance that issued it, and says plainly when an older instance refuses to revoke it rather than reporting a success that did not happen.
+- Claiming a deck invitation no longer reactivates access that was previously cut.

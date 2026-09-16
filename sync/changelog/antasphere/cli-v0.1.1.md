@@ -4,4 +4,4 @@ date: "2026-07-12"
 channel: cli
 ---
 
-release @antasphere/cli 0.1.1 — consume cli-core ^0.2.0
+A maintenance release of the `antasphere` CLI with no change to its commands.

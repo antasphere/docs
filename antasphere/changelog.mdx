@@ -7,101 +7,91 @@ description: "Release history, sourced from antasphere/hub release tags."
 
 <Update label="v0.5.0" description="2026-08-28">
 
-hub 0.5.0 — OIDC audit series: signing-key durability, end-session caller binding, API-key pin, first-party grant record, OAuth-surface conformance + client lifecycle (PRDCT-1371, 1379-1387, 1392)
+A durability and control release: you can see and manage the tools connected to your account, and operators get a restore path they can rehearse.
 
-### Features
+### Added
 
-- record first-party grants and surface connected apps (PRDCT-1386)
+- A Connected applications page lists every Antasphere tool connected to your account, when it first connected, when it was last used, and what it can reach.
+- Instances can cap how many OAuth clients one account registers, and can retire registrations that were never used.
 
-### Fixes
+### Changed
 
-- the pg pool had no 'error' listener — an idle client's dropped connection was an uncaught exception
-- surface conformance + client lifecycle (PRDCT-1382, PRDCT-1383, PRDCT-1384, PRDCT-1385)
-- signing-key durability + end-session caller binding (PRDCT-1379, PRDCT-1380)
-- make the failure-path rollback real and loud (PRDCT-1392)
-- enforce the one-live-grant invariant under concurrency (PRDCT-1387)
-- bound, attribute, and expire the offline tool grants (PRDCT-1387)
-- honour the workspace pin at request time (PRDCT-1381)
-- config/logging hygiene + HTTP surface hardening (PRDCT-1374, PRDCT-1375)
-- engineer the DR path and the operator deployment defaults (PRDCT-1372)
-- bump the better-auth trio to 1.6.22 — closes GHSA-qq9h-g4jm-xgf3
+- `antasphere logout` revokes the standing tool access that login granted, and the CLI now states exactly what it does and does not revoke.
+- An API key pinned to one organization behaves the same way as every other credential, and lists only the organization it is pinned to.
+
+### Fixed
+
+- Signing keys survive a restart and a secret rotation, so a deploy no longer invalidates the tokens tools are holding.
+- Restoring a backup brings back the secret the database is keyed to, checks every archive before replacing anything, and puts the previous instance back if any step fails.
+- Readiness now re-checks file storage instead of reporting the state it saw at boot, so an instance that has lost its store stops taking traffic.
 
 </Update>
 <Update label="v0.4.0" description="2026-07-15">
 
-hub 0.4.0 — seamless first-party experience (consent-skip, hint cookie, RP-logout, tools-used, tool-aware auth pages, authorize-resume fix)
+Signing in to an Antasphere tool now feels like one product rather than two: fewer screens, and pages that know which tool sent you.
 
-### Features
+### Added
 
-- toolInfo() — the /tool-info contract mapping (route-coverage guard)
-- tool-aware signup/verified branding off the registry (ADR 015 WI-5)
-- public GET /tool-info + scope-containment and authorize-resume pins (ADR 015 WI-5/WI-6 server)
-- the ant_sso_hint parent-domain hint cookie (ADR 015 WI-4)
-- tool-usage recording seam + advisory tool_first_login + /me tools[] (ADR 015 WI-3)
-- migration 0020 user_tool_usage (ADR 015 WI-2)
-- registry tool clients go consent-free first party (ADR 015 WI-1)
+- First-party Antasphere tools no longer show a consent screen. Following a tool's sign-in link takes you to the tool.
+- Sign-up and confirmation pages carry the name of the tool you came from, so you know what you are signing in to.
+- Signing out of the hub also signs you out of the first-party tools you are signed in to.
+- Your account page lists the Antasphere tools you have used.
 
-### Fixes
+### Fixed
 
-- install the oauth-provider client plugin — the authorize-resume dead-end (ADR 015 WI-6)
-- forward SSO_HINT_COOKIE_DOMAIN into the container
+- Signing in part-way through a tool's sign-in flow now returns you to the tool instead of stopping on the dashboard.
 
 </Update>
 <Update label="v0.3.0" description="2026-07-15">
 
-hub 0.3.0 — user-scoped cleanup release
+A cleanup release that finishes the move to user-held credentials started in 0.2.0.
 
-### Breaking
+### Changed
 
-- migration 0019 revokes the dormant accounts:status service keys
-- the H3 exchange JWT goes fully user-scoped (Phase 6 cleanup)
-- access tokens carry only user-level claims (Phase 6 cleanup)
-- delete the accounts:status endpoints + scope (Phase 6 cleanup)
+- Tokens the hub issues now describe the person signing in. Which organization a request works in is chosen per request by the tool, not fixed into the token.
+- The earlier, transitional account-status endpoints and their scope are gone. Nothing in the documented surface uses them.
 
 </Update>
 <Update label="v0.2.0" description="2026-07-15">
 
-hub 0.2.0 — user-scoped live federation
+Your credentials now belong to you rather than to one organization, so a single login reaches every organization you are a member of.
 
-### Breaking
+### Changed
 
-- consent flip to org-free, user-scoped OAuth grants (Stage B, Phase 3)
+- When you approve a tool, you approve it as yourself. The approval is not tied to one organization, and it keeps working as your memberships change.
+- Pick a default organization from the dashboard or the CLI, and new sessions start there.
+- Tools that work per organization can name the one they mean on each call, and fall back to your default when they do not.
 
-### Features
+### Added
 
-- H3 mints the tool client an offline grant, returned as hubRefreshToken (Stage B, Phase 4)
-- optional per-call workspace argument on tools (Stage B, Phase 3)
-- org default in the CLI; default marker + set-as-default + key pin in the dashboard
-- user-scoped key surfaces + default organization
-- ONE shared workspace-selection helper; selector threaded into every credential path
-- migration 0017 — user-scoped credentials (api_keys optional pin + user_settings)
-
-### Fixes
-
-- close three user-scoped-credential corners (Stage A double-check)
-- orgs schema gains status + isDefault (belongs with the API-surfaces commit)
+- API keys can be pinned to a single organization at mint, and the dashboard shows which key is pinned where.
+- `antasphere org list` and `antasphere org use` show your organizations and set the one tool CLIs work in.
 
 </Update>
 <Update label="cli-v0.1.2" description="2026-07-13" tags={["CLI"]}>
 
-release @antasphere/cli 0.1.2 — antasphere org list/use
+The `antasphere` CLI can now show your organizations and choose the one other Antasphere tool CLIs work in.
 
-### Features
+### Added
 
-- antasphere org list/use — the cross-tool exchange target
-
-### Fixes
-
-- refuse tool-token mint for an unverified subject email (P5 residual)
+- `antasphere org list` prints the organizations you belong to and marks the active one.
+- `antasphere org use <id>` sets the organization federated tool CLIs read as their context, and `--unset` clears it.
 
 </Update>
 <Update label="v0.1.0" description="2026-07-13">
 
-First image release — the Antasphere hub OIDC IdP (tool registry, accounts:status, /sso/tool-token)
+The first release of the Antasphere hub: one account that signs you in to every Antasphere tool.
+
+### Added
+
+- Sign up with an email address and get a personal organization straight away, then create shared organizations and invite people into them.
+- Sign in to first-party Antasphere tools with your Antasphere account, so one login carries across the family.
+- The `antasphere` command-line client signs in from a terminal with a code sent to your mailbox, and stores the result in a local profile.
+- A tool's command-line client can trade your hub login for its own short-lived credential, so you sign in once for every tool.
 
 </Update>
 <Update label="cli-v0.1.1" description="2026-07-12" tags={["CLI"]}>
 
-release @antasphere/cli 0.1.1 — consume cli-core ^0.2.0
+A maintenance release of the `antasphere` CLI with no change to its commands.
 
 </Update>

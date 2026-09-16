@@ -4,12 +4,9 @@ date: "2026-07-13"
 channel: cli
 ---
 
-release @antasphere/cli 0.1.2 — antasphere org list/use
+The `antasphere` CLI can now show your organizations and choose the one other Antasphere tool CLIs work in.
 
-### Features
+### Added
 
-- antasphere org list/use — the cross-tool exchange target
-
-### Fixes
-
-- refuse tool-token mint for an unverified subject email (P5 residual)
+- `antasphere org list` prints the organizations you belong to and marks the active one.
+- `antasphere org use <id>` sets the organization federated tool CLIs read as their context, and `--unset` clears it.

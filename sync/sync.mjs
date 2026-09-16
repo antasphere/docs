@@ -272,38 +272,35 @@ function cleanSubject(subject) {
   return subject.replace(/^[a-z]+(\([^)]*\))?!?:\s*/, "");
 }
 
-function seedEntry(tool, repoDir, tag, date, subject, prevTag, channel) {
-  const lines = [
-    "---",
-    `version: ${JSON.stringify(tag)}`,
-    `date: ${JSON.stringify(date)}`,
-    `channel: ${channel}`,
-    "---",
-    "",
-    escapeMdx(cleanSubject(subject) || tag),
-  ];
-  if (prevTag) {
-    const subjects = git(repoDir, [
-      "log",
-      "--no-merges",
-      "--format=%s",
-      `${prevTag}..${tag}`,
-    ])
-      .split("\n")
-      .filter(Boolean);
-    const sections = [
-      ["Breaking", subjects.filter((s) => /^[a-z]+(\([^)]*\))?!:/.test(s))],
-      ["Features", subjects.filter((s) => /^feat(\([^)]*\))?:/.test(s))],
-      ["Fixes", subjects.filter((s) => /^fix(\([^)]*\))?:/.test(s))],
-    ];
-    for (const [name, items] of sections) {
-      if (!items.length) continue;
-      lines.push("", `### ${name}`, "");
-      for (const s of items) lines.push(`- ${escapeMdx(cleanSubject(s))}`);
-    }
-  }
-  lines.push("");
-  return lines.join("\n");
+/**
+ * Seed a changelog entry with the release TITLE ONLY, never the commit log.
+ *
+ * This used to dump every `feat:`/`fix:` subject between the two tags into
+ * Added/Fixed sections. Commit subjects are written for the team: they carry
+ * ticket ids, internal document names, the shape of what a review found, and
+ * the occasional "not ready to ship". Every one of those published verbatim
+ * (2026-09-16: 101 such lines were live on the public site the day the docs
+ * went public). A commit log is not release notes, and no filter makes it
+ * into release notes — so the body is a human's to write.
+ *
+ * The seed is therefore the frontmatter plus the tag's own subject, and the
+ * file is written once and never regenerated (see buildChangelog), so a
+ * rewritten entry survives every later sync. Write the body from the
+ * product's own docs: what a reader can now do, in the words the docs use.
+ */
+function seedEntry(tag, date, subject, channel) {
+  return (
+    [
+      "---",
+      `version: ${JSON.stringify(tag)}`,
+      `date: ${JSON.stringify(date)}`,
+      `channel: ${channel}`,
+      "---",
+      "",
+      escapeMdx(cleanSubject(subject) || tag),
+      "",
+    ].join("\n") + "\n"
+  );
 }
 
 function buildChangelog(tool, repoDir, outDir) {
@@ -328,15 +325,13 @@ function buildChangelog(tool, repoDir, outDir) {
         channel === "cli" ? /^cli-v\d/.test(r.tag) : /^v\d/.test(r.tag)
       )
       .sort((a, b) => compareVersions(a.tag, b.tag));
-    series.forEach((ref, idx) => {
+    series.forEach((ref) => {
       const entryFile = path.join(entriesDir, `${ref.tag}.md`);
       if (fs.existsSync(entryFile)) return; // seeded once, never overwritten
-      const prev = idx > 0 ? series[idx - 1].tag : null;
-      fs.writeFileSync(
-        entryFile,
-        seedEntry(tool, repoDir, ref.tag, ref.date, ref.subject, prev, channel)
+      fs.writeFileSync(entryFile, seedEntry(ref.tag, ref.date, ref.subject, channel));
+      console.log(
+        `[${tool.slug}] seeded changelog entry ${ref.tag} (title only — write its body by hand)`
       );
-      console.log(`[${tool.slug}] seeded changelog entry ${ref.tag}`);
     });
   }
 
