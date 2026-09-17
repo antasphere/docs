@@ -57,10 +57,9 @@
         }
       ]
     },
-    "products": [
+    "tabs": [
       {
-        "product": "Antasphere",
-        "description": "One account for every Antasphere tool: sign in once, connected everywhere.",
+        "tab": "Antasphere",
         "icon": "circle-user",
         "groups": [
           {
@@ -91,8 +90,7 @@
         ]
       },
       {
-        "product": "Slideless",
-        "description": "Versioned, shareable live links for what your agents build — push decks from a CLI or MCP agent, share them with a secret URL.",
+        "tab": "Slideless",
         "icon": "presentation-screen",
         "groups": [
           {

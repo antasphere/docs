@@ -13,7 +13,7 @@ them directly — your change dies on the next sync. Edit instead:
 | A documentation page | the source repo's `docs/` (antasphere/hub or antasphere/slideless), then `npm run sync` |
 | Sidebar structure / titles | the source repo's `docs/nav.yml` |
 | Changelog wording | `sync/changelog/<tool>/<version>.md` (editable; never regenerated) |
-| Palette, faces, logo, navbar | `docs.json` (everything except `navigation`) |
+| Palette, faces, logo, navbar | `docs.json` (everything except `navigation`; the sync writes one tab per tool) |
 | The ground, the type weights | `style.css` |
 | The pipeline itself | `sync/sync.mjs`, `sync/tools.yml` |
 

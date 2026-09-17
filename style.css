@@ -168,7 +168,10 @@ body {
   letter-spacing: var(--ant-label-track) !important;
   text-transform: uppercase;
   color: #1a1918 !important;
-  margin-bottom: 0.5rem !important;
+  /* A title belongs to the section under it: a short gap below, a longer one
+   * above (the group margin further down), so it reads as that section's
+   * heading and not as the last row of the section before. */
+  margin-bottom: 0.35rem !important;
 }
 
 .dark #sidebar-content .sidebar-group-header,
@@ -179,7 +182,8 @@ body {
 
 /* Pages closer together: Mintlify's py-1.5 rows on a 1.5rem line, and
  * 1.5–2rem between groups, spread a short section across the whole rail.
- * Rows at 0.3rem on a 1.4 line, groups 1.25rem apart. */
+ * Rows at 0.3rem on a 1.4 line, groups 1.6rem apart — the long gap of the
+ * pair the title's short one belongs to. */
 #sidebar-content .sidebar-group > li > a,
 #sidebar-content .sidebar-group a {
   padding-top: 0.3rem !important;
@@ -188,7 +192,7 @@ body {
 }
 
 #sidebar-content #navigation-items > div {
-  margin-top: 1.25rem !important;
+  margin-top: 1.6rem !important;
 }
 
 #sidebar-content #navigation-items > div:first-child {

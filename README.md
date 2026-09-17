@@ -12,7 +12,7 @@ them in:
 
 - `antasphere/` and `slideless/` are wiped and rebuilt on every sync — edit the
   source repo, never these trees.
-- `docs.json` branding is hand-owned; its `navigation.products` block is
+- `docs.json` branding is hand-owned; its `navigation` block (one tab per tool, plus the anchors) is
   generated from the tools' `nav.yml` files.
 - Changelogs are seeded from each repo's release tags into editable entry files
   under `sync/changelog/<tool>/` (seeded once, never overwritten — polish the

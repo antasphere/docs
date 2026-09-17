@@ -395,11 +395,13 @@ function writeNavigation(results) {
   // The anchors above every sidebar come from tools.yml (site.anchors), so the
   // sync — which owns `navigation` whole — writes them back on every run.
   const anchors = config.site?.anchors ?? [];
+  // One TAB per tool (the Exos docs' shape), not the product dropdown: the
+  // sections sit side by side in the bar, one click apart. nav.description
+  // still feeds llms.txt and the sitemap; tabs have no description field.
   docsJson.navigation = {
     ...(anchors.length ? { global: { anchors } } : {}),
-    products: results.map(({ tool, nav }) => ({
-      product: nav.product,
-      description: nav.description,
+    tabs: results.map(({ tool, nav }) => ({
+      tab: nav.product,
       icon: tool.icon,
       groups: [
         ...nav.groups.map((g) => ({
