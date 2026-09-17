@@ -1,42 +1,38 @@
 ---
 title: "Antasphere"
-description: "One account for every Antasphere tool: sign in once at account.antasphere.com and you are connected everywhere. Slideless is the first tool built on it, and every tool in the…"
+description: "One account for every Antasphere tool: sign in once at account.antasphere.com and you are connected everywhere. Every tool in the family recognises the same identity, the same…"
 ---
 
 {/* GENERATED from antasphere/hub docs/index.md — edit there, then run `npm run sync`. */}
 
 One account for every Antasphere tool: sign in once at
-[account.antasphere.com](https://account.antasphere.com) and you are
-connected everywhere. Slideless is the first tool built on it, and every
-tool in the family authenticates against the same identity, the same
-organizations, and the same credentials.
+[account.antasphere.com](https://account.antasphere.com) and you are connected everywhere. Every
+tool in the family recognises the same identity, the same organizations and the same credentials,
+so a login carries across the whole product family.
 
-Under the hood, the account service is an OpenID Connect identity provider
-with an account layer on top: open sign-up, a personal organization
-provisioned automatically, shared organizations with invitations and roles,
-API keys, self-service account management (including optional 2FA), an
-audit log, and GDPR export and delete. First-party tools federate against
-it ("Sign in with Antasphere"), so one login carries across the whole
-product family. Agents are first-class consumers too: every instance
-serves a built-in MCP endpoint, and the `antasphere` CLI signs in with a
-one-time email code.
+## Your account
 
-## Find your way
+- **Sign up in a minute.** An email address and a password, or a one-time code sent to your inbox.
+  Verify the address once and the account is live.
+- **A personal organization from day one.** Every account starts with an organization of its own.
+  Create more for a team or a client, invite people by email, and give each member a role.
+- **One place to manage it all.** Your profile, your organizations and their members, your API
+  keys, two-factor authentication, and the audit trail of what happened on your account, from the
+  dashboard at [account.antasphere.com](https://account.antasphere.com).
+- **Your data stays yours.** Export everything an organization holds as a single archive, or delete
+  the account outright, from the dashboard.
 
-- **Agents and CLI.** [The `antasphere` CLI](/antasphere/agents/cli) covers login,
-  identity, organizations, and files from the terminal;
-  [connecting agents](/antasphere/agents/mcp-connector) pairs an instance with
-  claude.ai, Claude Code, or any MCP client.
-- **Self-hosting.** The hub is a single Docker image plus Postgres:
-  [install](/antasphere/self-hosting/install) it on your own machine, put a
-  [reverse proxy](/antasphere/self-hosting/reverse-proxy) in front, pick a
-  [deployment profile](/antasphere/self-hosting/deployment-profiles), and
-  [upgrade](/antasphere/self-hosting/upgrade) with a pull and a restart.
-- **Operations.** [Backup and restore](/antasphere/operations/backup-restore), and
-  the [scale drill](/antasphere/operations/scaling) that proves the multi-replica
-  story with a real stack.
-- **Security.** The enforced [security posture](/antasphere/security/security):
-  what the platform guarantees out of the box and what stays in the
-  operator's hands.
-- **Reference.** [Every environment variable](/antasphere/reference/env-reference),
-  generated from the schema the app actually boots with.
+## The tools
+
+Each tool signs you in with your Antasphere account ("Sign in with Antasphere") and reads your
+organizations from it, so membership is managed once and applies everywhere.
+
+- [**Slideless**](/antasphere/tools/slideless) — the home for what your agents build: HTML presentations,
+  small apps, plans and reports, kept as versioned decks and shared by link.
+
+## Agents and the command line
+
+Agents are first-class users of your account. The [`antasphere` CLI](/antasphere/agents/cli) signs in with
+a code sent to your email and manages your identity, organizations and files from the terminal;
+[connecting an agent](/antasphere/agents/mcp-connector) pairs claude.ai, Claude Code or any MCP client with
+your account in a few clicks.

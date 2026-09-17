@@ -1,115 +1,81 @@
 ---
 title: "CLI"
-description: "@antasphere/cli is the antasphere command-line client — the account CLI for the Antasphere hub. One antasphere login mints a workspace-bound API key over the browserless email-OTP…"
+description: "antasphere is the command-line client for your Antasphere account. One antasphere login signs you in with a code sent to your email and stores a personal API key in a local…"
 ---
 
 {/* GENERATED from antasphere/hub docs/agents/cli.md — edit there, then run `npm run sync`. */}
 
-`@antasphere/cli` is the `antasphere` command-line client — the account CLI
-for the Antasphere hub. One `antasphere login` mints a
-workspace-bound API key over the browserless email-OTP surface and
-stores it in a local profile; every later command rides that profile. The
-surface mirrors what an API key can reach through the fail-closed scope
-allowlist: identity, organizations, files, and — with the opt-in
-`data:export` scope — the workspace export.
+`antasphere` is the command-line client for your Antasphere account. One `antasphere login`
+signs you in with a code sent to your email and stores a personal API key in a local profile;
+every later command uses that profile. From the terminal you can check who you are, list and pick
+your organizations, manage files, and export an organization's data.
 
 ## Install
 
-`npm i -g @antasphere/cli` exposes the `antasphere` binary. The published
-package is a single self-contained bundle (`dist/bin.js`, built with esbuild):
-the workspace-internal `@antasphere/contract`, `@antasphere/sdk`,
-`@antasphere/cli-core`, and commander are inlined at build time, so the
-published manifest carries **zero runtime dependencies** — nothing internal or
-git-pinned leaks into a public install.
-
-From a checkout:
-
 ```bash
-pnpm --filter @antasphere/cli... build
-node packages/cli/dist/bin.js --help
+npm i -g @antasphere/cli
 ```
+
+The published package is a single self-contained bundle with no runtime dependencies.
 
 ## Sign in
 
 ```bash
-antasphere login                 # prompts for email + the 6-digit mailed code
+antasphere login                 # prompts for your email and the 6-digit mailed code
 antasphere login --email you@example.com --key-name laptop --expires-days 90
-antasphere whoami                # user + organizations + the active org
-antasphere logout                # revokes the key server-side, clears the profile
+antasphere whoami                # you, your organizations, the active one
+antasphere logout                # revokes the key, clears the profile
 ```
 
-`login` drives the public `/cli/auth/request` + `/cli/auth/complete`
-surface: the code proves the mailbox, the minted key carries
-`account:read` + `account:write` + `sso:exchange` (never `data:export`;
-`sso:exchange` is the cross-tool token exchange at `POST /sso/tool-token` —
-federated tool CLIs trade the hub key for a short-lived
-tool-local credential, one hub login for every tool), appears exactly once,
-and goes straight into the config file. On the hub's open instance
-a first login for a fresh email IS the onboarding: account + personal org +
-key in one flow. 2FA-enrolled accounts are refused
-(`two_factor_required` — mint a key in the dashboard instead).
+The code proves the mailbox; the key it mints is shown exactly once and goes straight into the
+profile. A first login with a new email address creates the account, its personal organization
+and the key in one flow. Accounts with two-factor authentication enabled cannot log in from the
+CLI: create an API key in the dashboard instead and pass it with `--api-key` or
+`ANTASPHERE_API_KEY`.
 
-`logout` calls `DELETE /cli/auth/key` — a key may revoke exactly ITSELF —
-then removes the profile (an already-dead key still clears the profile).
+`logout` revokes the stored key on the server and removes the profile.
 
 ## Configuration
 
-Profiles live at `~/.config/antasphere/config.json`
-(`$XDG_CONFIG_HOME/antasphere/config.json`; directory 0700, file 0600 — it
-stores the API key). The store is the `hub` namespace of the shared
-Antasphere CLI config home owned by `@antasphere/cli-core` (extracted from
-this CLI); other tool CLIs keep their profiles under
-`~/.config/antasphere/tools/<tool>.json` in the same home. `--profile <name>`
-selects one; `login` writes the selected profile and marks it active.
-Resolution per setting:
+Profiles live at `~/.config/antasphere/config.json` (or under `$XDG_CONFIG_HOME`), readable by
+you alone since they hold the API key. `--profile <name>` selects one; `login` writes the selected
+profile and marks it active. Each setting resolves in this order:
 
 | Setting  | Precedence                                                                  |
 | -------- | --------------------------------------------------------------------------- |
 | Base URL | `--api-url` → `ANTASPHERE_URL` → profile → `https://account.antasphere.com` |
 | API key  | `--api-key` → `ANTASPHERE_API_KEY` → profile                                |
 
-Dev instances: `antasphere --api-url http://localhost:3200 login` stores the
-URL in the profile, so later commands need no flag.
-
 ## Commands
 
 ```bash
-antasphere login                          # email OTP → stored API key (see above)
-antasphere logout                         # revoke the stored key + clear the profile
-antasphere whoami                         # user, orgs, active org, scopes
-antasphere org list                       # your organizations (active org marked *; alias: orgs)
-antasphere org use <id>                   # pick the org tool CLIs exchange this login for
-antasphere org use --unset                # back to the org the key was bound to at login
-antasphere instance                       # discovery: name, version, auth methods
-antasphere export [-o <path>]             # full org export as a zip (needs data:export)
-antasphere files list                     # list org files (newest first)
+antasphere login                          # email code → stored API key
+antasphere logout                         # revoke the stored key, clear the profile
+antasphere whoami                         # you, your organizations, the active one, scopes
+antasphere org list                       # your organizations (active org marked *)
+antasphere org use <id>                   # choose the organization tool CLIs work in
+antasphere org use --unset                # back to the organization you logged in to
+antasphere export [-o <path>]             # full organization export as a zip
+antasphere files list                     # list files (newest first)
 antasphere files upload ./report.pdf      # upload (name defaults to the basename)
 antasphere files download <id> --out ./f  # download by id
 antasphere files rm <id>                  # delete by id
 ```
 
-The key is bound to ONE organization at mint — `whoami` and
-`org list` mark the active org with `*`. For HUB commands in another org,
-log in again into a second profile: `antasphere --profile acme login`
-(a per-org key each, the gcloud/gh model).
+A login is bound to one organization; `whoami` and `org list` mark it with `*`. To work in another
+organization, log in again into a second profile: `antasphere --profile acme login`, the same
+model as `gcloud` or `gh`.
 
-`org use <id>` does something different: it does not change what this hub
-key can reach — it stores the ACTIVE org that federated TOOL CLIs (e.g.
-`slideless`) read as their org context. Since the Phase-6 cleanup the
-exchange itself (`POST /sso/tool-token`) is org-free — the minted tool
-credential identifies the USER, and the org any tool operation
-targets is a per-request selection tool-side — so this choice steers tool
-CLIs' selection, never what the exchange mints. The choice lives on the
-hub profile; `--unset` clears it, and a tool-side `--org <id>` flag
-overrides it per invocation. `org use` validates the id against
-`GET /orgs` before storing it.
+`org use <id>` does something different: it stores the organization that the tool CLIs (the
+`slideless` CLI, for example) work in when you use them after one Antasphere login, and it checks
+the id against your memberships before storing it. `--unset` clears it, and a tool's own `--org`
+flag overrides it per command.
 
-`export` needs a key granted the opt-in `data:export` scope (never implied
-by `account:read`) and an admin+ creator; the zip streams to disk (default
-`export-<yyyy-mm-dd>.zip`). Account deletion is deliberately NOT in the
-CLI — it is a session-only act (see [security.md](/antasphere/security/security)).
+`export` needs a key granted the opt-in `data:export` scope and an admin role in the organization;
+the archive streams to disk (default `export-<yyyy-mm-dd>.zip`). Deleting an account is
+deliberately not a CLI action: do it from the dashboard.
 
-`files list` is cursor-paginated (server default 50, max 100 per page):
+`files list` is paginated (50 per page by default, 100 at most):
 
 | Flag                | Effect                                          |
 | ------------------- | ----------------------------------------------- |
@@ -117,13 +83,8 @@ CLI — it is a session-only act (see [security.md](/antasphere/security/securit
 | `--cursor <cursor>` | Resume from a previous page's `nextCursor`      |
 | `--all`             | Follow `nextCursor` until every page is fetched |
 
-Human output prints a `More available: rerun with --cursor <id> or --all`
-hint when a page remains; `--json` prints the wire shape
-`{ files, nextCursor }` (with `--all`, all rows and `nextCursor: null`).
-
-Add `--json` to any command for machine-readable output. A non-2xx response
-prints to stderr and exits non-zero; a scope denial (a read-only key trying
-to write) is a clean `403` message.
+Add `--json` to any command for machine-readable output. A failed request prints to stderr and
+exits non-zero; a key without the right scope gets a clean `403` message.
 
 ## Example (agent-style)
 
