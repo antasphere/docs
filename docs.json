@@ -22,8 +22,10 @@
       "format": "woff2"
     },
     "body": {
-      "family": "Onest",
-      "weight": 400
+      "family": "Synonym",
+      "weight": 450,
+      "source": "/fonts/Synonym-Variable.woff2",
+      "format": "woff2"
     }
   },
   "favicon": "/favicon.svg",
@@ -36,6 +38,25 @@
     "default": "system"
   },
   "navigation": {
+    "global": {
+      "anchors": [
+        {
+          "anchor": "My account",
+          "href": "https://account.antasphere.com",
+          "icon": "circle-user"
+        },
+        {
+          "anchor": "Slideless",
+          "href": "https://slideless.antasphere.com",
+          "icon": "presentation-screen"
+        },
+        {
+          "anchor": "antasphere.com",
+          "href": "https://antasphere.com",
+          "icon": "globe"
+        }
+      ]
+    },
     "products": [
       {
         "product": "Antasphere",

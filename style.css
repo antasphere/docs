@@ -1,196 +1,35 @@
 /* ══════════════════════════════════════════════════════════════════════════
  * Antasphere brand layer for the docs, the half docs.json cannot express.
  *
+ * This file is a SIBLING of the one in the Exos docs (labs/products/exos/exos/
+ * docs/style.css) and the two are kept byte-identical on purpose: port a change
+ * to both, or the two doc sites drift.
+ *
  * Mintlify loads any .css file in the content directory on every page, so this
  * file needs no reference from docs.json. docs.json carries the palette, the
- * faces and the logo; this carries the GROUND: the brand's field, which is a
- * gradient with the film grain over it rather than flat paper.
+ * faces, the logo and the flat ground colour; this carries what it cannot:
+ * the second weight of Sentient, the variable Synonym face, the heading tiers,
+ * the sidebar's label register, and the size of the chrome.
  *
- * The recipe matches the website's home: fonts OBSERVATORY, theme GLACIER,
- * ground GRAPHITE, field PAPER (the neutral field the home hero sits on, so
- * the ground favours neither universe). Sources, both of which win over
- * anything inferred here:
- *   company/website/apps/website/src/brand/recipe.ts   PALETTES.paper
- *   company/brand/src/lib/tokens.css                   --grain
- *
- * Three rules govern every value below, and they are the brief, not taste:
- *   1. the field is NOT uniform: it pools, the way the engine's blobs do;
- *   2. the chrome is ONE colour. The app bar and the sidebar rail are the same
- *      surface seen in two places, so they take one token (--ant-chrome) and
- *      the reading column is the field showing through beside them;
- *   3. the steps between them are small, and the light ground stays light.
- *      Every pool below is a translucent wash over the paper, which is what
- *      keeps (3) true by construction: raise an alpha, never darken a hex.
+ * The ground is FLAT (settled 2026-09-17). The pooled gradient with the film
+ * grain that used to be painted on #background-color read as a dim, uneven
+ * page; the website's app bar and page sit on one flat tone, and the docs now
+ * do the same. The tone is the brand's graphite ground, --ground / --color-bg
+ * in company/brand tokens.css and company/website brand.css: #F7F6F4 light,
+ * #1A1918 dark. Both live in docs.json (background.color) and nowhere here.
  * ══════════════════════════════════════════════════════════════════════ */
 
-:root {
-  /* The film grain, byte-identical to the console's tokens.css --grain and the
-   * website's brand.css --grain-btn: the engine's grain (CONSTANTS.grain, film
-   * at alpha 0.22) reduced to a repeating feTurbulence tile, so the docs carry
-   * the same material as every other Antasphere surface. Change all three
-   * together. Blended `overlay`, which is how it textures a fill without
-   * lightening it. */
-  --ant-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='96' height='96' filter='url(%23g)' opacity='0.3'/%3E%3C/svg%3E");
-
-  /* The same tile carrying more speckle, and the ONE deliberate departure from
-   * the console's numbers. `overlay` modulates a fill toward its own lightness,
-   * so it has almost nothing to work with on near-white paper: the console's
-   * 0.3 tile is tuned against a filled control and the engine's own grain is
-   * composited over a far more colourful field. Raised until the grain is felt
-   * on the paper rather than measured off it. Same baseFrequency, same tile,
-   * only the rect's opacity moves. */
-  --ant-grain-ground: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='96' height='96' filter='url(%23g)' opacity='0.62'/%3E%3C/svg%3E");
-
-  /* THE CHROME TONE. One value, worn by the app bar and the sidebar rail alike,
-   * because they are the same surface and reading as two was the bug: Mintlify
-   * paints the scrolled bar flat `background.color` (#F7F6F4), which sat lighter
-   * than the field beside it, while the rail sat darker, so scrolling swapped a
-   * near-white bar over a dimmer rail.
-   *
-   * It is the console's ground-2 (company/brand tokens.css --ground-2, the
-   * graphite scale's second step), which is the brand's own answer here: the
-   * console describes the viewport as the ground-2 *coque* with the sidebar
-   * floating on it. The dark pair is PALETTES['paper-dark'] hue 1, the same
-   * step read from the ink end. */
-  --ant-chrome: #f0efec;
-
-  /* The chrome tone AS THE GRAIN LEAVES IT, measured off the rendered page.
-   * The grain sits in the ground layer, so anything that paints the chrome
-   * tone ABOVE the ground misses it and lands ~2 points off, which shows as a
-   * pale block. The app bar solves that by carrying the grain itself; the
-   * sidebar's fade strip cannot, because it fades to transparent and a grain
-   * layer over the transparent half would double against the ground's own.
-   * So the strip takes the flat post-grain value instead. Re-measure both if
-   * --ant-grain-ground's opacity or --ant-chrome ever moves. */
-  --ant-chrome-lit: #f2f1ee;
-
-  /* One step up from Mintlify's 14px chrome label. See the block near the
-   * bottom of this file for why the face makes that necessary. */
-  --ant-chrome-text: 0.9375rem;
-
-  /* Where the rail ends. The sidebar is 18rem wide at a 2rem inset, so its right
-   * edge IS 20rem: the band holds flat to there, which is what makes the whole
-   * sidebar one colour, and feathers out over the 2rem gutter so the field
-   * returns without a hard rule down the page. */
-  --ant-rail-hold: 20rem;
-  --ant-rail-fade: 22rem;
-}
-
-.dark {
-  --ant-chrome: #1f1e1c;
-  --ant-chrome-lit: #232220;
-}
-
-/* ── The ground ────────────────────────────────────────────────────────────
- * #background-color is Mintlify's own full-viewport fixed layer at z-index -10
- * (`fixed inset-0 bg-background-light dark:bg-background-dark`). Painting the
- * field here means it sits under everything, survives every page and needs no
- * element of our own. The colour underneath still comes from docs.json's
- * background.color, so the two cannot disagree.
- *
- * Layer order is top-first. Grain, then the rail wash, then three pools, then
- * the base drift. The pools are the paper palette's own hues; the two upper
- * ones are the warm and cool drift that palette is built around, the lower one
- * is its deepest step at a fraction of its strength. */
-#background-color {
-  background-image:
-    var(--ant-grain-ground),
-    linear-gradient(
-      to right,
-      var(--ant-chrome) 0,
-      var(--ant-chrome) var(--ant-rail-hold),
-      rgba(240, 239, 236, 0) var(--ant-rail-fade)
-    ),
-    radial-gradient(120% 85% at 6% -10%, rgba(244, 242, 238, 0.9), rgba(244, 242, 238, 0) 60%),
-    radial-gradient(85% 65% at 92% 4%, rgba(235, 243, 239, 0.55), rgba(235, 243, 239, 0) 62%),
-    radial-gradient(110% 75% at 62% 108%, rgba(197, 194, 186, 0.22), rgba(197, 194, 186, 0) 66%),
-    linear-gradient(168deg, #f8f7f5 0%, #f2f1ee 46%, #eeedea 100%);
-  background-blend-mode: overlay, normal, normal, normal, normal, normal;
-  background-repeat: repeat, no-repeat, no-repeat, no-repeat, no-repeat, no-repeat;
-  background-attachment: fixed;
-}
-
-/* Dark is the same field read from the ink end: PALETTES['paper-dark'], the
- * neutral field's own dark pair. The rail carries the dark chrome tone, so the
- * bar and the rail meet on one colour there too. */
-.dark #background-color {
-  background-image:
-    var(--ant-grain-ground),
-    linear-gradient(
-      to right,
-      var(--ant-chrome) 0,
-      var(--ant-chrome) var(--ant-rail-hold),
-      rgba(31, 30, 28, 0) var(--ant-rail-fade)
-    ),
-    radial-gradient(120% 85% at 6% -10%, rgba(42, 40, 37, 0.85), rgba(42, 40, 37, 0) 60%),
-    radial-gradient(85% 65% at 92% 4%, rgba(56, 53, 47, 0.5), rgba(56, 53, 47, 0) 62%),
-    radial-gradient(110% 75% at 62% 108%, rgba(86, 80, 70, 0.16), rgba(86, 80, 70, 0) 66%),
-    linear-gradient(168deg, #1f1e1c 0%, #1a1918 48%, #141312 100%);
-  background-blend-mode: overlay, normal, normal, normal, normal, normal;
-}
-
-/* ── The sidebar scroll fade ───────────────────────────────────────────────
- * Mintlify sticks a 2rem gradient at the top of the scrolling sidebar so nav
- * items dissolve rather than cut, and builds it `from-background-light`, the
- * one flat colour docs.json declares. Against a field that is no longer flat
- * that gradient starts from the wrong colour and reads as a pale block over
- * the rail. Restated from the rail's own composite instead. */
-#sidebar-content .sticky.top-0 {
-  background-image: linear-gradient(to bottom, var(--ant-chrome-lit), rgba(242, 241, 238, 0));
-}
-
-.dark #sidebar-content .sticky.top-0 {
-  background-image: linear-gradient(to bottom, var(--ant-chrome-lit), rgba(35, 34, 32, 0));
-}
-
-/* ── The app bar ───────────────────────────────────────────────────────────
- * #navbar-transition is the bar's own surface, and it swaps colour on scroll
- * through `data-is-opaque`. Both states are restated on the chrome tone: opaque
- * so the scrolled bar lands exactly on the rail beneath it, and the top state
- * as the same colour at Mintlify's own 60%, so the bar warms toward the rail
- * rather than toward white while the page sits at the top.
- *
- * `!important` for the same reason as the headings: the colours are Tailwind
- * utilities carrying an arbitrary-variant prefix, printed on the element. */
-#navbar-transition[data-is-opaque='true'],
-.dark #navbar-transition[data-is-opaque='true'] {
-  background-color: var(--ant-chrome) !important;
-  /* The grain too, not just the colour. The rail takes its speckle from the
-   * ground layer underneath, while the bar is its own element above it, so
-   * without this the bar lands on the same hex but reads about two points
-   * lighter and the seam under the navbar comes straight back. Only on the
-   * opaque state: at the top the bar is translucent and the ground's own grain
-   * already shows through it. */
-  background-image: var(--ant-grain-ground);
-  background-blend-mode: overlay;
-  background-repeat: repeat;
-}
-
-#navbar-transition[data-is-opaque='false'] {
-  background-color: rgba(240, 239, 236, 0.6) !important;
-}
-
-/* Dark's top state stays fully transparent, which is Mintlify's own behaviour
- * there and correct: a wash over near-black only greys the field. */
-.dark #navbar-transition[data-is-opaque='false'] {
-  background-color: transparent !important;
-}
-
-/* The reading column needs no wash of its own: it is simply the field, which the
- * rail band stops short of. An overlay over the content was tried and removed,
- * because anything painted across the text column is a veil over the text the
- * moment its alpha is wrong. */
-
-/* ── Type ──────────────────────────────────────────────────────────────────
- * docs.json names ONE face at ONE weight, and Mintlify then asks for h1 at 700.
- * A single 300 file cannot answer that, so the browser synthesises the bold by
- * smearing the Light outlines: the headings come out thick, muddy and not
- * actually Sentient. Every rule below exists to stop that.
- *
- * Sentient Medium, the second real face, so weight 500 is a file rather than a
- * synthesis. Mintlify's own @font-face covers 300 from docs.json; this adds the
- * one more weight the console's type scale asks for. Both files are the
- * Fontshare statics the brand console links from its index.html. */
+/* ── Faces ─────────────────────────────────────────────────────────────────
+ * Sentient Medium, the second display face, so weight 500 is a file rather
+ * than a synthesis (Mintlify's own @font-face covers 300 from docs.json).
+ * Synonym Variable is the reading face, the website's since 2026-09-12: one
+ * file, the 200–700 axis, the same bytes as company/website
+ * src/assets/fonts/synonym and company/brand src/brand/fonts. docs.json also
+ * names it (so Mintlify sets the family); this declaration is what gives the
+ * chrome its 500/600 weights from the axis instead of a faux bold. No
+ * size-adjust here, unlike the website: the docs never mix Synonym and
+ * Sentient on one line, and two faces of one family with different
+ * size-adjusts would make one weight render 4 % off the next. */
 @font-face {
   font-family: 'Sentient';
   src: url('/fonts/Sentient-Medium.woff2') format('woff2');
@@ -199,48 +38,114 @@
   font-display: swap;
 }
 
-/* The console's two display tiers, verbatim (company/brand src/lib/tokens.css).
- * A page opens on --title-* (28px / 500 / -0.015em, the tier added so a page
- * begins on a title rather than a caption) and its sections sit on the display
- * voice proper (--display-weight 300 / --display-track -0.005em), which is also
- * the rule the website ships for h1..h6. Both weights now resolve to a real
- * file, so `font-synthesis: none` is safe: if a weight ever goes missing again
- * it will look wrong instead of looking almost right. */
-/* `!important`, and not out of laziness: Mintlify prints its weights as Tailwind
- * utilities ON the heading elements themselves (`<h1 class="… font-bold">`,
- * `<h2 class="… font-semibold">`). A class selector outranks any selector built
- * out of element names, so there is no specificity a plain `h1` rule can reach
- * to win this, and the utility class names are Mintlify's to change. Overriding
- * the utility by name would break the day they rename it. The tracking carries
- * it too, for the same reason: `tracking-tight` is a utility on the same tag. */
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
+@font-face {
+  font-family: 'Synonym';
+  src: url('/fonts/Synonym-Variable.woff2') format('woff2');
+  font-weight: 200 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  /* The reading voice, as the website's html rule sets it: 450 on the axis is
+   * the weight that matches Sentient in colour, the tracking in em so it
+   * scales with each size rather than pulling small text tighter. */
+  --ant-ui-weight: 450;
+  --ant-ui-track: -0.008em;
+
+  /* Chrome type: Mintlify's 14px, which Synonym carries well (the old 15px
+   * step-up existed for Onest's small x-height and is gone with it). */
+  --ant-chrome-text: 0.875rem;
+
+  /* The sidebar's group titles wear the brand's label register (the console's
+   * .lbl / overline: small caps-height uppercase, letterspaced on the
+   * --track-label scale). */
+  --ant-label-size: 0.72rem;
+  --ant-label-track: 0.1em;
+  --ant-label-weight: 600;
+
+  /* The logo in the bar. Mintlify's h-7 (28px) made the lockup — mark plus
+   * the outlined wordmark — the loudest thing on the page. */
+  --ant-logo-height: 1.375rem;
+}
+
+body {
+  font-weight: var(--ant-ui-weight);
+  letter-spacing: var(--ant-ui-track);
+}
+
+/* ── Headings ──────────────────────────────────────────────────────────────
+ * docs.json names ONE display face at ONE weight, and Mintlify then asks for
+ * h1 at 700 and h2 at 600 through Tailwind utilities printed ON the tags
+ * (`<h1 class="… font-bold">`). A single 300 file cannot answer that, so the
+ * browser would synthesise the bold by smearing the Light outlines. The two
+ * console tiers instead, verbatim (company/brand tokens.css): a page opens on
+ * --title-* (500 / -0.015em) and its sections sit on the display voice
+ * (300 / -0.005em). Both weights resolve to a real file, so
+ * `font-synthesis: none` is safe.
+ *
+ * Scoped to the reading column. The old unscoped `h1..h6` rule also reached
+ * the sidebar's group titles (Mintlify renders them as <h3>), which is why
+ * they came out as 300-weight hairlines nobody could see.
+ *
+ * `!important` because the weights are utility classes on the elements: no
+ * element selector can outrank them, and the class names are Mintlify's to
+ * rename. */
+#content-area h1,
+#content-area h2,
+#content-area h3,
+#content-area h4,
+#content-area h5,
+#content-area h6,
+#content h1,
+#content h2,
+#content h3,
+#content h4,
+#content h5,
+#content h6 {
   font-synthesis-weight: none;
   font-weight: 300 !important;
   letter-spacing: -0.005em !important;
 }
 
-h1 {
+#content-area h1,
+#content h1 {
   font-weight: 500 !important;
   letter-spacing: -0.015em !important;
 }
 
+/* ── The app bar ───────────────────────────────────────────────────────────
+ * Flat, on the ground colour, in both scroll states: the bar is the page's
+ * own surface with Mintlify's hairline under it, as the website's bar is.
+ * The colours are utilities on the element, hence !important. */
+#navbar-transition[data-is-opaque='true'],
+#navbar-transition[data-is-opaque='false'] {
+  background-color: #f7f6f4 !important;
+  background-image: none !important;
+}
+
+.dark #navbar-transition[data-is-opaque='true'],
+.dark #navbar-transition[data-is-opaque='false'] {
+  background-color: #1a1918 !important;
+}
+
+#navbar img.nav-logo {
+  height: var(--ant-logo-height) !important;
+}
+
+/* The sidebar's scroll fade, restated on the flat ground so it is invisible. */
+#sidebar-content .sticky.top-0 {
+  background-image: linear-gradient(to bottom, #f7f6f4, rgba(247, 246, 244, 0));
+}
+
+.dark #sidebar-content .sticky.top-0 {
+  background-image: linear-gradient(to bottom, #1a1918, rgba(26, 25, 24, 0));
+}
+
 /* ── Chrome type size ──────────────────────────────────────────────────────
- * Mintlify sets every chrome label at 14px, a size tuned against Inter. Onest
- * carries a smaller x-height at the same nominal size, so the whole rail, the
- * tab bar and the contents list read a step smaller here than they did in the
- * default face. One step back up, in one place. Reading text is untouched: the
- * body already sits at 18px.
- *
- * `!important` again, and again because these are Tailwind size utilities
- * printed on the elements (`text-sm`), not stylesheet rules to outrank. */
+ * One size for every label in the rail, the tab bar, the contents list and
+ * the search entry. `!important` because these are `text-sm` utilities. */
 #sidebar-content a,
-#sidebar-content h5,
-#sidebar-content [id='sidebar-title'],
 #table-of-contents-layout a,
 #navbar .nav-tabs-item,
 #navbar #topbar-cta-button,
@@ -248,15 +153,58 @@ h1 {
   font-size: var(--ant-chrome-text) !important;
 }
 
-/* The sidebar's group titles are <h5>, so the display voice above reaches them
- * and sets them to 300, which is right for a heading at 24px and much too thin
- * for a label at 14px: the nav groups came out as hairlines. The display weight
- * is a reading-size decision, not a universal one, so chrome takes the tier up.
- * 500 rather than a heavier number because that is the second face actually
- * installed, and `font-synthesis: none` above means an uninstalled weight would
- * not render bolder, it would render wrong. */
-#sidebar-content h5,
+/* ── The sidebar ───────────────────────────────────────────────────────────
+ * Group titles as labels: the console's overline register, in the ink
+ * colour, so a group reads as a heading over its pages rather than as one
+ * more line among them. Mintlify renders the title as
+ * `.sidebar-group-header > h3.sidebar-title`; both hooks are named so the rule
+ * survives either one changing. */
+#sidebar-content .sidebar-group-header,
+#sidebar-content .sidebar-title,
 #sidebar-content [id='sidebar-title'] {
-  font-weight: 500 !important;
-  letter-spacing: -0.005em !important;
+  font-family: 'Synonym', ui-sans-serif, system-ui, sans-serif;
+  font-size: var(--ant-label-size) !important;
+  font-weight: var(--ant-label-weight) !important;
+  letter-spacing: var(--ant-label-track) !important;
+  text-transform: uppercase;
+  color: #1a1918 !important;
+  margin-bottom: 0.5rem !important;
+}
+
+.dark #sidebar-content .sidebar-group-header,
+.dark #sidebar-content .sidebar-title,
+.dark #sidebar-content [id='sidebar-title'] {
+  color: #f7f6f4 !important;
+}
+
+/* Pages closer together: Mintlify's py-1.5 rows on a 1.5rem line, and
+ * 1.5–2rem between groups, spread a short section across the whole rail.
+ * Rows at 0.3rem on a 1.4 line, groups 1.25rem apart. */
+#sidebar-content .sidebar-group > li > a,
+#sidebar-content .sidebar-group a {
+  padding-top: 0.3rem !important;
+  padding-bottom: 0.3rem !important;
+  line-height: 1.4 !important;
+}
+
+#sidebar-content #navigation-items > div {
+  margin-top: 1.25rem !important;
+}
+
+#sidebar-content #navigation-items > div:first-child {
+  margin-top: 0 !important;
+}
+
+/* The anchors above the groups (the links out to the account, the tools, the
+ * site) in the same chrome size, a touch heavier than a page row. */
+#sidebar-content #navigation-items ~ *,
+#sidebar-content a[href^='http'] {
+  font-weight: 500;
+}
+
+/* ── The tab bar ───────────────────────────────────────────────────────────
+ * Tabs at the chrome size, medium weight, the active one in the ink colour
+ * rather than the accent so the bar stays quiet. */
+#navbar .nav-tabs-item {
+  font-weight: 500;
 }

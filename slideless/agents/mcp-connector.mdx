@@ -1,15 +1,9 @@
 ---
 title: "The MCP connector"
-description: "Every instance is MCP-capable at boot: the monolith serves a streamable-HTTP MCP endpoint at /mcp, protected by the instance's own built-in OAuth 2.1 authorization server. No…"
+description: "Every instance is MCP-capable at boot: the monolith serves a streamable-HTTP MCP endpoint at /mcp, protected by the instance's own built-in OAuth 2.1 authorization server. No companion service, no shared secrets, no aud/resource URL to keep in sync — the resource identifier is derived at boot as PUBLIC_BASE_URL + '/mcp'."
 ---
 
 {/* GENERATED from antasphere/slideless docs/agents/mcp-connector.md — edit there, then run `npm run sync`. */}
-
-Every instance is MCP-capable at boot: the monolith serves a streamable-HTTP
-MCP endpoint at `/mcp`, protected by the instance's own built-in OAuth 2.1
-authorization server. No companion service, no shared secrets, no
-`aud`/resource URL to keep in sync — the resource identifier is derived at
-boot as `PUBLIC_BASE_URL + '/mcp'`.
 
 ## claude.ai / Claude Desktop (OAuth)
 

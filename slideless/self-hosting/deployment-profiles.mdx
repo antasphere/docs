@@ -1,15 +1,9 @@
 ---
 title: "Deployment profiles"
-description: "One template, one statelessness invariant, two documented shapes. Scaling is a deployment choice, not an architecture change: the app container holds no state (sessions in…"
+description: "One template, one statelessness invariant, two documented shapes. Scaling is a deployment choice, not an architecture change: the app container holds no state (sessions in Postgres, jobs in pg-boss, files behind the StorageDriver, counters append-and-aggregate, graceful drain on SIGTERM, expand-then-contract migrations)."
 ---
 
 {/* GENERATED from antasphere/slideless docs/self-hosting/deployment-profiles.md — edit there, then run `npm run sync`. */}
-
-One template, one statelessness invariant, two documented shapes. Scaling is
-a deployment choice, not an architecture change: the app container holds no
-state (sessions in Postgres, jobs in pg-boss, files behind the
-StorageDriver, counters append-and-aggregate, graceful drain on SIGTERM,
-expand-then-contract migrations).
 
 ## Profile A — single VPS (the default)
 

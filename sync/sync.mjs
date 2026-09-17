@@ -153,7 +153,17 @@ function transformPage(tool, docsDir, relNoExt, fileMap) {
     if (/^(#|```|~~~|\||[-*+] |> |\d+\. |<)/.test(t)) break;
     para.push(t);
   }
-  const description = truncate(stripInlineMd(para.join(" ")));
+  // The intro IS the page's description (Mintlify renders it under the title
+  // as the subtitle), so it leaves the body: rendering it twice — once as the
+  // subtitle, once as the first paragraph — was the site's most visible flaw.
+  // Whole, not truncated: a subtitle cut with an ellipsis reads as an error.
+  // Links inside it flatten to their text; an intro that needs a live link
+  // repeats it in the body. llms.txt truncates its own copy.
+  const description = stripInlineMd(para.join(" "));
+  if (para.length) {
+    body.splice(0, para.length);
+    while (body.length && body[0].trim() === "") body.shift();
+  }
 
   // Link rewriting + MDX hazard lint on prose.
   for (const { i, line } of proseLines(body)) {
@@ -382,7 +392,11 @@ function buildChangelog(tool, repoDir, outDir) {
 function writeNavigation(results) {
   const docsJsonPath = path.join(ROOT, "docs.json");
   const docsJson = JSON.parse(fs.readFileSync(docsJsonPath, "utf8"));
+  // The anchors above every sidebar come from tools.yml (site.anchors), so the
+  // sync — which owns `navigation` whole — writes them back on every run.
+  const anchors = config.site?.anchors ?? [];
   docsJson.navigation = {
+    ...(anchors.length ? { global: { anchors } } : {}),
     products: results.map(({ tool, nav }) => ({
       product: nav.product,
       description: nav.description,
@@ -414,7 +428,7 @@ function writeLlmsTxt(results) {
         const m = meta.get(page);
         if (!m) continue;
         const url = `https://${DOMAIN}/${tool.slug}/${page}`;
-        lines.push(`- [${m.title}](${url})${m.description ? `: ${m.description}` : ""}`);
+        lines.push(`- [${m.title}](${url})${m.description ? `: ${truncate(m.description)}` : ""}`);
       }
     }
     lines.push(`- [Changelog](https://${DOMAIN}/${tool.slug}/changelog): Release history for ${nav.product}.`, "");

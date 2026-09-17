@@ -6,6 +6,18 @@
 # In CI, TOOL_CHECKOUT_<SLUG-UPPERCASED> env vars override it.
 site:
   domain: docs.antasphere.com
+  # Links pinned above every sidebar (navigation.global.anchors in docs.json):
+  # the places a reader goes from the docs — their account, the tools, the site.
+  anchors:
+    - anchor: My account
+      href: https://account.antasphere.com
+      icon: circle-user
+    - anchor: Slideless
+      href: https://slideless.antasphere.com
+      icon: presentation-screen
+    - anchor: antasphere.com
+      href: https://antasphere.com
+      icon: globe
 tools:
   - slug: antasphere
     repo: antasphere/hub

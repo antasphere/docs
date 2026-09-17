@@ -1,17 +1,9 @@
 ---
 title: "Scaling drill — proving Profile B"
-description: "deployment-profiles.md claims the image scales horizontally because the app container holds no state. Claims rot; this drill is the executable proof. It stands up real…"
+description: "deployment-profiles.md claims the image scales horizontally because the app container holds no state. Claims rot; this drill is the executable proof. It stands up real multi-replica stacks with Docker Compose and asserts every scaling invariant with direct evidence (Postgres lock tables, DDL logs, cross-replica HTTP round-trips, pg-boss internals). CI runs it on every push and PR (the scale-drill job in .github/workflows/ci.yml), so the proof cannot silently regress."
 ---
 
 {/* GENERATED from antasphere/slideless docs/operations/scaling.md — edit there, then run `npm run sync`. */}
-
-[deployment-profiles.md](/slideless/self-hosting/deployment-profiles) claims the image scales
-horizontally because the app container holds no state. Claims rot; this drill
-is the executable proof. It stands up real multi-replica stacks with Docker
-Compose and asserts every scaling invariant with direct evidence (Postgres
-lock tables, DDL logs, cross-replica HTTP round-trips, pg-boss internals).
-CI runs it on every push and PR (the `scale-drill` job in
-`.github/workflows/ci.yml`), so the proof cannot silently regress.
 
 ## Run it locally
 
