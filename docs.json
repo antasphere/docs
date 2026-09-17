@@ -135,6 +135,7 @@
             "group": "Self-hosting",
             "pages": [
               "slideless/self-hosting/install",
+              "slideless/self-hosting/hostinger",
               "slideless/self-hosting/reverse-proxy",
               "slideless/self-hosting/deployment-profiles",
               "slideless/self-hosting/upgrade"
