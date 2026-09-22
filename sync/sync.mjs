@@ -55,12 +55,29 @@ function checkoutDir(tool) {
 // ---------------------------------------------------------------------------
 // Markdown helpers (fence- and inline-code-aware)
 // ---------------------------------------------------------------------------
-/** Split a line into segments, tagging inline-code spans. */
-function segments(line) {
-  return line.split(/(`[^`]*`)/g).map((text) => ({
-    code: text.startsWith("`") && text.endsWith("`") && text.length > 1,
-    text,
-  }));
+/**
+ * Split a line into segments, tagging inline-code spans. A code span may
+ * open on one line and close on the next (CommonMark lets a span cross a
+ * soft line break, and hard-wrapped prose does it all the time), so the
+ * state at the end of a line carries into the next: `open` says whether
+ * the line starts inside a span, and the returned `open` says whether it
+ * ends inside one. Reading one line at a time without that state flagged
+ * every `<id>` inside a wrapped span as an MDX hazard (2026-09-22: five
+ * false positives in Slideless's cli.md kept the site from syncing).
+ */
+function segments(line, open = false) {
+  const segs = [];
+  let inCode = open;
+  line.split("`").forEach((text, i) => {
+    // each backtick toggles the state; it stays glued to the text after
+    // it, so the segments rebuild the line byte for byte
+    if (i > 0) {
+      inCode = !inCode;
+      text = "`" + text;
+    }
+    segs.push({ code: inCode, text });
+  });
+  return { segs, open: inCode };
 }
 
 /** Iterate non-fence lines of a document, giving fence state per line. */
@@ -126,7 +143,7 @@ function validateNav(tool, nav, pages) {
   }
 }
 
-function transformPage(tool, docsDir, relNoExt, fileMap) {
+function transformPage(tool, docsDir, relNoExt, fileMap, nav) {
   const srcFile = path.join(docsDir, relNoExt + ".md");
   const raw = fs.readFileSync(srcFile, "utf8");
   const lines = raw.split("\n");
@@ -160,14 +177,25 @@ function transformPage(tool, docsDir, relNoExt, fileMap) {
   // Links inside it flatten to their text; an intro that needs a live link
   // repeats it in the body. llms.txt truncates its own copy.
   const description = stripInlineMd(para.join(" "));
-  if (para.length) {
+  // On a page with a compact band the intro STAYS in the body: the band
+  // carries the title alone, Mintlify's subtitle is hidden with its title,
+  // and the intro is then read where it was written, under the band.
+  const band = bandKind(tool, relNoExt, nav);
+  if (para.length && band !== "compact") {
     body.splice(0, para.length);
     while (body.length && body[0].trim() === "") body.shift();
   }
 
-  // Link rewriting + MDX hazard lint on prose.
+  // Link rewriting + MDX hazard lint on prose. A code span's state carries
+  // from one line to the next; a fence (which proseLines skips) closes it.
+  let open = false;
+  let prev = -1;
   for (const { i, line } of proseLines(body)) {
-    const segs = segments(line);
+    if (i !== prev + 1) open = false;
+    prev = i;
+    const split = segments(line, open);
+    const segs = split.segs;
+    open = split.open;
     let rebuilt = "";
     for (const seg of segs) {
       if (seg.code) {
@@ -225,8 +253,100 @@ function transformPage(tool, docsDir, relNoExt, fileMap) {
     "",
     `{/* GENERATED from ${tool.repo} docs/${relNoExt}.md — edit there, then run \`npm run sync\`. */}`,
     "",
+    ...heroBand(tool, relNoExt, nav, description, title, band),
     ...body,
   ].join("\n");
+}
+
+/** A small stable hash of a page path: which body a page's band wears, and its lean. */
+function seedOf(text) {
+  let h = 0x811c9dc5;
+  for (const ch of text) {
+    h ^= ch.charCodeAt(0);
+    h = Math.imul(h, 0x01000193);
+  }
+  return h >>> 0;
+}
+
+// the bodies a compact band is dealt from: `harmonic` is left out — its few
+// nodal circles read as an empty box at that size (it suits a landing band)
+const BODIES = ["latitudes", "meridians", "lattice"];
+
+/**
+ * Which band a page gets: the full one on the index, none on a page of a
+ * group written for agents (tools.yml `plain:`), the compact one everywhere
+ * else. A tool without a hero block gets none at all.
+ */
+function bandKind(tool, relNoExt, nav) {
+  if (!tool.hero?.title) return null;
+  if (relNoExt === "index") return "full";
+  const group = nav.groups.find((g) => g.pages.includes(relNoExt));
+  const plain = new Set(tool.plain ?? []);
+  if (!group || plain.has(group.title)) return null;
+  return "compact";
+}
+
+/**
+ * The hero band on a tool's index page: the products' page band, rendered
+ * by snippets/HeroBand.jsx from the tool's `hero:` block in tools.yml. The
+ * tool's own docs never name it — the band is the site's chrome, like the
+ * anchors — and its words stay the tool's: the eyebrow is the product name
+ * from nav.yml, the lede is the page's intro (the same paragraph that is
+ * the page's description). style.css hides Mintlify's own title on a page
+ * that carries a band, so the band is the page's opening.
+ */
+function heroBand(tool, relNoExt, nav, description, title, band) {
+  if (!band) return [];
+  if (band === "compact") {
+    const group = nav.groups.find((g) => g.pages.includes(relNoExt));
+    const seed = seedOf(`${tool.slug}/${relNoExt}`);
+    return bandLines({
+      eyebrow: group.title,
+      title,
+      drawing: BODIES[seed % BODIES.length],
+      seed,
+      compact: true,
+    });
+  }
+  // The lede is the band's own when tools.yml writes one (the intro often
+  // opens on the same words as the band's title), else the intro's opening:
+  // whole sentences up to about 180 characters, as the products' bands
+  // carry one line under the title, never the paragraph. A sentence ends
+  // at punctuation FOLLOWED BY A SPACE, so a dot inside a domain does not
+  // end one. The full intro stays the page's description either way.
+  const lede =
+    tool.hero.lede ||
+    (() => {
+      const sentences = (description || "").split(/(?<=[.!?])\s+/);
+      let out = "";
+      for (const s of sentences) {
+        if (out && (out + " " + s).length > 180) break;
+        out = out ? out + " " + s : s;
+      }
+      return out.trim() || undefined;
+    })();
+  const attrs = {
+    eyebrow: nav.product,
+    title: tool.hero.title,
+    lede,
+    drawing: tool.hero.drawing || "latitudes",
+    seed: tool.hero.seed,
+  };
+  return bandLines(attrs);
+}
+
+function bandLines(attrs) {
+  const props = Object.entries(attrs)
+    .filter(([, v]) => v !== undefined && v !== null)
+    .map(([k, v]) => `  ${k}={${JSON.stringify(v)}}`);
+  return [
+    'import { HeroBand } from "/snippets/HeroBand.jsx";',
+    "",
+    "<HeroBand",
+    ...props,
+    "/>",
+    "",
+  ];
 }
 
 function syncTool(tool) {
@@ -242,7 +362,7 @@ function syncTool(tool) {
 
   const meta = new Map(); // page → {title, description} for llms.txt
   for (const page of pages) {
-    const out = transformPage(tool, docsDir, page, fileMap);
+    const out = transformPage(tool, docsDir, page, fileMap, nav);
     if (out == null) continue;
     const outFile = path.join(outDir, page + ".mdx");
     fs.mkdirSync(path.dirname(outFile), { recursive: true });
@@ -255,7 +375,7 @@ function syncTool(tool) {
     });
   }
 
-  const changelog = buildChangelog(tool, repoDir, outDir);
+  const changelog = buildChangelog(tool, repoDir, outDir, nav);
   return { tool, nav, pages, meta, changelog };
 }
 
@@ -313,7 +433,7 @@ function seedEntry(tag, date, subject, channel) {
   );
 }
 
-function buildChangelog(tool, repoDir, outDir) {
+function buildChangelog(tool, repoDir, outDir, nav) {
   const entriesDir = path.join(ROOT, "sync", "changelog", tool.slug);
   fs.mkdirSync(entriesDir, { recursive: true });
 
@@ -378,6 +498,15 @@ function buildChangelog(tool, repoDir, outDir) {
     "",
     `{/* GENERATED — edit the entry files under sync/changelog/${tool.slug}/, then run \`npm run sync\`. */}`,
     "",
+    ...(tool.hero?.title
+      ? bandLines({
+          eyebrow: nav.product,
+          title: "Changelog",
+          drawing: "lattice",
+          seed: seedOf(`${tool.slug}/changelog`),
+          compact: true,
+        })
+      : []),
     ...blocks,
     "",
   ].join("\n");
@@ -395,22 +524,52 @@ function writeNavigation(results) {
   // The anchors above every sidebar come from tools.yml (site.anchors), so the
   // sync — which owns `navigation` whole — writes them back on every run.
   const anchors = config.site?.anchors ?? [];
-  // One TAB per tool (the Exos docs' shape), not the product dropdown: the
-  // sections sit side by side in the bar, one click apart. nav.description
-  // still feeds llms.txt and the sitemap; tabs have no description field.
+  // The products as ONE dropdown in the bar (back since 2026-09-22: one tab
+  // per tool put a nine-group rail under Slideless), and under the chosen
+  // product a few tabs, each a rail's worth of groups, cut in tools.yml by
+  // the groups' titles. A tool without a tabs block keeps its groups as one
+  // rail. nav.description feeds the dropdown's line, llms.txt and the sitemap.
   docsJson.navigation = {
     ...(anchors.length ? { global: { anchors } } : {}),
-    tabs: results.map(({ tool, nav }) => ({
-      tab: nav.product,
-      icon: tool.icon,
-      groups: [
+    products: results.map(({ tool, nav }) => {
+      const groups = [
         ...nav.groups.map((g) => ({
           group: g.title,
           pages: g.pages.map((p) => `${tool.slug}/${p}`),
         })),
         { group: "Changelog", pages: [`${tool.slug}/changelog`] },
-      ],
-    })),
+      ];
+      const product = {
+        product: nav.product,
+        description: nav.description,
+        icon: tool.icon,
+      };
+      if (!tool.tabs?.length) return { ...product, groups };
+      const byTitle = new Map(groups.map((g) => [g.group, g]));
+      const placed = new Set();
+      const tabs = tool.tabs.map((t) => ({
+        tab: t.tab,
+        ...(t.icon ? { icon: t.icon } : {}),
+        groups: (t.groups ?? []).flatMap((title) => {
+          const g = byTitle.get(title);
+          if (!g) {
+            fail(`[${tool.slug}] tools.yml tab "${t.tab}" names a group "${title}" that nav.yml does not have`);
+            return [];
+          }
+          if (placed.has(title)) {
+            fail(`[${tool.slug}] tools.yml places the group "${title}" in two tabs`);
+            return [];
+          }
+          placed.add(title);
+          return [g];
+        }),
+      }));
+      for (const g of groups) {
+        if (!placed.has(g.group))
+          fail(`[${tool.slug}] nav.yml group "${g.group}" is in no tab of tools.yml`);
+      }
+      return { ...product, tabs };
+    }),
   };
   fs.writeFileSync(docsJsonPath, JSON.stringify(docsJson, null, 2) + "\n");
 }

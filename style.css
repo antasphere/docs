@@ -1,35 +1,37 @@
 /* ══════════════════════════════════════════════════════════════════════════
- * Antasphere brand layer for the docs, the half docs.json cannot express.
+ * The product material on the docs: the half docs.json cannot express.
  *
- * This file is a SIBLING of the one in the Exos docs (labs/products/exos/exos/
- * docs/style.css) and the two are kept byte-identical on purpose: port a change
- * to both, or the two doc sites drift.
+ * Since 2026-09-22 the site wears the LOOK OF THE PRODUCTS — the hub and
+ * Slideless dashboards after their rebrand (apps/dashboard/src/lib/tokens.css
+ * in either repo, the canonical statement; `company/brand` is still on the
+ * older graphite/glacier skin and is not the source here). One paper for a
+ * person moving from their account to a tool to its docs: the creme ground
+ * under a quiet seeded field with the film grain, plates of translucent
+ * paper on one hairline, a warm umber accent for the few things an accent
+ * touches, ink on paper for the one action, Sentient over Synonym, and one
+ * motion. The tokens are copied verbatim below, in the products' names, so
+ * a value can be checked against its source by name.
  *
- * Mintlify loads any .css file in the content directory on every page, so this
- * file needs no reference from docs.json. docs.json carries the palette, the
- * faces, the logo and the flat ground colour; this carries what it cannot:
- * the second weight of Sentient, the variable Synonym face, the heading tiers,
- * the sidebar's label register, and the size of the chrome.
+ * Mintlify loads any .css file in the content directory on every page, so
+ * this file needs no reference from docs.json. docs.json carries the palette
+ * (`colors` = the umber, its dark-mode terracotta, its deep ink), the flat
+ * ground colour (`background.color` = the paper) the field is painted over,
+ * the faces and the logo; this carries everything else.
  *
- * The ground is FLAT (settled 2026-09-17). The pooled gradient with the film
- * grain that used to be painted on #background-color read as a dim, uneven
- * page; the website's app bar and page sit on one flat tone, and the docs now
- * do the same. The tone is the brand's graphite ground, --ground / --color-bg
- * in company/brand tokens.css and company/website brand.css: #F7F6F4 light,
- * #1A1918 dark. Both live in docs.json (background.color) and nowhere here.
+ * Mintlify's own classes are Tailwind utilities printed on the elements,
+ * hence the `!important`s: no element selector outranks them, and the
+ * ids (#navbar, #sidebar-content, #content-area, …) are the stable hooks.
+ *
+ * This file USED to be a byte-identical sibling of labs/products/exos/exos/
+ * docs/style.css. The two diverged on 2026-09-22: the Exos docs keep the
+ * company skin (flat graphite, glacier), these follow the products.
  * ══════════════════════════════════════════════════════════════════════ */
 
 /* ── Faces ─────────────────────────────────────────────────────────────────
  * Sentient Medium, the second display face, so weight 500 is a file rather
  * than a synthesis (Mintlify's own @font-face covers 300 from docs.json).
- * Synonym Variable is the reading face, the website's since 2026-09-12: one
- * file, the 200–700 axis, the same bytes as company/website
- * src/assets/fonts/synonym and company/brand src/brand/fonts. docs.json also
- * names it (so Mintlify sets the family); this declaration is what gives the
- * chrome its 500/600 weights from the axis instead of a faux bold. No
- * size-adjust here, unlike the website: the docs never mix Synonym and
- * Sentient on one line, and two faces of one family with different
- * size-adjusts would make one weight render 4 % off the next. */
+ * Synonym Variable is the reading face: one file, the 200–700 axis. No
+ * size-adjust here: the docs never mix Synonym and Sentient on one line. */
 @font-face {
   font-family: 'Sentient';
   src: url('/fonts/Sentient-Medium.woff2') format('woff2');
@@ -46,51 +48,201 @@
   font-display: swap;
 }
 
+/* ── Tokens — the products' warm recipe, verbatim ──────────────────────── */
 :root {
-  /* The reading voice, as the website's html rule sets it: 450 on the axis is
-   * the weight that matches Sentient in colour, the tracking in em so it
-   * scales with each size rather than pulling small text tighter. */
-  --ant-ui-weight: 450;
-  --ant-ui-track: -0.008em;
+  /* grounds — the creme paper */
+  --ground: #f7f4ec;
+  --ground-2: #f1ede1;
+  --ground-3: #eae5d6;
+  /* ink */
+  --ink: #1c1915;
+  --ink-soft: #35302a;
+  --muted: #6e6759;
+  --hairline: #e0daca;
+  /* the ember survives only as a focus ring */
+  --focus: #b4552f;
+  /* status */
+  --ok: #2e7d52;
+  --ok-soft: #dfece3;
+  --warn: #b07d1e;
+  --warn-soft: #f4ead2;
+  --danger: #b4552f;
+  --danger-soft: #f3e1d8;
+  /* the four slots a theme writes: the default look, the website's beige */
+  --accent: #7a6652;
+  --accent-ink: #f7f4ec;
+  --accent-soft: rgba(122, 102, 82, 0.14);
+  --accent-deep: #5c4d3e;
+  --field-base: #efeeea;
+  /* a plate is content sitting on the page field: translucent paper */
+  --plate: rgb(250 247 240 / 0.62);
+  --plate-strong: rgb(251 249 243 / 0.82);
+  --plate-edge: rgb(255 255 255 / 0.6);
+  /* a bar content scrolls under: opaque */
+  --bar: #faf7f0;
+  /* elevation — the four steps */
+  --shadow-sm: 0 1px 2px rgba(28, 25, 21, 0.05);
+  --shadow: 0 1px 3px rgba(28, 25, 21, 0.1), 0 1px 2px -1px rgba(28, 25, 21, 0.1);
+  --shadow-md: 0 4px 6px -1px rgba(28, 25, 21, 0.1), 0 2px 4px -2px rgba(28, 25, 21, 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(28, 25, 21, 0.12), 0 4px 6px -4px rgba(28, 25, 21, 0.1);
+  /* the one motion */
+  --motion: 160ms;
+  --ease: cubic-bezier(0.2, 0, 0, 1);
+  /* geometry: 7 default, 12 cards, 10 controls and floats */
+  --r: 7px;
+  --r-lg: 12px;
+  --r-ctl: 10px;
+  /* the film grain as a repeating tile (the products' --grain) */
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='96' height='96' filter='url(%23g)' opacity='0.3'/%3E%3C/svg%3E");
+  /* the field's pools, the umber paper's own hues, at the products' default
+   * level (look.field 0.25 over the brand's 0.7: a whisper) */
+  --field-level: 0.4;
+  --grain-level: 0.09;
+  --ink-rgb: 28, 25, 21;
 
-  /* Chrome type: Mintlify's 14px, which Synonym carries well (the old 15px
-   * step-up existed for Onest's small x-height and is gone with it). */
-  --ant-chrome-text: 0.875rem;
-
-  /* The sidebar's group titles wear the brand's label register (the console's
-   * .lbl / overline: small caps-height uppercase, letterspaced on the
-   * --track-label scale). */
-  --ant-label-size: 0.72rem;
-  --ant-label-track: 0.1em;
-  --ant-label-weight: 600;
-
-  /* The logo in the bar. Mintlify's h-7 (28px) made the lockup — mark plus
-   * the outlined wordmark — the loudest thing on the page. */
-  --ant-logo-height: 1.375rem;
+  /* type */
+  --display: 'Sentient', ui-serif, Georgia, 'Times New Roman', serif;
+  --ui: 'Synonym', ui-sans-serif, system-ui, sans-serif;
+  --ui-weight: 450;
+  --ui-track: -0.008em;
+  --mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  /* the eyebrow: the second voice as a small label */
+  --eyebrow-size: 11px;
+  --eyebrow-track: 0.14em;
+  --eyebrow-weight: 400;
+  /* chrome type: Mintlify's 14px */
+  --chrome-text: 0.875rem;
+  /* the logo in the bar: the lockup at 22px, not Mintlify's 28 */
+  --logo-height: 1.375rem;
 }
 
+.dark {
+  /* The night set is CLAVE'S CHARCOAL (labs/products/clave/clave-app,
+   * src/renderer/src/assets/main.css, [data-theme="charcoal"]), not the
+   * products' near-black: one warm hue held at low chroma through the whole
+   * ramp, so the greys are ash and not slate, bigger steps between the rungs
+   * than a dark theme needs, and nothing in it black — not the ground, not
+   * the scrim, not a shadow. The ground is Clave's chrome (#34302c), the
+   * sunken paper its card, a step below (#2b2722); the ink its three warm
+   * greys; the hairline its warm white at a tenth. The accent stays the
+   * products' terracotta, a hair from Clave's own. */
+  --ground: #34302c;
+  --ground-2: #2b2722;
+  --ground-3: #3e3a35;
+  --ink: #efece9;
+  --ink-soft: #c7c3c0;
+  --muted: #a39f9b;
+  --hairline: #47433e;
+  --focus: #d9805a;
+  --ok: #5db487;
+  --ok-soft: #2b3a30;
+  --warn: #d9a646;
+  --warn-soft: #443a22;
+  --danger: #e07a56;
+  --danger-soft: #473028;
+  --accent: #db7d5f;
+  --accent-ink: #2a1d15;
+  --accent-soft: rgba(219, 125, 95, 0.16);
+  --accent-deep: #f3c7ac;
+  --field-base: #302c28;
+  --plate: rgb(52 48 44 / 0.6);
+  --plate-strong: rgb(62 58 53 / 0.84);
+  --plate-edge: rgb(255 243 232 / 0.07);
+  --bar: #34302c;
+  --shadow-sm: 0 1px 2px rgba(9, 6, 4, 0.22);
+  --shadow: 0 1px 3px rgba(9, 6, 4, 0.3), 0 1px 2px -1px rgba(9, 6, 4, 0.22);
+  --shadow-md: 0 6px 16px rgba(9, 6, 4, 0.34), 0 1px 4px rgba(9, 6, 4, 0.22);
+  --shadow-lg: 0 12px 28px rgba(9, 6, 4, 0.42), 0 3px 8px rgba(9, 6, 4, 0.3);
+  --field-level: 0.5;
+  --grain-level: 0.06;
+  --ink-rgb: 239, 236, 233;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion: 0ms;
+  }
+}
+
+/* ── The ground: the paper, the field, the grain ───────────────────────────
+ * docs.json paints the flat paper on #background-color (a fixed sheet
+ * behind everything). The field is laid over it as pools of the umber
+ * paper's hues — the same palette the products' gates paint on a canvas —
+ * at the products' default level, and the film grain over that as an
+ * overlay sheet, so the page is the paper the products sit on: a whisper,
+ * never a filter. Text sits straight on it, as on the gates' plate. */
+html,
+#background-color {
+  background-color: var(--ground) !important;
+}
+
+#background-color::before,
+#background-color::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+#background-color::before {
+  opacity: var(--field-level);
+  background-color: var(--field-base);
+  background-image:
+    radial-gradient(52% 44% at 8% 12%, #faf6ee 0%, rgba(250, 246, 238, 0) 100%),
+    radial-gradient(46% 40% at 88% 18%, #d9c6ac 0%, rgba(217, 198, 172, 0) 100%),
+    radial-gradient(60% 52% at 62% 92%, #c9b193 0%, rgba(201, 177, 147, 0) 100%),
+    radial-gradient(44% 38% at 28% 68%, #f6f0e4 0%, rgba(246, 240, 228, 0) 100%),
+    radial-gradient(38% 34% at 96% 74%, #b89e80 0%, rgba(184, 158, 128, 0) 100%),
+    radial-gradient(70% 60% at 50% 40%, #ece4d6 0%, rgba(236, 228, 214, 0) 100%);
+}
+
+.dark #background-color::before {
+  /* the charcoal ramp as weather: its rungs pooled over the ground */
+  background-image:
+    radial-gradient(52% 44% at 8% 12%, #3e3a35 0%, rgba(62, 58, 53, 0) 100%),
+    radial-gradient(46% 40% at 88% 18%, #4c4743 0%, rgba(76, 71, 67, 0) 100%),
+    radial-gradient(60% 52% at 62% 92%, #5a5651 0%, rgba(90, 86, 81, 0) 100%),
+    radial-gradient(44% 38% at 28% 68%, #2b2722 0%, rgba(43, 39, 34, 0) 100%),
+    radial-gradient(38% 34% at 96% 74%, #6a6560 0%, rgba(106, 101, 96, 0) 100%),
+    radial-gradient(70% 60% at 50% 40%, #2f2b27 0%, rgba(47, 43, 39, 0) 100%);
+}
+
+#background-color::after {
+  background-image: var(--grain);
+  background-repeat: repeat;
+  mix-blend-mode: overlay;
+  opacity: var(--grain-level);
+}
+
+/* ── The reading voice ─────────────────────────────────────────────────── */
 body {
-  font-weight: var(--ant-ui-weight);
-  letter-spacing: var(--ant-ui-track);
+  font-family: var(--ui);
+  font-weight: var(--ui-weight);
+  letter-spacing: var(--ui-track);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: var(--accent-soft);
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(var(--ink-rgb), 0.18) transparent;
 }
 
 /* ── Headings ──────────────────────────────────────────────────────────────
- * docs.json names ONE display face at ONE weight, and Mintlify then asks for
- * h1 at 700 and h2 at 600 through Tailwind utilities printed ON the tags
- * (`<h1 class="… font-bold">`). A single 300 file cannot answer that, so the
- * browser would synthesise the bold by smearing the Light outlines. The two
- * console tiers instead, verbatim (company/brand tokens.css): a page opens on
- * --title-* (500 / -0.015em) and its sections sit on the display voice
- * (300 / -0.005em). Both weights resolve to a real file, so
- * `font-synthesis: none` is safe.
- *
- * Scoped to the reading column. The old unscoped `h1..h6` rule also reached
- * the sidebar's group titles (Mintlify renders them as <h3>), which is why
- * they came out as 300-weight hairlines nobody could see.
- *
- * `!important` because the weights are utility classes on the elements: no
- * element selector can outrank them, and the class names are Mintlify's to
- * rename. */
+ * The two console tiers: a page opens on the title tier (500 / -0.015em),
+ * its sections sit on the display voice (300 / -0.005em). Both weights
+ * resolve to a real file, so no synthesised bold. Scoped to the reading
+ * column; the sidebar's <h3> group titles are labels, further down. */
 #content-area h1,
 #content-area h2,
 #content-area h3,
@@ -103,9 +255,11 @@ body {
 #content h4,
 #content h5,
 #content h6 {
+  font-family: var(--display);
   font-synthesis-weight: none;
   font-weight: 300 !important;
   letter-spacing: -0.005em !important;
+  color: var(--ink) !important;
 }
 
 #content-area h1,
@@ -114,81 +268,384 @@ body {
   letter-spacing: -0.015em !important;
 }
 
-/* ── The app bar ───────────────────────────────────────────────────────────
- * Flat, on the ground colour, in both scroll states: the bar is the page's
- * own surface with Mintlify's hairline under it, as the website's bar is.
- * The colours are utilities on the element, hence !important. */
-#navbar-transition[data-is-opaque='true'],
-#navbar-transition[data-is-opaque='false'] {
-  background-color: #f7f6f4 !important;
-  background-image: none !important;
+#content-area h2:not([data-component-part]),
+#content h2:not([data-component-part]) {
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--hairline);
 }
 
-.dark #navbar-transition[data-is-opaque='true'],
-.dark #navbar-transition[data-is-opaque='false'] {
-  background-color: #1a1918 !important;
+/* the subtitle under the title, in the soft ink */
+#header p,
+#header .description {
+  color: var(--muted) !important;
+}
+
+/* ── Prose ─────────────────────────────────────────────────────────────── */
+#content p,
+#content li {
+  color: var(--ink-soft);
+}
+
+#content strong {
+  font-weight: 550;
+  color: var(--ink);
+}
+
+/* links: the accent as an ink deep enough to read on paper, a hairline
+ * underline that takes the accent under the hand */
+#content a:not(.card):not([data-component-part]),
+#content-area .link:not(.card) {
+  color: var(--accent-deep) !important;
+  font-weight: 500;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in oklab, var(--accent) 45%, transparent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+  transition:
+    color var(--motion) var(--ease),
+    text-decoration-color var(--motion) var(--ease);
+}
+
+#content a:not(.card):hover,
+#content-area .link:not(.card):hover {
+  text-decoration-color: var(--accent);
+}
+
+/* inline code: a chip of the sunken paper, one hairline */
+#content :not(pre) > code {
+  font-family: var(--mono);
+  font-size: 0.86em;
+  font-weight: 450;
+  color: var(--ink) !important;
+  background: color-mix(in oklab, var(--ground-3) 70%, transparent) !important;
+  border: 1px solid color-mix(in oklab, var(--hairline) 80%, transparent) !important;
+  border-radius: 5px;
+  padding: 0.1em 0.35em;
+}
+
+/* the quote as the products' notice: a quiet plate, no bar on its side */
+#content blockquote {
+  margin: 1.25rem 0;
+  padding: 10px 14px;
+  border: 1px solid var(--hairline);
+  border-left-width: 1px;
+  border-radius: var(--r-ctl);
+  background: color-mix(in oklab, var(--ground-2) 62%, transparent);
+  color: var(--ink-soft);
+  font-style: normal;
+  font-size: 0.92em;
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+
+#content blockquote p {
+  margin: 0;
+  color: inherit;
+}
+
+/* tables: hairlines between rows, not boxes; the head in the label voice */
+#content table {
+  border-collapse: collapse;
+}
+
+#content th {
+  font-family: var(--ui);
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--muted);
+  border-bottom: 1px solid var(--hairline);
+  padding: 0.45rem 0.75rem 0.45rem 0;
+}
+
+#content td {
+  border-bottom: 1px solid color-mix(in oklab, var(--hairline) 70%, transparent);
+  padding: 0.6rem 0.75rem 0.6rem 0;
+  vertical-align: top;
+}
+
+#content tr:last-child td {
+  border-bottom-color: var(--hairline);
+}
+
+#content hr {
+  border-color: var(--hairline);
+}
+
+/* ── Code blocks: the products' code plate ────────────────────────────────
+ * One hairline, 10px corners, the sunken paper mixed with the plate, a
+ * catch of light on the top edge; the hairline takes the accent under the
+ * hand. Shiki paints its own ground inline (white / #0B0C0E), overridden
+ * so the plate shows. */
+#content .code-block,
+#content-area .code-block {
+  --code-plate: color-mix(in oklab, var(--ground-2) 78%, var(--plate-strong));
+  border-radius: var(--r-ctl) !important;
+  border: 1px solid var(--hairline) !important;
+  background: var(--code-plate) !important;
+  box-shadow: inset 0 1px 0 var(--plate-edge) !important;
+  transition: border-color var(--motion) var(--ease);
+}
+
+#content .code-block:hover,
+#content .code-block:focus-within {
+  border-color: color-mix(in oklab, var(--accent) 40%, var(--hairline)) !important;
+}
+
+/* the fade behind the copy button is an inline gradient in Mintlify's own
+ * code-block colour; restated in the plate's, so it is a fade and not a patch */
+#content .code-block [data-fade-overlay] {
+  --fade-color-light: var(--code-plate) !important;
+  --fade-color-dark: var(--code-plate) !important;
+}
+
+#content .code-block pre,
+#content .code-block pre.shiki,
+#content .code-block [class*='bg-codeblock'],
+#content .code-block .dark\:bg-codeblock {
+  background-color: transparent !important;
+  --shiki-dark-bg: transparent !important;
+}
+
+#content .code-block pre,
+#content .code-block code {
+  font-family: var(--mono) !important;
+  font-size: 12.5px !important;
+  line-height: 1.65 !important;
+  letter-spacing: 0;
+  tab-size: 2;
+}
+
+/* the block's head (the filename, the language, the copy button): the
+ * hairline under it a shade lighter, the name in the second voice */
+#content .code-block > div:first-child:not(.font-mono):not([class*='px-4']) {
+  border-bottom: 1px solid color-mix(in oklab, var(--hairline) 70%, transparent) !important;
+  background: transparent !important;
+  min-height: 34px;
+}
+
+#content .code-block > div:first-child:not(.font-mono) [class*='text-'] {
+  font-family: var(--ui);
+  font-size: 10.5px;
+  font-weight: 400;
+  letter-spacing: var(--eyebrow-track);
+  text-transform: uppercase;
+  color: var(--muted) !important;
+}
+
+/* the copy button: a chip that takes the plate under the hand, the
+ * success tone when it has copied */
+#content .code-block button {
+  border-radius: 7px;
+  color: var(--muted);
+  transition:
+    background-color var(--motion) var(--ease),
+    color var(--motion) var(--ease);
+}
+
+#content .code-block button:hover {
+  background: var(--plate-strong);
+  color: var(--ink);
+}
+
+/* ── The app bar ───────────────────────────────────────────────────────────
+ * A plate: translucent paper with Mintlify's own blur, the hairline under
+ * it only once the page has scrolled under it. The logo at 22px. */
+#navbar-transition[data-is-opaque='true'],
+#navbar-transition[data-is-opaque='false'] {
+  background-color: var(--plate) !important;
+  background-image: none !important;
+  border-bottom-color: transparent !important;
+  transition: border-color var(--motion) var(--ease);
+}
+
+#navbar-transition[data-is-opaque='true'] {
+  background-color: color-mix(in oklab, var(--bar) 78%, transparent) !important;
+  border-bottom-color: color-mix(in oklab, var(--hairline) 80%, transparent) !important;
 }
 
 #navbar img.nav-logo {
-  height: var(--ant-logo-height) !important;
+  height: var(--logo-height) !important;
 }
 
-/* The sidebar's scroll fade, restated on the flat ground so it is invisible. */
-#sidebar-content .sticky.top-0 {
-  background-image: linear-gradient(to bottom, #f7f6f4, rgba(247, 246, 244, 0));
+/* the product selector, beside the logo: its trigger a quiet control in
+ * the ink that takes the accent's wash under the hand, its menu a float
+ * cut from the plate (one hairline, 10px corners, the products' shadow),
+ * each product a row with its icon in the accent and its line in the
+ * muted ink, the row under the hand on the accent's wash, never grey */
+#navbar .nav-dropdown-products-selector-trigger {
+  border-radius: var(--r-ctl) !important;
+  color: var(--ink) !important;
+  font-size: var(--chrome-text) !important;
+  transition: background-color var(--motion) var(--ease);
 }
 
-.dark #sidebar-content .sticky.top-0 {
-  background-image: linear-gradient(to bottom, #1a1918, rgba(26, 25, 24, 0));
+#navbar .nav-dropdown-products-selector-trigger:hover,
+#navbar .nav-dropdown-products-selector-trigger[aria-expanded='true'] {
+  background: var(--accent-soft) !important;
 }
 
-/* ── Chrome type size ──────────────────────────────────────────────────────
- * One size for every label in the rail, the tab bar, the contents list and
- * the search entry. `!important` because these are `text-sm` utilities. */
-#sidebar-content a,
-#table-of-contents-layout a,
-#navbar .nav-tabs-item,
-#navbar #topbar-cta-button,
-#search-bar-entry div.truncate {
-  font-size: var(--ant-chrome-text) !important;
+#navbar .nav-dropdown-products-selector-trigger > svg:first-child {
+  background-color: var(--accent) !important;
+  color: var(--accent) !important;
+}
+
+.nav-dropdown-products-selector-content {
+  background: var(--plate-strong) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(1.2);
+  backdrop-filter: blur(20px) saturate(1.2);
+  border: 1px solid var(--hairline) !important;
+  border-radius: var(--r-ctl) !important;
+  box-shadow: var(--shadow-md) !important;
+  color: var(--ink) !important;
+}
+
+.nav-dropdown-products-selector-item {
+  border-radius: var(--r) !important;
+  transition: background-color var(--motion) var(--ease);
+}
+
+.nav-dropdown-products-selector-item:hover,
+.nav-dropdown-products-selector-item:focus,
+.nav-dropdown-products-selector-item[data-highlighted] {
+  background: color-mix(in oklab, var(--accent) 8%, transparent) !important;
+}
+
+.nav-dropdown-products-selector-item-icon svg {
+  background-color: var(--accent) !important;
+  color: var(--accent) !important;
+}
+
+.nav-dropdown-products-selector-item-title {
+  color: var(--ink) !important;
+  font-weight: 500;
+}
+
+.nav-dropdown-products-selector-item-description {
+  color: var(--muted) !important;
+  font-size: 0.8rem !important;
+}
+
+/* the tab bar: the chrome size, the lit tab in the ink with the accent
+ * underline it grows */
+#navbar .nav-tabs-item {
+  font-size: var(--chrome-text) !important;
+  font-weight: 500;
+  color: var(--muted) !important;
+  transition: color var(--motion) var(--ease);
+}
+
+#navbar .nav-tabs-item:hover,
+#navbar .nav-tabs-item[class*='text-primary'],
+#navbar .nav-tabs-item[aria-current] {
+  color: var(--ink) !important;
+}
+
+#navbar .nav-tabs-item > div[class*='absolute'][class*='bg-primary'] {
+  background: var(--accent) !important;
+  height: 2px !important;
+  border-radius: 2px 2px 0 0;
+}
+
+/* the search entry: a field on the plate, the accent on its edge under
+ * the hand */
+#search-bar-entry,
+#search-bar-entry-mobile {
+  border-radius: var(--r-ctl) !important;
+  background: var(--plate-strong) !important;
+  color: var(--muted) !important;
+  box-shadow: 0 0 0 1px var(--hairline) !important;
+  font-size: var(--chrome-text) !important;
+  transition: box-shadow var(--motion) var(--ease);
+}
+
+#search-bar-entry:hover,
+#search-bar-entry-mobile:hover {
+  box-shadow: 0 0 0 1px color-mix(in oklab, var(--accent) 35%, var(--hairline)) !important;
+}
+
+#search-bar-entry kbd,
+#search-bar-entry [class*='text-xs'] {
+  color: var(--muted) !important;
+}
+
+/* the one action of the bar: ink on paper, the way a printed form sets
+ * its button. No gradient, no pill. A hairline of light on its top edge;
+ * under the pointer the ink deepens toward the accent by a hair. */
+#topbar-cta-button a {
+  font-size: var(--chrome-text) !important;
+  font-weight: 500;
+  border-radius: var(--r-ctl);
+  transition: transform var(--motion) var(--ease);
+}
+
+#topbar-cta-button a > span:first-child {
+  background: var(--ink) !important;
+  border-radius: var(--r-ctl) !important;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.14), 0 1px 2px rgba(28, 25, 21, 0.18);
+  opacity: 1 !important;
+  transition: background-color var(--motion) var(--ease);
+}
+
+#topbar-cta-button a:hover > span:first-child {
+  background: color-mix(in oklab, var(--ink) 86%, var(--accent)) !important;
+}
+
+#topbar-cta-button a:active {
+  transform: scale(0.97);
+}
+
+#topbar-cta-button a span,
+#topbar-cta-button a svg {
+  color: var(--ground) !important;
 }
 
 /* ── The sidebar ───────────────────────────────────────────────────────────
- * Group titles as labels: the console's overline register, in the ink
- * colour, so a group reads as a heading over its pages rather than as one
- * more line among them. Mintlify renders the title as
- * `.sidebar-group-header > h3.sidebar-title`; both hooks are named so the rule
- * survives either one changing. */
+ * Straight on the field, as the products' rail is. Group titles in the
+ * eyebrow register (the second voice, small, letterspaced, uppercase, in
+ * the muted ink), pages close together, the open page on the accent's
+ * wash — never a fill — in the ink. */
 #sidebar-content .sidebar-group-header,
 #sidebar-content .sidebar-title,
 #sidebar-content [id='sidebar-title'] {
-  font-family: 'Synonym', ui-sans-serif, system-ui, sans-serif;
-  font-size: var(--ant-label-size) !important;
-  font-weight: var(--ant-label-weight) !important;
-  letter-spacing: var(--ant-label-track) !important;
+  font-family: var(--ui);
+  font-size: var(--eyebrow-size) !important;
+  font-weight: var(--eyebrow-weight) !important;
+  letter-spacing: var(--eyebrow-track) !important;
   text-transform: uppercase;
-  color: #1a1918 !important;
-  /* A title belongs to the section under it: a short gap below, a longer one
-   * above (the group margin further down), so it reads as that section's
-   * heading and not as the last row of the section before. */
-  margin-bottom: 0.35rem !important;
+  color: var(--muted) !important;
+  margin-bottom: 0.4rem !important;
 }
 
-.dark #sidebar-content .sidebar-group-header,
-.dark #sidebar-content .sidebar-title,
-.dark #sidebar-content [id='sidebar-title'] {
-  color: #f7f6f4 !important;
+#sidebar-content a,
+#table-of-contents-layout a {
+  font-size: var(--chrome-text) !important;
 }
 
-/* Pages closer together: Mintlify's py-1.5 rows on a 1.5rem line, and
- * 1.5–2rem between groups, spread a short section across the whole rail.
- * Rows at 0.3rem on a 1.4 line, groups 1.6rem apart — the long gap of the
- * pair the title's short one belongs to. */
 #sidebar-content .sidebar-group > li > a,
 #sidebar-content .sidebar-group a {
   padding-top: 0.3rem !important;
   padding-bottom: 0.3rem !important;
   line-height: 1.4 !important;
+  border-radius: var(--r) !important;
+  color: var(--ink-soft) !important;
+  transition:
+    background-color var(--motion) var(--ease),
+    color var(--motion) var(--ease),
+    transform 200ms ease-out;
+}
+
+#sidebar-content .sidebar-group a:hover {
+  background: color-mix(in oklab, var(--accent) 7%, transparent) !important;
+  color: var(--ink) !important;
+  transform: translateX(2px);
+}
+
+#sidebar-content .sidebar-group a[class*='bg-primary'],
+#sidebar-content .sidebar-group a[aria-current='page'] {
+  background: var(--accent-soft) !important;
+  color: var(--ink) !important;
+  text-shadow: none !important;
+  font-weight: 500;
 }
 
 #sidebar-content #navigation-items > div {
@@ -199,16 +656,440 @@ body {
   margin-top: 0 !important;
 }
 
-/* The anchors above the groups (the links out to the account, the tools, the
- * site) in the same chrome size, a touch heavier than a page row. */
-#sidebar-content #navigation-items ~ *,
-#sidebar-content a[href^='http'] {
+/* the anchors above the groups: the chrome size, a touch heavier, their
+ * icons on a chip of paper */
+#sidebar-content a.nav-anchor {
+  font-weight: 500;
+  color: var(--ink-soft) !important;
+}
+
+#sidebar-content a.nav-anchor:hover {
+  color: var(--ink) !important;
+}
+
+#sidebar-content a.nav-anchor > div:first-child {
+  background: var(--plate-strong) !important;
+  border: 1px solid var(--hairline);
+  border-radius: var(--r) !important;
+  box-shadow: var(--shadow-sm);
+}
+
+#sidebar-content a.nav-anchor svg {
+  background-color: var(--accent) !important;
+}
+
+/* the sidebar's scroll fade: no flat tone matches a field, so none */
+#sidebar-content .sticky.top-0 {
+  background-image: none !important;
+  background-color: transparent !important;
+}
+
+/* ── The contents list ─────────────────────────────────────────────────── */
+#table-of-contents a {
+  color: var(--muted) !important;
+  transition: color var(--motion) var(--ease);
+}
+
+#table-of-contents a:hover,
+#table-of-contents a[class*='text-primary'] {
+  color: var(--ink) !important;
+}
+
+#table-of-contents-content > span,
+#table-of-contents-content > div:first-child > span {
+  font-family: var(--ui);
+  font-size: var(--eyebrow-size) !important;
+  font-weight: var(--eyebrow-weight);
+  letter-spacing: var(--eyebrow-track);
+  text-transform: uppercase;
+  color: var(--muted) !important;
+}
+
+/* ── The page's chrome: the context menu, the pagination, the footer ──── */
+#page-context-menu button,
+#page-context-menu > div {
+  border-color: var(--hairline) !important;
+  background: var(--plate-strong) !important;
+  color: var(--ink-soft) !important;
+  transition:
+    background-color var(--motion) var(--ease),
+    border-color var(--motion) var(--ease);
+}
+
+#page-context-menu button:hover {
+  background: color-mix(in oklab, var(--accent) 6%, var(--plate-strong)) !important;
+  border-color: color-mix(in oklab, var(--accent) 45%, var(--hairline)) !important;
+}
+
+#pagination a {
+  border-color: var(--hairline) !important;
+  color: var(--ink-soft) !important;
+}
+
+#pagination a:hover {
+  color: var(--ink) !important;
+}
+
+#footer,
+footer {
+  border-color: var(--hairline) !important;
+}
+
+footer a {
+  color: var(--muted) !important;
+}
+
+footer a:hover {
+  color: var(--ink) !important;
+}
+
+/* the assistant's entry at the foot of the page: a float, cut from the
+ * plate, on 12px corners */
+[class*='chat-assistant'],
+#chat-assistant-textarea {
+  font-family: var(--ui);
+}
+
+div:has(> div > #chat-assistant-textarea) {
+  border-color: var(--hairline) !important;
+  border-radius: var(--r-lg) !important;
+  background: var(--plate-strong) !important;
+  box-shadow: var(--shadow-md);
+}
+
+div:has(> div > #chat-assistant-textarea):focus-within {
+  border-color: color-mix(in oklab, var(--accent) 45%, var(--hairline)) !important;
+}
+
+/* ── Cards and the changelog ──────────────────────────────────────────────
+ * A card is a sheet: paper a shade more opaque than the field, one
+ * hairline, the smallest shadow; the pressable ones lift under the pointer
+ * and their edge takes the accent. */
+#content .card,
+#content a.card,
+#content [data-component-part='card'] {
+  background: var(--plate-strong) !important;
+  border: 1px solid var(--hairline) !important;
+  border-radius: var(--r-lg) !important;
+  box-shadow: var(--shadow-sm);
+  transition:
+    transform var(--motion) var(--ease),
+    box-shadow var(--motion) var(--ease),
+    border-color var(--motion) var(--ease);
+}
+
+@media (hover: hover) {
+  #content a.card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    border-color: color-mix(in oklab, var(--accent) 38%, var(--hairline)) !important;
+  }
+}
+
+#content a.card:active {
+  transform: scale(0.985);
+}
+
+#content [data-component-part='card-title'] {
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: 1.1rem;
+  letter-spacing: -0.01em;
+  color: var(--ink) !important;
+}
+
+#content [data-component-part='card-icon'] {
+  color: var(--accent) !important;
+}
+
+/* the release labels of the changelog: a chip of the accent's wash */
+#content .update-label,
+#content [class*='update'] [class*='rounded-full'],
+#content [class*='rounded-full'][class*='bg-'] {
+  background: var(--accent-soft) !important;
+  color: var(--accent-deep) !important;
+  border: 0 !important;
   font-weight: 500;
 }
 
-/* ── The tab bar ───────────────────────────────────────────────────────────
- * Tabs at the chrome size, medium weight, the active one in the ink colour
- * rather than the accent so the bar stays quiet. */
-#navbar .nav-tabs-item {
-  font-weight: 500;
+/* ── The hero band ─────────────────────────────────────────────────────────
+ * The products' page band (HeroStage) on a tool's landing page, placed by
+ * the sync from tools.yml and rendered by snippets/HeroBand.jsx: the
+ * seeded field with the grain as the ground, the drawing pinned at the
+ * top right, the words at the foot. The recess is four inset casts tinted
+ * with the accent's deep ink — never neutral black, which greys a warm
+ * field out — and one lit lip; the edge is white, as light caught on the
+ * frame. On a hero page Mintlify's own title and subtitle step aside: the
+ * band IS the page's opening. */
+#content-area:has(.ant-hero) #page-title,
+#content-area:has(.ant-hero) #header .eyebrow,
+#content-area:has(.ant-hero) #header .prose {
+  display: none !important;
+}
+
+/* The page's context menu (Copy page) belongs to the band on a hero page:
+ * the header collapses to nothing and the menu, a chip of paper, sits in
+ * the band's top-right corner, over the field. The header and the band
+ * share the same column, so a right inset in the header is the same inset
+ * in the band. */
+#content-area:has(.ant-hero) #header {
+  position: relative;
+  z-index: 5;
+  height: 0;
+  margin: 0;
+  overflow: visible;
+}
+
+#content-area:has(.ant-hero) #header > div {
+  margin-top: 0;
+}
+
+/* the band takes the header's place: no gap where the title used to be */
+#content-area:has(.ant-hero) #content {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+}
+
+#content-area:has(.ant-hero) .ant-hero {
+  margin-top: 0;
+}
+
+#content-area:has(.ant-hero) #page-context-menu {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  margin: 0;
+  min-width: 0;
+}
+
+#content-area:has(.ant-hero) #page-context-menu button {
+  background: var(--plate-strong) !important;
+  border-color: var(--plate-edge) !important;
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  box-shadow: var(--shadow-sm);
+}
+
+/* the group's name over a page title, in the eyebrow register */
+#header .eyebrow {
+  font-family: var(--ui);
+  font-size: var(--eyebrow-size) !important;
+  font-weight: var(--eyebrow-weight) !important;
+  letter-spacing: var(--eyebrow-track);
+  text-transform: uppercase;
+  color: var(--muted) !important;
+}
+
+.ant-hero {
+  --tall: 216px;
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: end;
+  min-height: var(--tall);
+  margin: 0.25rem 0 2rem;
+  border: 1px solid var(--plate-edge);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-sm);
+  background: var(--field-base);
+  color: var(--ink);
+}
+
+@media (min-width: 768px) {
+  .ant-hero {
+    --tall: 256px;
+  }
+}
+
+/* the compact band: the product's section hero — the eyebrow and the
+ * title, a lower box, the drawing smaller and quieter */
+.ant-hero.compact {
+  --tall: 132px;
+  margin-bottom: 1.75rem;
+}
+
+@media (min-width: 768px) {
+  .ant-hero.compact {
+    --tall: 150px;
+  }
+}
+
+.ant-hero-ground {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  opacity: var(--level);
+}
+
+/* the film, a still sheet over the moving weather */
+.ant-hero-grain {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  mix-blend-mode: overlay;
+  opacity: 0.22;
+  background-repeat: repeat;
+}
+
+.dark .ant-hero-grain {
+  opacity: 0.11;
+}
+
+.ant-hero-shade {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  border-radius: inherit;
+  --cast: color-mix(in oklab, var(--accent-deep, var(--accent)) 28%, #000);
+  box-shadow:
+    inset 0 9px 13px -11px color-mix(in oklab, var(--cast) 9%, transparent),
+    inset 0 -9px 13px -11px color-mix(in oklab, var(--cast) 6%, transparent),
+    inset 0 0 16px 5px color-mix(in oklab, var(--cast) 2.5%, transparent),
+    inset 0 1px 0 0 rgb(255 255 255 / 0.16);
+}
+
+.dark .ant-hero-shade {
+  --cast: color-mix(in oklab, var(--accent-deep, var(--accent)) 20%, #000);
+  box-shadow:
+    inset 0 9px 14px -11px color-mix(in oklab, var(--cast) 17%, transparent),
+    inset 0 -9px 14px -11px color-mix(in oklab, var(--cast) 11%, transparent),
+    inset 0 0 18px 5px color-mix(in oklab, var(--cast) 4.5%, transparent),
+    inset 0 1px 0 0 rgb(255 255 255 / 0.08);
+}
+
+.ant-hero-drawing {
+  position: absolute;
+  z-index: 1;
+  top: -30px;
+  right: -30px;
+  width: 168px;
+  aspect-ratio: 1;
+  opacity: calc(0.35 + 0.5 * var(--level));
+  pointer-events: none;
+}
+
+@media (min-width: 768px) {
+  .ant-hero-drawing {
+    top: -34px;
+    right: 6%;
+    width: 320px;
+  }
+}
+
+.ant-hero.compact .ant-hero-drawing {
+  top: -28px;
+  right: -26px;
+  width: 132px;
+  opacity: calc(0.3 + 0.45 * var(--level));
+}
+
+@media (min-width: 768px) {
+  .ant-hero.compact .ant-hero-drawing {
+    top: -40px;
+    right: 4%;
+    width: 210px;
+  }
+}
+
+.ant-hero-body {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  will-change: transform;
+  -webkit-mask-image: radial-gradient(closest-side, #000 78%, transparent 100%);
+  mask-image: radial-gradient(closest-side, #000 78%, transparent 100%);
+}
+
+.ant-hero-body canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.ant-hero-words {
+  position: relative;
+  z-index: 3;
+  max-width: 560px;
+  padding: 28px 24px 26px;
+}
+
+@media (min-width: 768px) {
+  .ant-hero-words {
+    padding: 40px 44px 36px;
+  }
+}
+
+.ant-hero.compact .ant-hero-words {
+  padding: 20px 22px 18px;
+}
+
+@media (min-width: 768px) {
+  .ant-hero.compact .ant-hero-words {
+    padding: 24px 30px 22px;
+  }
+}
+
+#content .ant-hero.compact .ant-hero-title,
+.ant-hero.compact .ant-hero-title {
+  margin-top: 6px !important;
+  font-size: clamp(22px, 3.6vw, 28px) !important;
+}
+
+#content .ant-hero-eyebrow,
+.ant-hero-eyebrow {
+  margin: 0 !important;
+  font-family: var(--ui);
+  font-size: 10.5px;
+  font-weight: var(--eyebrow-weight);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink) !important;
+  opacity: 0.6;
+}
+
+#content .ant-hero-title,
+#content-area .ant-hero-title,
+.ant-hero-title {
+  margin: 10px 0 0 !important;
+  font-family: var(--display);
+  font-weight: 300 !important;
+  font-size: clamp(26px, 4.2vw, 36px) !important;
+  line-height: 1.1 !important;
+  letter-spacing: -0.015em !important;
+  color: var(--ink) !important;
+  text-wrap: balance;
+}
+
+#content .ant-hero-lede,
+.ant-hero-lede {
+  margin: 10px 0 0 !important;
+  max-width: 56ch;
+  font-size: 14.5px;
+  line-height: 1.5;
+  color: var(--ink) !important;
+  opacity: 0.72;
+  text-wrap: pretty;
+}
+
+/* the words on the field keep their contrast with a paper halo, never a
+ * scrim */
+.ant-hero-words {
+  text-shadow:
+    0 0 22px rgb(247 246 244 / 0.95),
+    0 0 8px rgb(247 246 244 / 0.9);
+}
+
+.dark .ant-hero-words {
+  text-shadow:
+    0 0 22px rgb(43 39 34 / 0.9),
+    0 0 8px rgb(43 39 34 / 0.85);
 }

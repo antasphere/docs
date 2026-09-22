@@ -5,6 +5,20 @@ description: "A deck is one artifact in your account: one record with a page of 
 
 {/* GENERATED from antasphere/slideless docs/concepts/artifact.md — edit there, then run `npm run sync`. */}
 
+import { HeroBand } from "/snippets/HeroBand.jsx";
+
+<HeroBand
+  eyebrow={"Concepts"}
+  title={"The deck is the artifact"}
+  drawing={"lattice"}
+  seed={3577496900}
+  compact={true}
+/>
+
+A deck is one artifact in your account: one record with a page of its own, a history of immutable
+versions, and share links created on top of it. Everything you do to a deck happens on that one
+thing. A link is never the deck, only a door into it.
+
 ## One deck, one page
 
 Every deck has a page of its own on the instance, at `/decks/<id>/present` (the master page): the
