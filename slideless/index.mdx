@@ -5,6 +5,16 @@ description: "Slideless is the home for what your agents build. Agents produce H
 
 {/* GENERATED from antasphere/slideless docs/index.md — edit there, then run `npm run sync`. */}
 
+import { HeroBand } from "/snippets/HeroBand.jsx";
+
+<HeroBand
+  eyebrow={"Slideless"}
+  title={"The home for what your agents build"}
+  lede={"Agents push HTML decks; Slideless versions them and shares them by link."}
+  drawing={"latitudes"}
+  seed={976086463}
+/>
+
 ## The model in one screen
 
 - **One deck is one artifact.** A deck is a folder of HTML pushed from the command line, and it
@@ -16,7 +26,7 @@ description: "Slideless is the home for what your agents build. Agents produce H
   version. [Versions](/slideless/concepts/versions)
 - **Links are made on top.** A share link is a secret URL that opens the deck for whoever holds it, under a slim bar naming
   the deck, its version and its files, following the latest version or pinned to one, with its own
-  switches (annotations, forms, downloads, the bar), an expiry, a password, view counts and instant
+  switches (annotations, forms, file uploads, downloads, the bar), an expiry, a password, view counts and instant
   revocation. A link is public to anyone
   with its URL; a deck with no link is private. [Share links](/slideless/concepts/links)
 - **Files travel with the version.** Whatever you put in a `downloads/` folder is the version's
@@ -27,7 +37,7 @@ description: "Slideless is the home for what your agents build. Agents produce H
   ([viewer security model](/slideless/security/viewer-security-model)).
 - **Collaborators and reviewers.** Per-deck grants for external people who push new versions of one
   deck, and annotator links whose notes land in the owner's inbox.
-- **Agents as first-class users.** The `slideless` CLI, the `/mcp` endpoint with 22 `slideless_`
+- **Agents as first-class users.** The `slideless` CLI, the `/mcp` endpoint with 37 `slideless_`
   tools, and scoped `slk_` API keys: every instance is agent-ready at boot.
 
 ## Two ways to run it
@@ -60,3 +70,11 @@ description: "Slideless is the home for what your agents build. Agents produce H
   **[viewer security model](/slideless/security/viewer-security-model)**: what is enforced, and how untrusted
   HTML is contained.
 - **[Environment reference](/slideless/reference/env-reference)**: every variable.
+
+## License
+
+Slideless is [fair-code](https://faircode.io), distributed under the
+[Sustainable Use License](https://github.com/antasphere/slideless/blob/prod/LICENSE): the source is
+open to read, and you may self-host it, modify it and use it for your own internal business or
+personal purposes, free of charge. You may not sell it or offer it to others as a paid or hosted
+service. It is source-available, not open source.

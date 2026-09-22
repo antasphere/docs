@@ -49,12 +49,30 @@ imported again on the next run; delete `~/.config/slideless/config.json` too
 if you want a truly clean slate.
 
 Every command accepts `--api-url` (alias `--url`), `--api-key`, `--profile`,
-and `--json`. Resolution order:
+`--workspace`, and `--json`. Resolution order:
 
-| Setting  | 1st         | 2nd                 | 3rd               | Otherwise                                                                     |
-| -------- | ----------- | ------------------- | ----------------- | ----------------------------------------------------------------------------- |
-| Base URL | `--api-url` | `SLIDELESS_URL`     | profile `baseUrl` | **error**                                                                     |
-| API key  | `--api-key` | `SLIDELESS_API_KEY` | profile `apiKey`  | hub connect (cloud, below) — else the public commands work and the rest error |
+| Setting   | 1st           | 2nd                   | 3rd                         | Otherwise                                                                     |
+| --------- | ------------- | --------------------- | --------------------------- | ----------------------------------------------------------------------------- |
+| Base URL  | `--api-url`   | `SLIDELESS_URL`       | profile `baseUrl`           | **error**                                                                     |
+| API key   | `--api-key`   | `SLIDELESS_API_KEY`   | profile `apiKey`            | hub connect (cloud, below) — else the public commands work and the rest error |
+| Workspace | `--workspace` | `SLIDELESS_WORKSPACE` | profile `activeWorkspaceId` | the server's default workspace                                                |
+
+**Choosing the workspace**: an API key identifies a person, and a person can
+belong to several workspaces. `--workspace <id or name>` (or
+`SLIDELESS_WORKSPACE`, or the selection `slideless workspace use` saves on the
+profile) names the one a command runs in; with none, the server picks your
+default workspace. The value is a Slideless workspace id as `slideless
+workspaces` prints it, or a workspace name, matched without regard to case; a
+name that matches several workspaces, or none, is an error that lists the
+candidates. An id is sent as it is, a name costs one extra request to look it
+up, and `workspace use` always saves the id. The saved selection applies only
+to the instance its profile names, and `slideless logout` removes it.
+`slideless whoami` shows the workspace the command ran in and what chose it.
+A key pinned to one workspace only ever acts there: selecting another one is
+refused, and the error names the pin.
+A deck lives in one workspace: a deck id (a linked folder's, a pasted one)
+asked of another workspace answers "not found", and the error names the
+workspace that was asked and what selected it.
 
 **Keeping secrets out of `argv`**: a value passed as `--api-key slk_…` or
 `--password …` is visible to every process on the machine (`ps`) and lands in
@@ -84,7 +102,7 @@ selection, never part of the credential):
 
 ```bash
 antasphere login                       # once, for the whole tool family
-slideless list --api-url https://app.slideless.ai   # exchanges + caches on first use
+slideless list --api-url https://slideless.antasphere.com   # exchanges + caches on first use
 slideless list                                      # served from the cache — no hub call, no new key
 ```
 
@@ -114,7 +132,7 @@ it refuses — the CLI detects cloud via discovery and steers you to
 `antasphere login` (see "Cloud instances" above); server-side the endpoints
 answer `403 cli_otp_disabled` (cloud instances are hub-login-only). The
 flow needs the instance to have a delivering email driver
-(`EMAIL_DRIVER=smtp|resend`); it signs in **existing accounts only** — sign-up
+(`EMAIL_DRIVER=smtp|resend|brevo`); it signs in **existing accounts only** — sign-up
 stays closed (accounts enter via setup, workspace invitations, or
 collaborator claims):
 
@@ -161,7 +179,7 @@ slideless push ./deck --no-open                  # never open, even on the first
 slideless open ./deck                            # open the linked deck's page (--json prints the URL)
 slideless pull <id> ./out                        # byte-exact download of the latest version
 slideless pull <id> ./out --at 1                 # …or any pinned version
-slideless pull ./deck                            # no id: the folder's .slideless.json names the deck
+cd deck && slideless pull                        # no id: the current folder's .slideless.json names the deck
 slideless pull-annotations [id] [--version N] [--status open|resolved] [--out notes.json]
 slideless annotation resolve <id> <annotationId> # mark a note resolved
 slideless annotation reopen <id> <annotationId>  # …and flip it back open
@@ -236,13 +254,16 @@ re-uploaded.
   Error: downloads/video.mp4 is 250.0 MB, over this instance's 100.0 MB per-file cap (MAX_FILE_SIZE_MB) — nothing was uploaded. Shrink or drop the file and push again.
   ```
 
-  The cap is `limits.maxFileSizeMb` from
-  `GET /api/v1/instance` when the instance exposes it, else the documented
-  default of 100 MB. Without this check the instance answered `413` to the
-  oversized blob only after its upload, with the smaller files already stored.
+  The cap the CLI checks against is the 100 MB default: no instance publishes
+  its own `MAX_FILE_SIZE_MB` yet. On an instance configured with a lower cap the
+  server stays the enforcement point and still answers `413` to the oversized
+  blob after its upload, with the smaller files already stored.
 
 - Flags: `--title`, `--entry`, `--kind presentation|app|plan`,
-  `--interactive`, `--id`, `--new`, `--open` / `--no-open`.
+  `--interactive`, `--id`, `--new`, `--open` / `--no-open`, `--brand` /
+  `--template` (the references this deck was made from, recorded on it:
+  "References: brand, template" below), and `--project` (repeatable — the
+  projects the deck goes in: "Projects" below).
 
 **open** opens the page of the deck a folder is linked to: it reads
 `.slideless.json` (deck id + instance) and composes the same URL a push
@@ -258,17 +279,22 @@ byte-identical to what was pushed, attachments under `downloads/` included
 so a later `push` in that folder targets the same deck. It treats the
 instance's answer as untrusted input: every manifest path is re-validated
 locally, each blob is capped at the size the manifest declared and must hash
-to the sha256 the manifest claims before anything is written, writes refuse
-to follow a symlink (file or directory) and never leave a file executable,
+to the sha256 the manifest claims before anything is written, deck file writes
+refuse to follow a symlink (file or directory) and never leave a file executable
+(the `.slideless.json` link file itself is written plainly),
 and a destination whose `.slideless.json` names a _different_ instance errors
 loudly — the same refusal `push` has always had.
 
-**dev** serves the folder locally with the **exact** public-viewer posture —
+**dev** serves the folder locally under the same sandbox headers as the public viewer —
 `Content-Security-Policy: sandbox allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox
-allow-modals allow-downloads`, `nosniff`, `no-referrer`, `no-store` — so what
-you preview is exactly what share-link recipients get (same isolation, same
-relative paths). Live reload is injected into HTML responses; any file change
-reloads the browser. No backend, no credentials.
+allow-modals allow-downloads`, `nosniff`, `no-referrer`, `no-store` — so isolation
+and relative paths match what share-link recipients get. It is not the hosted
+viewer: it injects live reload and nothing else (no recipient bar, no annotation
+layer, no forms runtime, so a marked form submits nowhere), it serves
+`downloads/` files inline and has no `downloads.zip`, it serves files a push
+would ignore, and a root-absolute URL (`/style.css`) resolves locally but breaks
+under `/v/<secret>/`. Test forms, notes and downloads on a real share link. Any
+file change reloads the browser. No backend, no credentials.
 
 It serves the deck folder and nothing else: a path is resolved with
 `realpath` and re-checked against the root, so a symlink inside the folder
@@ -276,6 +302,255 @@ cannot serve a file from elsewhere on the disk; dot-prefixed paths 404
 outright; and requests whose `Host` header is not the address the server
 bound answer 403, which is what stops a DNS-rebinding page from reading your
 deck (and anything else) through the browser.
+
+## References: brand, template
+
+A reference is a deck the workspace keeps to make other decks from, and `brand`
+and `template` are its two types: [References](/slideless/concepts/references) is the
+model. The type is one line of the `AGENT.md` frontmatter, and the server reads
+it at push. The CLI has one real family, `slideless reference <verb>`, whose
+verbs take `--type brand|template` where the type matters, and two shortcut
+families, `slideless brand` and `slideless template`, the same verbs with the
+type already chosen.
+
+```bash
+slideless brand list                             # the brands you can read (* marks the default)
+slideless brand pull                             # no name: the workspace default, into .slideless/brand/
+slideless brand pull <ref> --into ./ref          # …a named one, written where you say
+slideless brand pull <ref> --at 2                # …pinned to a version instead of the latest
+slideless brand new ./house-brand --title "Acme brand"   # scaffold a brand folder to fill in
+slideless brand push ./house-brand               # push it (refused when AGENT.md names no type)
+slideless brand publish <ref>                    # every member of the workspace reads it
+slideless brand unpublish <ref>                  # its owner, the admins and its collaborators again
+slideless brand default <ref>                    # the workspace's default brand
+slideless brand default <ref> --clear            # …no longer the default
+slideless brand default --clear                  # clear whichever brand is the default
+slideless brand start <ref> ./new-deck           # a deck folder copied from the brand
+slideless template list                          # the same eight verbs, with the type preset
+slideless template pull                          # the workspace default template
+slideless template pull <ref> --into ./ref
+slideless template pull <ref> --at 2
+slideless template new ./qbr --title "Quarterly business review"
+slideless template push ./qbr
+slideless template publish <ref>
+slideless template unpublish <ref>
+slideless template default <ref>
+slideless template default <ref> --clear
+slideless template default --clear
+slideless template start <ref> ./new-deck
+slideless reference list --type brand            # the real family: the type is a flag
+slideless reference list                         # …or open, every reference of every type
+slideless reference pull --type template
+slideless reference new ./house-brand --type brand
+slideless reference push ./house-brand
+slideless reference publish <ref>
+slideless reference unpublish <ref>
+slideless reference default <ref>
+slideless reference start <ref> ./new-deck
+slideless push ./deck --brand <ref>@3 --template <ref>   # record what the deck was made from
+```
+
+**`<ref>`** is a reference's id, else its exact title, else the start of its
+title without regard to case, as long as one reference matches. A name that
+matches several is refused: the error lists the candidates with their ids, and
+the command exits non-zero. Every verb also takes `--json`, and `list` pages
+like the other listings (`--cursor`, `--limit`, `--all`).
+
+**pull** downloads a reference into `.slideless/<type>/` of the current deck
+folder, so the brand an agent reads sits beside the deck it is authoring.
+`.slideless` is dot-prefixed on purpose: a push skips every dot-prefixed file
+and directory, so a pulled brand can never travel into the deck beside it. With
+no `<ref>` the command takes the workspace's default of the type, and a
+workspace with no default says so and points at `slideless brand list`. `--at
+<version>` pulls an older version, `--into <dir>` writes somewhere else. The
+folder gets a `.slideless.json` link file naming the reference's id, the
+instance and the type and version that were pulled. That link file is also the
+replace rule: a second pull of the same type empties the folder and writes it
+again, while a folder that is not empty and carries no such link file is refused
+with `is not empty and is not a folder a previous pull wrote. Delete it to pull
+there, or pull into another folder (--into).` The download is the same safe
+path as `slideless pull`: every manifest path is re-validated locally, each blob
+is capped at the size the manifest declares and must hash to the sha256 it
+claims before anything is written, and no write follows a symlink. A pull that
+fails part way (a blob that does not hash, a dropped connection) removes what it
+had written and says so on stderr, so the next pull of that type starts clean;
+it removes only what it created: a folder that existed before the pull is
+emptied and kept, and a parent folder you made is never touched. Pushing a new version
+of the reference from its pulled folder (`slideless brand push .slideless/brand`,
+as its owner) keeps the link file's type and moves its version to the one just
+pushed, so the deck beside it keeps recording the brand.
+
+**new** scaffolds a folder to fill in: an `AGENT.md` carrying the frontmatter of
+the type with every field it has, an `index.html` with one page per layout for a
+brand or the skeleton pages for a template, and an empty `assets/` (plus
+`assets/fonts/` for a brand). The content is neutral and invented, no real brand
+and no real client, so every value is an example to replace. `--title` writes the
+title into the frontmatter. The command touches no instance: the type is the
+frontmatter's, and the server classifies the deck at the next push.
+
+**push** is `slideless push` with one refusal in front of it. Before a single
+byte leaves the machine, the folder must carry an `AGENT.md` whose frontmatter
+names a type, and, on a shortcut family, that type: a folder with no `AGENT.md`,
+a file with no frontmatter, a frontmatter with no `type:` line, a type the server
+does not know, or a brand pushed with `slideless template push` each end with a
+sentence saying what is wrong and `Nothing was uploaded.` It takes `--title`,
+`--entry`, `--id`, `--new`, `--open` and `--no-open` like an ordinary push. A
+reference is named by its frontmatter, not by its folder: with no `--title`, a
+push that creates the deck names it after the `title:` line of the `AGENT.md`
+frontmatter, quotes stripped, so `<ref>` later resolves by the name the author
+wrote. A frontmatter with no `title:` line, or an empty one, falls back to the
+folder name as an ordinary push does. A push that adds a version to an existing
+reference keeps the deck's title unless `--title` gives a new one. After
+the commit, the summary carries a `reference:` line naming the type, the title,
+whether the reference is private or published to the workspace, and whether it is
+the workspace default; a `warning:` line carries whatever the server found
+unusable in the frontmatter, and what the deck lost when a push takes its audience
+back to private or drops its default. A push that the instance classified as an
+ordinary deck adds `warning: the instance classified this push as an ordinary
+deck, not a brand.` A concurrent push is `Someone pushed a new version while this
+push was running — rerun to retry on top of it.` Pushing a reference you read but
+do not own is refused with `This brand is not yours to push: only its owner (or a
+collaborator with a dev grant) pushes a new version, and the instance answers
+"not found" to anyone else.`, which points at `slideless brand start`.
+
+**publish** and **unpublish** set the audience: `publish` opens the reference to
+every member of the workspace, `unpublish` closes it to its owner, the workspace
+admins and its collaborators again. Whoever administers the deck may do it, its
+owner or a workspace admin or owner; anyone else gets `Only the owner of "…", or
+a workspace admin or owner, changes who reads it.` **default** makes a reference
+the workspace's default of its type, which is what `slideless brand pull` with no
+name fetches; only a workspace admin or owner sets it. `--clear` removes the
+default: with a `<ref>` it clears that reference, with none it clears whichever
+reference is the default of the type. The server's refusals arrive as sentences.
+A private reference cannot be the default, and the message says to publish it
+first. A default reference cannot go private while it is the default, and the
+message says to clear the default first. An ordinary deck has no audience and no
+default: `"…" is an ordinary deck, not a brand: its AGENT.md frontmatter names no
+type. Push it with one first.`
+
+**start** copies a reference's files into a fresh folder, which must be missing
+or empty. The `type:` line is removed from the `AGENT.md` and the rest of the
+frontmatter is kept, so the deck is not a reference but the agent keeps the
+briefing: the title, the description, the fonts, the colours, the pages. No link
+file is written, so the first push of that folder creates a deck of its own, and
+the command prints the next step, `slideless push --new --brand <id>@<n>`. That
+is the difference from pushing a copy of the reference itself: a duplicate on the
+server is a reference again, while starting a deck is a local copy that becomes
+an ordinary deck.
+
+**Provenance** is what a deck records about the references it was made from.
+`slideless push --brand <ref>` and `--template <ref>` record one each, and
+`<ref>@n` pins the version instead of the reference's latest; both take the same
+`<ref>` forms as everywhere else and are resolved before any upload, so a wrong
+name costs nothing. The value is tried whole first, so a reference whose title
+ends in `@2` is named as written; only when nothing matches the whole value is
+the trailing `@n` read as a version; when both readings name a real reference,
+the title wins and a note on stderr says how to pin the other by its id. With
+neither flag, a push reads the link
+files of `.slideless/brand/` and `.slideless/template/` beside the deck and
+records what was pulled there, which makes the ordinary sequence, pull then
+author then push, record itself. A reference pulled from another instance is not
+recorded, and the push says so on stderr: `Note: the brand in .slideless/brand/
+was pulled from <url>, not <url>; it is not recorded on this deck.` A folder
+whose link names the other type (a template moved under `.slideless/brand/`) is
+not recorded either, with the same kind of note. What is recorded is merged
+into `metadata.references`, one entry per type, every other entry and every other
+metadata key kept. The push prints the result as a `references:` line, `brand
+<id>@<n>, template <id>@<n>`, and `slideless get <id>` shows the same entries as
+`made from:`.
+
+## Projects
+
+A project is a subgroup of the workspace: a name, its own members with one of
+three roles (viewer < editor < manager), the decks linked to it and at most one
+brand. [Projects](/slideless/concepts/projects) is the model — a workspace
+membership is not a grant on its decks, and the project is the grant.
+
+```bash
+slideless projects list                          # the projects you belong to
+slideless projects list --archived all           # …the archived ones too (false | true | all)
+slideless projects get <project>                 # one project, with your own role on it
+slideless projects create "Atlas" --description "The launch work"
+slideless projects create "Atlas" --metadata '{"client":"acme"}'
+slideless projects update <project> --name "Atlas 2026" --description "…"
+slideless projects update <project> --clear-description
+slideless projects update <project> --metadata '{"client":"acme"}'
+slideless projects archive <project>             # read-only, out of the default list. Never deleted
+slideless projects unarchive <project>           # …and writable again
+slideless projects members list <project>
+slideless projects members add <project> ada@acme.co --role editor
+slideless projects members add <project> <userId> --role manager
+slideless projects members role <project> <userId> viewer
+slideless projects members remove <project> <userId>
+slideless projects link <project> <deck>         # put a deck in the project
+cd deck && slideless projects link <project>     # …no deck: the .slideless.json of this folder
+slideless projects unlink <project> <deck>       # take it back out
+slideless projects brand <project>               # the project's brand, or nothing
+slideless projects brand <project> <ref>         # make that linked brand reference its brand (id, title or title prefix, or a linked folder)
+slideless projects brand <project> --clear       # no brand; the deck and its link stay
+slideless list --project <project>               # only the decks linked to the project
+slideless brand list --project <project>         # …the same filter on the reference listings
+slideless push ./deck --project <project>        # push and put the deck in the project
+```
+
+**The projects themselves** page like every other listing (`--cursor`,
+`--limit`, `--all`) and take `--json`. `list` shows the live projects;
+`--archived true` shows the archived ones and `--archived all` both.
+`create` makes you the project's first manager and takes `--description` and
+`--metadata` (a JSON object of your own, opaque to the server); `update` takes
+`--name`, `--description` or `--clear-description`, and `--metadata`, which
+replaces the whole object. `archive` takes a project out of the default listing
+and makes it read-only; nothing is ever deleted, and `unarchive` brings it back.
+
+**Members** come from the workspace's own roster, named by email (anything with
+an `@`) or by user id. `add` takes a required `--role viewer|editor|manager`.
+A manager removes anyone; anyone removes themselves. A stranger's address is
+`No active member of this workspace matches — check the user id or email. Only a
+member of the workspace can join a project.`, and a per-deck guest is refused
+with `That person is a guest of the workspace, and a guest cannot be a project
+member. Invite them as a workspace member first.`
+
+**link / unlink** are the deck's side. Linking widens who reads the deck, so it
+is the deck administrator's act — its owner, or a workspace admin or owner —
+with editor or more on the project; unlinking is theirs or a project manager's.
+The deck is named by id, or by a folder whose `.slideless.json` names it, or by
+nothing at all, in which case the current folder's link file is read (the same
+file `push`, `open` and `pull` use). Both print the projects the deck is in
+afterwards, and `--json` is the deck payload verbatim.
+
+**brand** reads, sets and clears the project's brand: with no `<deck>` it prints
+the brand deck's title, id and version (`--json` is `{ brand }`, `{ "brand":
+null }` when there is none); with one, named like every reference ref (its id, its
+title or the start of its title, or a folder a push linked), it makes that deck the brand, and
+`--clear` removes it. The deck must be a brand reference already linked to the
+project, so the two refusals are `That deck is not in this project. Link it
+first (slideless projects link <project> <deck>).` and `That deck is not a brand
+reference: its AGENT.md frontmatter names no type: brand. Push it as a brand
+first (slideless brand push).` Only a project manager changes it.
+
+**`--project <id>`** filters the deck listings: `slideless list --project` keeps
+the decks linked to it, and `slideless brand list --project` / `template list` /
+`reference list` do the same for the references. A project you cannot read
+answers the same way the project itself does, so the filter refuses with `No such
+project, or it is not yours to read.` rather than an empty page.
+
+**`slideless push --project <id>`** is repeatable, and the two branches differ on
+purpose. On a **new deck** the projects ride in the commit itself: one
+transaction, and a project that does not qualify refuses the whole push, so a
+new deck is never half-placed. On an **existing deck** (the folder's
+`.slideless.json` names one) the version is committed first and each project is
+linked after it, one call each: the push stays a success, the summary's
+`projects:` line names what the deck is in, and a project that refused prints its
+sentence on stderr under `project <id>:` without touching the others. `--json`
+carries the same as `projectLinks`, one `{ projectId, linked, error? }` per
+`--project` given.
+
+The refusals every project verb shares read as sentences: `No such project, or it
+is not yours to read. (A project you are not a member of answers the same way:
+its existence is not probeable.)`, `You need the manager role on this project to
+do that.`, `This project is archived and read-only. Unarchive it first to change
+it.`, and `You are a guest of this workspace, and guests do not take part in
+projects.`
 
 ## Share
 
@@ -309,13 +584,18 @@ slideless share <id> --no-download                        # viewers of this link
 slideless share <id> --no-bar                             # a bare deck: no recipient bar (title, version,
                                                           # downloads) over it (default: shown; also on
                                                           # share-email; never inside embeds anyway)
+slideless share <id> --no-uploads                         # viewers of this link cannot upload files into
+                                                          # the deck's form file fields; the rest of the
+                                                          # form still submits (default: they can; also
+                                                          # on share-email)
 slideless share <id> --embed                              # also print the website embed snippets
 slideless share <id> --embed --placement pricing-footer   # bake a per-spot analytics label in
 slideless unshare <id> --token <tokenId>                  # revoke one link
 slideless unshare <id>                                    # revoke ALL active links
 slideless share-email <id> --to a@x.com b@x.com [--message "…"]  # one personal token per address, emailed;
                                                           # takes every share flag (--to-version, --annotator,
-                                                          # --no-forms, --no-download, --no-bar, --no-remember,
+                                                          # --no-forms, --no-download, --no-bar, --no-uploads,
+                                                          # --no-remember,
                                                           # --badge-position, --expires, --password,
                                                           # --password-stdin) except --embed and --placement;
                                                           # each link remembers its recipient's answers
@@ -323,7 +603,10 @@ slideless pin <id> <tokenId> --to-version 1               # freeze a recipient o
 slideless pin <id> <tokenId> --latest                     # follow the latest again
 slideless tokens <id> [--all]                             # list links + access stats (opens, last opened,
                                                           # downloads or "no downloads", "no forms",
-                                                          # "remembers answers")
+                                                          # "no uploads", "remembers answers")
+slideless uploads <id> <tokenId> [--on|--off]             # show or switch file uploads on an EXISTING
+                                                          # link (a link minted before file fields
+                                                          # existed has them off)
 slideless views <id> [tokenId] [--all]                    # per-view events of one link: when, referring
                                                           # site, ?p= label, browser family (no IPs, no
                                                           # full URLs — never stored)
@@ -333,7 +616,19 @@ slideless responses <id> [--form name] [--link tokenId] \
                                                           # embedded forms, newest first; --since reads
                                                           # activity (created OR edited)
 slideless response <id> <responseId>                      # one response with its edit history: every
-                                                          # kept revision, newest first
+                                                          # kept revision, newest first; lists the files
+                                                          # it holds (field, name, size, id)
+slideless response-files <id> [--form name] [--link tokenId] \
+                    [--source link|embed] [--placement label] \
+                    [--since ISO] [--out ./dir]           # download every file respondents uploaded into
+                                                          # the deck's form file fields, as
+                                                          # <dir>/<form>/<response>/<field>/<name>
+                                                          # (default dir ./form-files-<deck id head>)
+slideless response-files <id> <responseId> [--out ./dir]  # one response's files, as <dir>/<field>/<name>
+                                                          # (default dir ./response-files-<response id head>)
+slideless response-files <id> [responseId] --zip [path]   # the same files as ONE zip streamed from the
+                                                          # server (default: the server's file name, in
+                                                          # the current directory)
 slideless notify <id> [--on|--off]                        # show or switch the owner mails on this deck
                                                           # (a mail on a new response, another on an edit;
                                                           # on by default; forms stay on when off)
@@ -387,6 +682,57 @@ silences the owner mails (one on a new response, a different one on an edit,
 never carrying the answers, at most one per deck per ten minutes) without
 touching forms. Details: the Forms page under Sharing & review.
 
+**Files uploaded through a form**: a form can carry a file field, and what
+respondents upload is attached to their response. `responses` shows a files
+count per row, `--csv` adds one column per file field met in the exported
+rows, named `<field> (files)` and holding that field's file names joined
+with `; ` (guarded like every other cell), and `--json` carries `files` on
+every response (`id`, `field`, `name`, `contentType`, `sizeBytes`, `sha256`).
+`response` lists the current files and, in the history, the names each
+revision held (`-` on a revision from before file fields existed).
+
+`slideless response-files <id>` brings the bytes to disk. Without a
+`responseId` it takes every file of the deck's responses, narrowed by
+`--form`, `--link`, `--source`, `--placement` and `--since` exactly as
+`responses` reads them; with one
+it takes that response's files (the filters are refused there). Two modes:
+
+- **A folder** (the default, `--out <dir>`): one download per file, laid out
+  as `<dir>/<form>/<response>/<field>/<name>` where `<response>` is when the
+  response was first sent plus the head of its id (`20260914-2000-7f3a9c1e`),
+  or `<dir>/<field>/<name>` for one response. File and field names are the
+  respondent's raw input, so no name is ever used as a path: each segment is
+  reduced to one plain name (separators resolved to the basename, control
+  characters dropped, a leading dot replaced by `_`, so `../../x` is written
+  as `x` and `.env` as `_env`), two files with the same name in one field
+  become `name.ext` and `name (2).ext`, and every write is contained in
+  `<dir>` (symlinks refused, mode forced to 0644). Each download is capped at
+  the size the response declares and its sha256 is verified before the file
+  is kept; a mismatch stops the command with an error and exit code 1. The
+  human output prints the path written for each file, with the name as sent
+  when the two differ.
+- **One zip** (`--zip [path]`): the server builds the archive
+  (`<form>/<response>/<field>/<file>`, or `<field>/<file>` for one response)
+  and the CLI streams it to disk without buffering it. Without a path, the
+  file takes the server's name (`<deck-title>-form-files.zip`), reduced to a
+  plain file name and written in the current directory; a path you type is
+  used verbatim. `--out` and `--zip` cannot be combined.
+
+Nothing to download is not an error: the command says so and exits 0, in both
+modes (the zip routes answer `404 no_files`, which the CLI reads as the same
+empty result). `--json` prints a summary instead of the table: in folder mode
+`{ mode: "folder", path, files: [{ responseId, formName, fileId, field, name,
+sizeBytes, sha256, path }], totalBytes }` (`path` is `null` and `files` empty
+when there was nothing), in zip mode `{ mode: "zip", path, sizeBytes }`.
+
+Uploads are a per-link switch, like forms and downloads: a new link has them
+on, `share --no-uploads` mints one without, and
+`slideless uploads <id> <tokenId> --on` turns them on for a link minted
+before file fields existed (those stay off until their owner says otherwise;
+a link already in circulation never gains a public write capability by
+itself). Without a flag `uploads` prints the current state. An upload rides a
+form submit, so the switch does nothing on a link minted with `--no-forms`.
+
 ## Collaborators
 
 ```bash
@@ -398,7 +744,9 @@ slideless uninvite <id> <collaboratorId>           # revoke the grant
 
 ```bash
 slideless list [--all]        # presentations, newest first
-slideless get <id>            # one deck: title, kind, version, agent doc, metadata keys
+slideless get <id>            # one deck: title, kind, version, agent doc, metadata keys, the
+                              # reference line (the type, its audience, the workspace default) and
+                              # the made-from line (the references the deck was made from)
 slideless meta <id>           # print the deck's metadata object (JSON)
 slideless meta <id> --set client=Acme --set priority=3   # merge keys (values parse as JSON when valid)
 slideless meta <id> --unset priority                     # remove a key
@@ -410,6 +758,9 @@ slideless versions <id> [--all]  # version history, newest first (numbers line u
                                  # or the MCP tool slideless_get_version
 slideless delete <id>         # soft delete (links stop resolving)
 slideless instance            # public discovery — no key needed
+slideless workspaces          # your workspaces: id, role, name; * = the one the commands run in, (default) = the server's
+slideless workspace use <id or name>   # save the selection on the profile (the id is what is stored)
+slideless workspace use --clear        # remove it: commands run in the server's default again
 slideless files list [--all]
 slideless files upload <path> [--name <stored name>] [--content-type <type>]
 slideless files rm <id>
@@ -435,7 +786,7 @@ slideless completion fish | source      # fish
 
 ## Machine use
 
-Add `--json` to any command for the wire shape; every error prints to stderr
+Add `--json` to any command except `files download` for the wire shape; every error prints to stderr
 and exits non-zero. Typical agent loop:
 
 ```bash

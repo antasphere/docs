@@ -5,6 +5,22 @@ description: "Files can travel with a deck: the spreadsheet behind a chart, the 
 
 {/* GENERATED from antasphere/slideless docs/concepts/attachments.md — edit there, then run `npm run sync`. */}
 
+import { HeroBand } from "/snippets/HeroBand.jsx";
+
+<HeroBand
+  eyebrow={"Concepts"}
+  title={"Attachments"}
+  drawing={"latitudes"}
+  seed={1394693664}
+  compact={true}
+/>
+
+Files can travel with a deck: the spreadsheet behind a chart, the PDF of the slides, the raw data.
+Put them in a `downloads/` folder at the root of the deck and push. Every file in that folder is an attachment of the version it was pushed with, offered to the
+recipient by the bar over the share link, one by one or as a zip. Where the bar is absent (a link
+made with the bar off, an embed), the deck links them itself; where downloads are switched off for
+the link, nothing offers them.
+
 ## The convention
 
 - `downloads/` at the root of the deck bundle is reserved: every file under it, nested folders
@@ -73,8 +89,9 @@ download counts once, whatever it held.
 ## The size limit
 
 Each file of a deck, attachments included, is capped per file by the instance: `MAX_FILE_SIZE_MB`,
-100 MB by default. The CLI checks every file against the cap before uploading anything, so a file
-over it is refused by name, with the cap, and no byte has left your machine:
+100 MB by default. The CLI checks every file against that 100 MB default before uploading anything
+(an instance's own cap is not yet visible to it, so on a lower cap the server refuses with a 413
+after the upload). A file over the default is refused by name, and no byte has left your machine:
 
 ```
 Error: downloads/video.mp4 is 250.0 MB, over this instance's 100.0 MB per-file cap (MAX_FILE_SIZE_MB) — nothing was uploaded. Shrink or drop the file and push again.

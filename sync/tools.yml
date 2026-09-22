@@ -18,14 +18,73 @@ site:
     - anchor: antasphere.com
       href: https://antasphere.com
       icon: globe
+#
+# tabs: the tool's sidebar cut into a few tabs (five at most), each holding
+# whole groups of the tool's nav.yml by their titles, plus the sync's own
+# "Changelog" group. The products stay one dropdown in the bar; the tabs sit
+# under it and each shows one rail's worth. Every group must land in exactly
+# one tab — the sync refuses a group left out or placed twice, so a group
+# renamed in a tool's nav.yml is caught here rather than silently dropped.
+# A tool without a tabs block gets its groups as one rail.
+#
+# plain: the groups whose pages are written for AGENTS (references a person
+# hands to a tool rather than reads): they get no band at all, and that bareness
+# is the signal. Every other page gets the compact band (eyebrow = its group,
+# title = the page's); the index gets the full one.
+#
+# hero: the band the sync places at the top of the tool's index page
+# (snippets/HeroBand.jsx, the products' page band): the title in the band,
+# the drawing pinned at its top right (latitudes | meridians, the bodies of
+# the products' solids.ts ported there) and the seed that deals its lean.
+# The band's eyebrow is the tool's name from nav.yml; its lede is the one
+# written here (one or two sentences; the intro tends to open on the
+# title's own words) or, absent, the opening sentences of the page's intro.
 tools:
   - slug: antasphere
     repo: antasphere/hub
     branch: prod
     localPath: ../hub
     icon: circle-user
+    tabs:
+      - tab: Your account
+        icon: circle-user
+        groups: [Overview, Tools]
+      - tab: Agents & CLI
+        icon: terminal
+        groups: [Agents & CLI]
+      - tab: Changelog
+        icon: list
+        groups: [Changelog]
+    plain: [Agents & CLI]
+    hero:
+      title: One account for every Antasphere tool
+      lede: Sign in once, and every Antasphere tool knows you.
+      drawing: meridians
+      seed: 402881
   - slug: slideless
     repo: antasphere/slideless
     branch: prod
     localPath: ../tools/slideless/slideless
     icon: presentation-screen
+    tabs:
+      - tab: Getting started
+        icon: rocket
+        groups: [Getting started, Concepts]
+      - tab: Agents
+        icon: terminal
+        groups: [Agents]
+      - tab: Sharing & review
+        icon: share-nodes
+        groups: [Sharing & review]
+      - tab: Self-hosting
+        icon: server
+        groups: [Self-hosting, Operations, Security, Reference]
+      - tab: Changelog
+        icon: list
+        groups: [Changelog]
+    plain: [Agents, Reference]
+    hero:
+      title: The home for what your agents build
+      lede: Agents push HTML decks; Slideless versions them and shares them by link.
+      drawing: latitudes
+      seed: 976086463

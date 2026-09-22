@@ -5,6 +5,41 @@ description: "Release history, sourced from antasphere/slideless release tags."
 
 {/* GENERATED — edit the entry files under sync/changelog/slideless/, then run `npm run sync`. */}
 
+import { HeroBand } from "/snippets/HeroBand.jsx";
+
+<HeroBand
+  eyebrow={"Slideless"}
+  title={"Changelog"}
+  drawing={"lattice"}
+  seed={2112689370}
+  compact={true}
+/>
+
+<Update label="v0.7.0" description="2026-09-21">
+
+Projects: subgroups of a workspace with their own members and roles. A deck linked to a project is read by the project's members, and a project can carry a brand of its own. Projects are in the dashboard, on the command line (`slideless projects`) and available to agents over MCP.
+
+</Update>
+<Update label="v0.6.0" description="2026-09-19">
+
+The workspace's look — its colour, its form, the gradient and the grain of the page — is set in Settings by an owner or admin and shared by every member. Settings has three tabs: the workspace, the instance and your account; creating a workspace is a three-step dialog.
+
+</Update>
+<Update label="v0.5.0" description="2026-09-19">
+
+References: a deck whose AGENT.md frontmatter names a type (brand or template) can be published as a reference the whole workspace shares, and one brand can be made the workspace's default. The dashboard gets a Brands and a Templates section.
+
+</Update>
+<Update label="cli-v0.4.1" description="2026-09-19" tags={["CLI"]}>
+
+The same commands as 0.4.0; the package now declares its repository, so npm can attest where it was built from.
+
+</Update>
+<Update label="cli-v0.4.0" description="2026-09-19" tags={["CLI"]}>
+
+Every command can name the workspace it works in: `--workspace`, `SLIDELESS_WORKSPACE`, or a field of the saved profile, and `slideless workspaces` lists yours. The reference commands arrive: brands and templates are decks the workspace shares, and `slideless brand` / `slideless template` list, pull, push, publish and start from them.
+
+</Update>
 <Update label="v0.4.2" description="2026-09-17">
 
 slideless 0.4.2 — the Hostinger installation template and guide

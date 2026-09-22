@@ -2,7 +2,7 @@
 
 The unified docs site for the Antasphere tool ecosystem, served at
 [docs.antasphere.com](https://docs.antasphere.com). Built with
-[Mintlify](https://mintlify.com); one product selector, one sidebar per tool.
+[Mintlify](https://mintlify.com); one product selector, a few tabs per tool, one sidebar per tab.
 
 ## How it works
 

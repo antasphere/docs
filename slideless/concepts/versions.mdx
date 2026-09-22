@@ -5,6 +5,20 @@ description: "Every push is a new version of the deck, numbered from 1, and a ve
 
 {/* GENERATED from antasphere/slideless docs/concepts/versions.md — edit there, then run `npm run sync`. */}
 
+import { HeroBand } from "/snippets/HeroBand.jsx";
+
+<HeroBand
+  eyebrow={"Concepts"}
+  title={"Versions"}
+  drawing={"latitudes"}
+  seed={2581997451}
+  compact={true}
+/>
+
+Every push is a new version of the deck, numbered from 1, and a version never changes once it is
+committed. The owner keeps the whole history and can show, pull or duplicate any version; a
+recipient sees one version, the one their link resolves to.
+
 ## What a version is
 
 A version is the manifest of one push: every file's path, its `sha256`, its size and its content

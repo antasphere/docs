@@ -5,6 +5,21 @@ description: "Slideless's whole point is rendering untrusted, user-authored HTML
 
 {/* GENERATED from antasphere/slideless docs/security/viewer-security-model.md — edit there, then run `npm run sync`. */}
 
+import { HeroBand } from "/snippets/HeroBand.jsx";
+
+<HeroBand
+  eyebrow={"Security"}
+  title={"The viewer security model (for operators)"}
+  drawing={"latitudes"}
+  seed={57443514}
+  compact={true}
+/>
+
+Slideless's whole point is rendering **untrusted, user-authored HTML** to
+anonymous visitors. This page is what an operator needs to know about how
+that is made safe, what the guarantees are, and the one hardening knob.
+(The full platform posture lives in [security.md](/slideless/security/security).)
+
 ## What a share link is
 
 `slideless share <id>` (or the dashboard/MCP equivalents) mints a URL like
@@ -12,7 +27,10 @@ description: "Slideless's whole point is rendering untrusted, user-authored HTML
 
 - The secret is a **384-bit random path token, stored hash-only** — the
   database never holds the URL, and a leaked database does not leak working
-  links. The URL is shown once at creation and is never retrievable again.
+  links. The URL is shown once at creation and is never retrievable again, with
+  one exception: a create sent with an `Idempotency-Key` can be replayed with
+  that same key for 24 hours (the cached response is encrypted under the auth
+  secret).
 - Links are **per-recipient**: each can carry its own expiry, viewer
   password (scrypt-hashed), pinned version or follow-latest mode, and view
   stats. Revocation is instant — viewer entries are served `no-store` and
@@ -119,16 +137,33 @@ Deck reads are **private by construction**, never workspace-wide:
 - **Machines authenticate with `slk_` API keys or the instance's own OAuth
   2.1 tokens**, and reach only the endpoints consciously allowlisted for
   their scopes — everything else fails closed with 403. Each instance is
-  its own OAuth authorization server; no central identity exists.
+  its own OAuth authorization server; on a self-hosted instance no central
+  identity exists (the cloud edition signs people in through the Antasphere hub).
 - Annotator share links use a deliberately public, token-authed annotation
   API bounded by rate limits — the token in the URL is the whole
   credential, and it can only write notes on its own deck+version.
+- Share links with forms on use the same kind of public, token-authed API
+  for form responses. It is the one place an anonymous visitor can **write
+  files** to the instance: a form's file field, when the link has uploads on.
+  The instance bounds it (size per file, files per response, total per deck,
+  a rate limit), stores the files apart from deck assets, never serves them
+  back to a link holder, and hands them to the deck's owner as downloads
+  only, never rendered on the app origin. The accepted types a deck author
+  lists are checked in the respondent's browser, not by the server, so treat
+  what arrives as untrusted. Details in
+  [security.md](/slideless/security/security#the-form-surface-and-the-files-it-takes) and
+  [Forms](/slideless/sharing/forms#file-fields).
 
 ## Operator checklist
 
 - Serve the instance over **HTTPS behind a reverse proxy**
   ([reverse-proxy.md](/slideless/self-hosting/reverse-proxy)) — share secrets travel in URLs.
 - Consider `VIEWER_BASE_URL` (above) once share links leave your team.
+- Size the disk for form uploads, or switch them off: each deck can hold up
+  to `FORMS_MAX_UPLOADS_MB_PER_DECK` (default 5120 MB) of files sent by
+  anonymous respondents. `FORMS_MAX_UPLOAD_MB=0` turns the feature off for
+  the whole instance
+  ([deployment-profiles.md](/slideless/self-hosting/deployment-profiles#sizing-storage-for-form-uploads)).
 - Never hand out `data:export`-scoped keys casually; never share the
   `/v/{secret}` URL of anything sensitive without an expiry or password.
 - Treat any code change touching `apps/server/src/viewer/routes.ts` or the

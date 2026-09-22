@@ -4,14 +4,14 @@
   "name": "Antasphere Documentation",
   "description": "Documentation for the Antasphere tool ecosystem: one account, every tool.",
   "colors": {
-    "primary": "#3E6E8C",
-    "light": "#7FA9C2",
-    "dark": "#3E6E8C"
+    "primary": "#7a6652",
+    "light": "#db7d5f",
+    "dark": "#5c4d3e"
   },
   "background": {
     "color": {
-      "light": "#F7F6F4",
-      "dark": "#1A1918"
+      "light": "#f7f4ec",
+      "dark": "#34302c"
     }
   },
   "fonts": {
@@ -57,111 +57,164 @@
         }
       ]
     },
-    "tabs": [
+    "products": [
       {
-        "tab": "Antasphere",
+        "product": "Antasphere",
+        "description": "One account for every Antasphere tool: sign in once, connected everywhere.",
         "icon": "circle-user",
-        "groups": [
+        "tabs": [
           {
-            "group": "Overview",
-            "pages": [
-              "antasphere/index"
+            "tab": "Your account",
+            "icon": "circle-user",
+            "groups": [
+              {
+                "group": "Overview",
+                "pages": [
+                  "antasphere/index"
+                ]
+              },
+              {
+                "group": "Tools",
+                "pages": [
+                  "antasphere/tools/slideless"
+                ]
+              }
             ]
           },
           {
-            "group": "Tools",
-            "pages": [
-              "antasphere/tools/slideless"
+            "tab": "Agents & CLI",
+            "icon": "terminal",
+            "groups": [
+              {
+                "group": "Agents & CLI",
+                "pages": [
+                  "antasphere/agents/cli",
+                  "antasphere/agents/mcp-connector"
+                ]
+              }
             ]
           },
           {
-            "group": "Agents & CLI",
-            "pages": [
-              "antasphere/agents/cli",
-              "antasphere/agents/mcp-connector"
-            ]
-          },
-          {
-            "group": "Changelog",
-            "pages": [
-              "antasphere/changelog"
+            "tab": "Changelog",
+            "icon": "list",
+            "groups": [
+              {
+                "group": "Changelog",
+                "pages": [
+                  "antasphere/changelog"
+                ]
+              }
             ]
           }
         ]
       },
       {
-        "tab": "Slideless",
+        "product": "Slideless",
+        "description": "Versioned, shareable live links for what your agents build — push decks from a CLI or MCP agent, share them with a secret URL.",
         "icon": "presentation-screen",
-        "groups": [
+        "tabs": [
           {
-            "group": "Getting started",
-            "pages": [
-              "slideless/index",
-              "slideless/getting-started/connect-an-agent",
-              "slideless/getting-started/antasphere-account"
+            "tab": "Getting started",
+            "icon": "rocket",
+            "groups": [
+              {
+                "group": "Getting started",
+                "pages": [
+                  "slideless/index",
+                  "slideless/getting-started/connect-an-agent",
+                  "slideless/getting-started/antasphere-account"
+                ]
+              },
+              {
+                "group": "Concepts",
+                "pages": [
+                  "slideless/concepts/workspaces",
+                  "slideless/concepts/projects",
+                  "slideless/concepts/artifact",
+                  "slideless/concepts/versions",
+                  "slideless/concepts/links",
+                  "slideless/concepts/attachments",
+                  "slideless/concepts/references"
+                ]
+              }
             ]
           },
           {
-            "group": "Concepts",
-            "pages": [
-              "slideless/concepts/artifact",
-              "slideless/concepts/versions",
-              "slideless/concepts/links",
-              "slideless/concepts/attachments"
+            "tab": "Agents",
+            "icon": "terminal",
+            "groups": [
+              {
+                "group": "Agents",
+                "pages": [
+                  "slideless/agents/cli",
+                  "slideless/agents/mcp-connector",
+                  "slideless/agents/deck-self-description"
+                ]
+              }
             ]
           },
           {
-            "group": "Agents",
-            "pages": [
-              "slideless/agents/cli",
-              "slideless/agents/mcp-connector",
-              "slideless/agents/deck-self-description"
+            "tab": "Sharing & review",
+            "icon": "share-nodes",
+            "groups": [
+              {
+                "group": "Sharing & review",
+                "pages": [
+                  "slideless/sharing/annotations",
+                  "slideless/sharing/forms",
+                  "slideless/sharing/downloads",
+                  "slideless/sharing/embedding",
+                  "slideless/sharing/link-analytics"
+                ]
+              }
             ]
           },
           {
-            "group": "Sharing & review",
-            "pages": [
-              "slideless/sharing/annotations",
-              "slideless/sharing/forms",
-              "slideless/sharing/downloads",
-              "slideless/sharing/embedding",
-              "slideless/sharing/link-analytics"
+            "tab": "Self-hosting",
+            "icon": "server",
+            "groups": [
+              {
+                "group": "Self-hosting",
+                "pages": [
+                  "slideless/self-hosting/install",
+                  "slideless/self-hosting/hostinger",
+                  "slideless/self-hosting/reverse-proxy",
+                  "slideless/self-hosting/deployment-profiles",
+                  "slideless/self-hosting/upgrade"
+                ]
+              },
+              {
+                "group": "Operations",
+                "pages": [
+                  "slideless/operations/backup-restore",
+                  "slideless/operations/scaling"
+                ]
+              },
+              {
+                "group": "Security",
+                "pages": [
+                  "slideless/security/security",
+                  "slideless/security/viewer-security-model"
+                ]
+              },
+              {
+                "group": "Reference",
+                "pages": [
+                  "slideless/reference/env-reference"
+                ]
+              }
             ]
           },
           {
-            "group": "Self-hosting",
-            "pages": [
-              "slideless/self-hosting/install",
-              "slideless/self-hosting/hostinger",
-              "slideless/self-hosting/reverse-proxy",
-              "slideless/self-hosting/deployment-profiles",
-              "slideless/self-hosting/upgrade"
-            ]
-          },
-          {
-            "group": "Operations",
-            "pages": [
-              "slideless/operations/backup-restore",
-              "slideless/operations/scaling"
-            ]
-          },
-          {
-            "group": "Security",
-            "pages": [
-              "slideless/security/security",
-              "slideless/security/viewer-security-model"
-            ]
-          },
-          {
-            "group": "Reference",
-            "pages": [
-              "slideless/reference/env-reference"
-            ]
-          },
-          {
-            "group": "Changelog",
-            "pages": [
-              "slideless/changelog"
+            "tab": "Changelog",
+            "icon": "list",
+            "groups": [
+              {
+                "group": "Changelog",
+                "pages": [
+                  "slideless/changelog"
+                ]
+              }
             ]
           }
         ]
@@ -192,5 +245,13 @@
       "cursor",
       "mcp"
     ]
+  },
+  "styling": {
+    "codeblocks": {
+      "theme": {
+        "light": "rose-pine-dawn",
+        "dark": "rose-pine-moon"
+      }
+    }
   }
 }

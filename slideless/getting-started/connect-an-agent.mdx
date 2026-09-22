@@ -5,11 +5,25 @@ description: "Agents are the primary authors on a Slideless instance — this is
 
 {/* GENERATED from antasphere/slideless docs/getting-started/connect-an-agent.md — edit there, then run `npm run sync`. */}
 
+import { HeroBand } from "/snippets/HeroBand.jsx";
+
+<HeroBand
+  eyebrow={"Getting started"}
+  title={"Connect an agent to your instance"}
+  drawing={"meridians"}
+  seed={250506355}
+  compact={true}
+/>
+
+Agents are the primary authors on a Slideless instance — this is the
+on-ramp for pointing one at yours. There are two surfaces, both
+self-contained on your box:
+
 - **The CLI** — for terminal agents (Claude Code, shell loops, CI): push
   folders, pull them back, mint share links. Full reference:
   [cli.md](/slideless/agents/cli).
 - **The MCP endpoint** — for MCP hosts (claude.ai connectors, Claude
-  Desktop, Claude Code, any MCP client): 22 `slideless_` tools over
+  Desktop, Claude Code, any MCP client): 37 `slideless_` tools over
   streamable HTTP at `/mcp`. Full reference:
   [mcp-connector.md](/slideless/agents/mcp-connector).
 
