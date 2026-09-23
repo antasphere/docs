@@ -1,6 +1,6 @@
 ---
 title: "CLI"
-description: "antasphere is the command-line client for your Antasphere account. One antasphere login signs you in with a code sent to your email and stores a personal API key in a local profile; every later command uses that profile. From the terminal you can check who you are, list and pick your organizations, manage files, and export an organization's data."
+description: "antasphere is the command-line client for your Antasphere account. One antasphere login signs you in with a code sent to your email and stores a personal API key in a local profile; every later command uses that profile. From the terminal you can check who you are, list and pick your organizations, manage files, export an organization's data, and follow its credits."
 ---
 
 {/* GENERATED from antasphere/hub docs/agents/cli.md — edit there, then run `npm run sync`. */}
@@ -55,6 +55,7 @@ antasphere files list                     # list files (newest first)
 antasphere files upload ./report.pdf      # upload (name defaults to the basename)
 antasphere files download <id> --out ./f  # download by id
 antasphere files rm <id>                  # delete by id
+antasphere billing account                # the organization's credits (see Billing below)
 ```
 
 A login is bound to one organization; `whoami` and `org list` mark it with `*`. To work in another
@@ -77,6 +78,40 @@ deliberately not a CLI action: do it from the dashboard.
 | `--limit <n>`       | Page size (1-100)                               |
 | `--cursor <cursor>` | Resume from a previous page's `nextCursor`      |
 | `--all`             | Follow `nextCursor` until every page is fetched |
+
+## Billing
+
+Your organization pays for what the Antasphere tools do in **credits**. Every organization starts
+with a balance; each priced action a tool performs takes its credits from it, and every movement
+is recorded in the organization's credit ledger. The `billing` commands read the ACTIVE
+organization and are open to its owners and admins.
+
+```bash
+antasphere billing account                 # balance, currency, plan, low-balance and expiring credits, billing details
+antasphere billing ledger                  # every credit movement, newest first
+antasphere billing ledger --kind debit --from 2026-09-01T00:00:00Z --all
+antasphere billing usage --period month    # what was used over a window: totals, by person, by action
+antasphere billing redeem WELCOME-500      # redeem a voucher code for credits
+```
+
+- `billing account` shows the balance, the currency (marked `locked` once it can no longer change),
+  the plan, a low-balance line when the balance falls below the notice threshold, and the credits
+  that expire soonest.
+- `billing ledger` lists one line per entry: the date, the kind (`signup`, `promo`, `manual`,
+  `debit`, `expiry`, …), the signed amount, the balance after it, and its reference (the voucher
+  code, the usage event). A grant that expires says when. It takes `--kind`, `--from`, `--to` and
+  the pagination flags below (`--limit`, `--cursor`, `--all`).
+- `billing usage` takes `--from`, `--to` (default: the last 30 days), `--period day|month`,
+  `--limit` and `--cursor`.
+- `billing redeem <code>` adds the voucher's credits to the balance; a code can be unknown,
+  inactive, expired, used up, or already redeemed by your organization, and the command says which.
+
+The reads (`account`, `ledger`, `usage`) need a key carrying `billing:read`. Keys minted by
+`antasphere login` carry it; a key minted before billing existed never gains it, so log in again
+if these commands answer `403`. `redeem` needs `account:write`.
+
+Managing the price book, the plan tiers, credit grants and vouchers is an Antasphere operator
+matter, not covered here.
 
 Add `--json` to any command for machine-readable output. A failed request prints to stderr and
 exits non-zero; a key without the right scope gets a clean `403` message.
