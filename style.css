@@ -77,6 +77,7 @@
   /* a plate is content sitting on the page field: translucent paper */
   --plate: rgb(250 247 240 / 0.62);
   --plate-strong: rgb(251 249 243 / 0.82);
+  --plate-solid: rgb(251 249 243);
   --plate-edge: rgb(255 255 255 / 0.6);
   /* a bar content scrolls under: opaque */
   --bar: #faf7f0;
@@ -147,6 +148,7 @@
   --field-base: #302c28;
   --plate: rgb(52 48 44 / 0.6);
   --plate-strong: rgb(62 58 53 / 0.84);
+  --plate-solid: rgb(62 58 53);
   --plate-edge: rgb(255 243 232 / 0.07);
   --bar: #34302c;
   --shadow-sm: 0 1px 2px rgba(9, 6, 4, 0.22);
@@ -744,7 +746,15 @@ footer a:hover {
 }
 
 /* the assistant's entry at the foot of the page: a float, cut from the
- * plate, on 12px corners */
+ * plate, on 12px corners. The field has no flat colour to match, so the
+ * strip Mintlify paints under the bar (a ::before in the flat background)
+ * is removed and the page shows through; the bar itself is solid, so the
+ * text scrolling beneath never reads through the field. */
+.chat-assistant-floating-input::before {
+  content: none !important;
+  display: none !important;
+}
+
 [class*='chat-assistant'],
 #chat-assistant-textarea {
   font-family: var(--ui);
@@ -753,7 +763,7 @@ footer a:hover {
 div:has(> div > #chat-assistant-textarea) {
   border-color: var(--hairline) !important;
   border-radius: var(--r-lg) !important;
-  background: var(--plate-strong) !important;
+  background: var(--plate-solid) !important;
   box-shadow: var(--shadow-md);
 }
 
