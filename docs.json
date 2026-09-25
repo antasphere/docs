@@ -148,7 +148,8 @@
                 "pages": [
                   "slideless/agents/cli",
                   "slideless/agents/mcp-connector",
-                  "slideless/agents/deck-self-description"
+                  "slideless/agents/deck-self-description",
+                  "slideless/agents/share-links-for-agents"
                 ]
               }
             ]
