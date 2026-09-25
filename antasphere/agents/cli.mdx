@@ -92,11 +92,18 @@ antasphere billing ledger                  # every credit movement, newest first
 antasphere billing ledger --kind debit --from 2026-09-01T00:00:00Z --all
 antasphere billing usage --period month    # what was used over a window: totals, by person, by action
 antasphere billing redeem WELCOME-500      # redeem a voucher code for credits
+antasphere billing buy 20000               # buy credits: prints the link to Stripe's payment page
+antasphere billing invoices                # the organization's invoices, newest first
+antasphere billing plan [subscribe|cancel|resume]
+antasphere billing card [add|remove]
+antasphere billing auto-recharge [on|off|set --threshold <n> --credits <n> --cap <n>]
+antasphere billing referral [code]
 ```
 
 - `billing account` shows the balance, the currency (marked `locked` once it can no longer change),
-  the plan, a low-balance line when the balance falls below the notice threshold, and the credits
-  that expire soonest.
+  the plan, a low-balance line when the balance falls below the notice threshold, the credits
+  that expire soonest, the card on file, the Pro subscription, whether auto-recharge is on, and
+  your organization's referral code.
 - `billing ledger` lists one line per entry: the date, the kind (`signup`, `promo`, `manual`,
   `debit`, `expiry`, …), the signed amount, the balance after it, and its reference (the voucher
   code, the usage event). A grant that expires says when. It takes `--kind`, `--from`, `--to` and
@@ -105,10 +112,35 @@ antasphere billing redeem WELCOME-500      # redeem a voucher code for credits
   `--limit` and `--cursor`.
 - `billing redeem <code>` adds the voucher's credits to the balance; a code can be unknown,
   inactive, expired, used up, or already redeemed by your organization, and the command says which.
+- `billing buy <credits>` buys credits: one of the packs, or a custom amount. It prints the price
+  and a link; open the link in a browser and pay on Stripe's page. The credits show on the balance
+  once Stripe confirms the payment.
+- `billing invoices` lists one line per invoice: the date, its number, the amount, its status and
+  the link to the invoice's page. It takes the pagination flags below.
+- `billing plan` shows the plan and the Pro subscription (its status, and when it renews or ends).
+  `plan subscribe` prints a link to Stripe's page, where you subscribe to Pro; the plan shows as
+  `pro` once Stripe confirms. `plan cancel` keeps Pro until the end of the paid period, then the
+  organization returns to free; `plan resume` takes a pending cancellation back. Both are done on
+  the account page, and the command says so.
+- `billing card` shows the card on file. `card add` prints a link to Stripe's page, where you enter
+  the card; it shows here once Stripe confirms. `card remove` is done on the account page (it also
+  switches auto-recharge off), and the command says so.
+- `billing auto-recharge` shows the auto-recharge settings: whether it is on, the balance under
+  which it buys credits (`--threshold`), how many credits one recharge buys (`--credits`), the most
+  it may buy in a calendar month (`--cap`), and what it bought this month. `on`, `off` and `set`
+  are done on the account page, and the command says so.
+- `billing referral` shows your organization's referral code, to hand to someone who signs up.
+  `billing referral <code>` registers the code of the organization that sent you, once and before
+  your first purchase; the reward comes with that first purchase.
 
-The reads (`account`, `ledger`, `usage`) need a key carrying `billing:read`. Keys minted by
-`antasphere login` carry it; a key minted before billing existed never gains it, so log in again
-if these commands answer `403`. `redeem` needs `account:write`.
+The reads (`account`, `ledger`, `usage`, `invoices`) need a key carrying `billing:read`. Keys
+minted by `antasphere login` carry it; a key minted before billing existed never gains it, so log
+in again if these commands answer `403`. `redeem`, `buy`, `card add`, `plan subscribe` and
+`referral <code>` need `account:write`: each hands back a page you finish in a browser (the
+Checkout for credits, the card's setup page, the subscription's Checkout) or registers a code. What
+changes money with no further confirmation stays on the account page and no key reaches it:
+`plan cancel`, `plan resume`, `card remove` and the `auto-recharge` settings answer with the page
+to open instead.
 
 Managing the price book, the plan tiers, credit grants and vouchers is an Antasphere operator
 matter, not covered here.
