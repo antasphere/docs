@@ -1,0 +1,59 @@
+---
+title: "Teams"
+description: "A team is a group of people inside one organization: the designers, the sales people, the members working for one client. Teams let an organization give a tool, or a tool's projects, to some of its people rather than to everyone."
+---
+
+{/* GENERATED from antasphere/hub docs/account/teams.md — edit there, then run `npm run sync`. */}
+
+import { HeroBand } from "/snippets/HeroBand.jsx";
+
+<HeroBand
+  eyebrow={"Account"}
+  title={"Teams"}
+  drawing={"lattice"}
+  seed={3229722065}
+  compact={true}
+/>
+
+A team is a group of people inside one organization: the designers, the sales people, the members
+working for one client. Teams let an organization give a tool, or a tool's projects, to some of its
+people rather than to everyone.
+
+## Who makes teams
+
+Owners and admins of an organization create its teams on
+[account.antasphere.com](https://account.antasphere.com), under **People > Teams**. There they name
+a team, rename it, add and remove its members, and delete it. A team holds only members of its
+organization, and one person can belong to several teams.
+
+Deleting a team removes the group, not the people: its members stay in the organization with the
+role they had.
+
+## What teams are for
+
+- **Opening a tool to some teams only.** An owner or admin can make a tool available to chosen
+  teams of the organization instead of to every member. People outside those teams do not see the
+  tool for that organization.
+- **Sharing a tool's projects with a team.** A tool's projects can be shared with a team, and
+  everyone in the team gets them.
+
+Both are settled on the account site, never inside a tool: the tools read the teams from your
+Antasphere account, so a change made once applies everywhere.
+
+## What a member sees
+
+Every member of an organization sees the teams they belong to on **People > Teams**. Inside each
+tool, they see the teams that share its projects with them.
+
+## When someone leaves
+
+A person who leaves an organization, or is removed from it, leaves every team of that organization
+at the same time. Their teams in other organizations are not affected.
+
+## From the command line
+
+The [`antasphere` CLI](/antasphere/agents/cli) works on the teams of the active organization:
+`antasphere teams list` lists them, `antasphere teams members <team>` shows who is in one, and
+`create`, `rename`, `delete`, `add <team> <email>` and `remove <team> <email>` change them. Reads
+need a key with `account:read`; changes need a key with `account:write` held by an owner or an
+admin of the organization (the key `antasphere login` stores carries both). With several organizations, add `--org <id>`, or run `antasphere org use <id>` once after `antasphere login` (a key set in the environment alone has no profile to remember the choice on).

@@ -50,6 +50,10 @@ antasphere whoami                         # you, your organizations, the active 
 antasphere org list                       # your organizations (active org marked *)
 antasphere org use <id>                   # choose the organization tool CLIs work in
 antasphere org use --unset                # back to the organization you logged in to
+antasphere teams list                     # the organization's teams (yours marked)
+antasphere teams members <team>           # a team's members (<team> is its slug or id)
+antasphere teams add <team> <email>       # put a member in a team (owner or admin)
+antasphere tools access [<tool>]          # who may use each tool (TOOL  MODE  TEAMS)
 antasphere export [-o <path>]             # full organization export as a zip
 antasphere files list                     # list files (newest first)
 antasphere files upload ./report.pdf      # upload (name defaults to the basename)
@@ -57,6 +61,8 @@ antasphere files download <id> --out ./f  # download by id
 antasphere files rm <id>                  # delete by id
 antasphere billing account                # the organization's credits (see Billing below)
 ```
+
+The teams and tools commands act on the organization set with `antasphere org use <id>`, or the one named with `--org <id>`; without either, the key's default organization.
 
 A login is bound to one organization; `whoami` and `org list` mark it with `*`. To work in another
 organization, log in again into a second profile: `antasphere --profile acme login`, the same
@@ -66,6 +72,17 @@ model as `gcloud` or `gh`.
 `slideless` CLI, for example) work in when you use them after one Antasphere login, and it checks
 the id against your memberships before storing it. `--unset` clears it, and a tool's own `--org`
 flag overrides it per command.
+
+`teams` works on the teams of the active organization: `teams list` and `teams members <team>`
+(where `<team>` is the team's slug or id) need a key with `account:read`; `teams create`, `rename`,
+`delete`, `add <team> <email>` and `remove <team> <email>` need a key with `account:write` held by
+an owner or an admin of the organization. See [Teams](/antasphere/account/teams).
+
+`tools access` shows who in the active organization may use each tool: `TOOL  MODE  TEAMS`, for
+every tool or for the one named. `tools access <tool> --everyone` opens it to the whole
+organization; `--teams design,sales` narrows it to those teams (by slug), and `--teams ""` leaves
+it to the owners and admins, who always keep access. Setting needs a key with `account:write` held
+by an owner or an admin.
 
 `export` needs a key granted the opt-in `data:export` scope and an admin role in the organization;
 the archive streams to disk (default `export-<yyyy-mm-dd>.zip`). Deleting an account is
@@ -105,16 +122,21 @@ antasphere billing referral [code]
   that expire soonest, the card on file, the Pro subscription, whether auto-recharge is on, and
   your organization's referral code.
 - `billing ledger` lists one line per entry: the date, the kind (`signup`, `promo`, `manual`,
-  `debit`, `expiry`, …), the signed amount, the balance after it, and its reference (the voucher
-  code, the usage event). A grant that expires says when. It takes `--kind`, `--from`, `--to` and
+  `debit`, `expiry`, …), the signed amount, the balance after it, and its reference in words (the
+  voucher code, the usage event, the payment, a referral reward taken back after a refund). A grant
+  that expires says when. It takes `--kind`, `--from`, `--to` and
   the pagination flags below (`--limit`, `--cursor`, `--all`).
 - `billing usage` takes `--from`, `--to` (default: the last 30 days), `--period day|month`,
   `--limit` and `--cursor`.
 - `billing redeem <code>` adds the voucher's credits to the balance; a code can be unknown,
   inactive, expired, used up, or already redeemed by your organization, and the command says which.
 - `billing buy <credits>` buys credits: one of the packs, or a custom amount. It prints the price
-  and a link; open the link in a browser and pay on Stripe's page. The credits show on the balance
-  once Stripe confirms the payment.
+  and a link; open the link in a browser and pay on Stripe's page, where a promotion code can be
+  entered. The credits show on the balance once Stripe confirms the payment, and the page the
+  browser comes back to confirms what was bought, what was paid and the invoice. With
+  `--auto-recharge`, the card you pay with is kept and auto-recharge turns on once the payment
+  lands (Stripe's page asks you to agree to keeping the card); it is never implied, and an
+  organization whose auto-recharge is already on keeps its card and its settings.
 - `billing invoices` lists one line per invoice: the date, its number, the amount, its status and
   the link to the invoice's page. It takes the pagination flags below.
 - `billing plan` shows the plan and the Pro subscription (its status, and when it renews or ends).
