@@ -1,0 +1,76 @@
+---
+title: "Demo links"
+description: "A demo link signs one person in without their password. Whoever opens it in a browser is that person, in the tool and on the page the link names. Demo links are made for demonstrations: showing a tool as a member of an organization sees it, or handing a prepared account to a tester for an afternoon."
+---
+
+{/* GENERATED from antasphere/hub docs/account/demo-links.md — edit there, then run `npm run sync`. */}
+
+import { HeroBand } from "/snippets/HeroBand.jsx";
+
+<HeroBand
+  eyebrow={"Account"}
+  title={"Demo links"}
+  drawing={"lattice"}
+  seed={3565414478}
+  compact={true}
+/>
+
+A demo link signs one person in without their password. Whoever opens it in a browser is that
+person, in the tool and on the page the link names. Demo links are made for demonstrations:
+showing a tool as a member of an organization sees it, or handing a prepared account to a tester
+for an afternoon.
+
+## Not on your Antasphere account
+
+Demo links are **off** on the Antasphere account, [account.antasphere.com](https://account.antasphere.com),
+and they cannot be turned on there. Nobody can be signed in to a real Antasphere account through a
+demo link.
+
+They exist only on demonstration and test installations of Antasphere. On such an installation, a
+banner on every page says that demo links are on, so that nobody works there without knowing it.
+
+## Which accounts a link can open
+
+A demo link only ever opens a **demonstration address**: an address on a domain reserved for
+examples and tests, such as `ada@example.com` or `reviewer@acme.test`. An address that can receive
+real mail, such as `ada@gmail.com`, is never opened by a demo link, whatever else is true.
+
+A link also never opens:
+
+- an account with a second factor (a link would walk past it);
+- an account that has not confirmed its address;
+- another owner's account;
+- a person who also belongs to another organization: a demonstration account is one an owner
+  invited into the organization for the demonstration, and it belongs nowhere else.
+
+Only an owner of the organization, signed in with their password, makes a demo link. An API key
+cannot make one.
+
+## Where a link lands
+
+A link names a tool and a page. Opening it signs the person in and takes them to that page of that
+tool. A link that names no tool lands on the account's own dashboard.
+
+The link decides where the person lands, not what they may do there: the tool's own access rules
+apply to the person exactly as they would after a password sign-in. A person whose teams do not
+have access to a tool is not let in by a link to it.
+
+## One person per browser window
+
+A link signs the whole browser in as its person: the account and every tool in that window are
+that person from then on, and whoever the window was signed in as before is signed out of them.
+There is no signing in as one person in one tab and another in the next. To show two people side
+by side, open the second link in another browser profile or in a private window.
+
+## How long a link lives
+
+A day by default, a week at most: the owner chooses when making it, and can revoke it at any
+moment. When a link expires or is revoked, the sessions it opened end with it: whoever is still
+signed in through it is signed out.
+
+A link is shown once, when it is made. Keep it like a password until it expires.
+
+## Making links
+
+On a demonstration installation, an owner makes demo links from the account settings or from the
+command line with `antasphere demo link` (see [the CLI](/antasphere/agents/cli#demo-links)).

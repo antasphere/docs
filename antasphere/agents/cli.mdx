@@ -60,6 +60,7 @@ antasphere files upload ./report.pdf      # upload (name defaults to the basenam
 antasphere files download <id> --out ./f  # download by id
 antasphere files rm <id>                  # delete by id
 antasphere billing account                # the organization's credits (see Billing below)
+antasphere demo link --email <address>    # a demo link, on a demonstration installation (see Demo links below)
 ```
 
 The teams and tools commands act on the organization set with `antasphere org use <id>`, or the one named with `--org <id>`; without either, the key's default organization.
@@ -169,6 +170,74 @@ matter, not covered here.
 
 Add `--json` to any command for machine-readable output. A failed request prints to stderr and
 exits non-zero; a key without the right scope gets a clean `403` message.
+
+## Demo links
+
+On a demonstration or test installation of Antasphere, an owner of an organization can make a
+link that signs one of its demonstration accounts in without a password
+([Demo links](/antasphere/account/demo-links)). Demo links are off on account.antasphere.com: there the
+three commands below answer `Demo sign-in is off on this instance (DEMO_SIGN_IN).`
+
+```bash
+export ANTASPHERE_URL=http://hub.example.test
+export ANTASPHERE_OWNER_EMAIL=owner@example.com
+read -rs ANTASPHERE_OWNER_PASSWORD && export ANTASPHERE_OWNER_PASSWORD
+antasphere demo link --email ada@example.com                          # one link, a day, the dashboard's home page
+antasphere demo link --email ada@example.com --tool slideless-cloud --path /decks --hours 2
+antasphere demo link --email ada@example.com --email bob@example.com  # one sign-in, one link each
+antasphere demo link --email ada@example.com --minutes 30 --json      # { passes: [{ pass, links: [{ path, url }] }], refused: [] }
+antasphere demo list                                                  # the links made in the organization, newest first
+antasphere demo revoke <id>                                           # end one, and the sessions it opened
+pass show demo-owner | antasphere demo list --owner-email owner@example.com --owner-password-stdin
+```
+
+**These commands never use an API key**, not even the one `antasphere login` stored: demo links
+are made by an owner who signed in with their password. Each command signs in as the owner for its
+own length and signs out when it ends, whatever happened. The owner's address is `--owner-email`
+or `ANTASPHERE_OWNER_EMAIL`; the password is `ANTASPHERE_OWNER_PASSWORD` or, with
+`--owner-password-stdin`, the first line of stdin. There is no password flag (a password on a
+command line lands in the shell history), and nothing (address, password, session) is written to
+the profile. The installation comes from the usual `--api-url` / `ANTASPHERE_URL` / profile, and
+the organization from `--org <id>` alone: without it the commands act on the owner's default
+organization, never on the one `antasphere org use` saved, which belongs to the installation
+your API key is for. An owner with a second
+factor cannot use these commands: make that owner's links on the account site.
+
+| Flag                      | Command | Effect                                                                                             |
+| ------------------------- | ------- | -------------------------------------------------------------------------------------------------- |
+| `--email <address>`       | `link`  | A member the link signs in. Repeatable: several members cost one sign-in, one link each            |
+| `--tool <slug>`           | `link`  | The tool the link lands in (`slideless-cloud`, …); without it, the account site's dashboard        |
+| `--path <p>`              | `link`  | A page the link lands on, a path starting with one `/`. Repeatable: one link per page; default `/` |
+| `--hours <n>`             | `link`  | How long the link lives, in hours: a day by default, a week at most                                |
+| `--minutes <n>`           | `link`  | The same in minutes, instead of `--hours`                                                          |
+| `--owner-email <address>` | all     | The owner who signs in (else `ANTASPHERE_OWNER_EMAIL`)                                             |
+| `--owner-password-stdin`  | all     | Read the owner's password from the first line of stdin (else `ANTASPHERE_OWNER_PASSWORD`)          |
+| `--org <id>`              | all     | The organization to act on (else the one set with `antasphere org use`)                            |
+| `--json`                  | all     | Machine-readable output                                                                            |
+
+**`demo link`** makes ONE link per `--email` and prints, for each, one URL per `--path`, all
+opening that member's link; the first `--path` is the link's own page. With `--tool`, every URL
+ends with `&tool=<slug>` and opens that tool, on that page, as the member. A member the
+installation refuses does not stop the others: the command names who was refused and why, and
+exits 1. Each page is checked before any sign-in. The human output is the person, the tool, the
+expiry, then the URLs one per line; `--json` is
+`{ passes: [{ pass, links: [{ path, url }] }], refused: [{ email, code, message }] }`. The URLs
+are the only place the link's secret ever appears: keep them like a password until they expire.
+
+The installation allows three sign-ins per ten seconds from one address. A script that runs
+several demo commands in a row meets that limit: the command waits it out (a few seconds, three
+times at most) and says so on stderr. Name every member on ONE `demo link` to sign in once.
+
+**`demo list`** prints each link's id, the person's address, the tool, the page, the expiry, the
+revocation, the last use and the number of uses (`--json`: `{ passes }`). **`demo revoke <id>`**
+revokes a link and ends every session it opened (`--json`: the revoked link).
+
+The refusals are the installation's own sentences: no member of the organization holds that
+address; a link cannot open another owner's account; the address is not a demonstration address;
+the account has not confirmed its address; the account has a second factor; the person belongs to
+another organization; no tool of the installation has that slug; the page is not a path. An admin
+or a member who signs in reads `Only an owner of this organization manages demo links: the account
+that signed in is not one.`
 
 ## Example (agent-style)
 
