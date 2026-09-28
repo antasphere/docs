@@ -181,6 +181,7 @@
                   "slideless/self-hosting/hostinger",
                   "slideless/self-hosting/reverse-proxy",
                   "slideless/self-hosting/deployment-profiles",
+                  "slideless/self-hosting/demo-links",
                   "slideless/self-hosting/upgrade"
                 ]
               },
