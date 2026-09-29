@@ -83,7 +83,9 @@ an owner or an admin of the organization. See [Teams](/antasphere/account/teams)
 every tool or for the one named. `tools access <tool> --everyone` opens it to the whole
 organization; `--teams design,sales` narrows it to those teams (by slug), and `--teams ""` leaves
 it to the owners and admins, who always keep access. Setting needs a key with `account:write` held
-by an owner or an admin.
+by an owner or an admin. A tool Antasphere opens to an organization itself reads
+`(opened by Antasphere)` in the TEAMS column and is listed only where Antasphere opened it; setting
+it answers a sentence saying whom to ask.
 
 `export` needs a key granted the opt-in `data:export` scope and an admin role in the organization;
 the archive streams to disk (default `export-<yyyy-mm-dd>.zip`). Deleting an account is
