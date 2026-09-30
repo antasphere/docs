@@ -4,7 +4,7 @@ Mintlify site for docs.antasphere.com. Read this before editing anything.
 
 ## The one rule
 
-`antasphere/`, `slideless/`, `llms.txt`, and `docs.json`'s `navigation`
+`antasphere/`, `slideless/`, `hackathon/`, `llms.txt`, and `docs.json`'s `navigation`
 block are **GENERATED** by `sync/sync.mjs`. Never edit them directly — your
 change dies on the next sync. The navigation's shape (since 2026-09-22): the
 products as ONE dropdown beside the logo, and under the chosen product a few
@@ -13,7 +13,7 @@ nine-group rail under Slideless. Edit instead:
 
 | You want to change… | Edit… |
 |---|---|
-| A documentation page | the source repo's `docs/` (antasphere/hub or antasphere/slideless), then `npm run sync` |
+| A documentation page | the source repo's `docs/` (antasphere/hub, antasphere/slideless or antasphere/hackathon), then `npm run sync` |
 | Sidebar structure / titles | the source repo's `docs/nav.yml` |
 | Which groups sit under which tab of a product (five at most) | `sync/tools.yml` (`tabs:`, by the groups' titles; the sync refuses a group left out or placed twice) |
 | Changelog wording | `sync/changelog/<tool>/<version>.md` (editable; never regenerated) |
