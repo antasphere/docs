@@ -1,6 +1,6 @@
 ---
 title: "Antasphere Hackathon"
-description: "Antasphere Hackathon is the platform a hackathon runs on: one event with a shared clock, one repository per team, the coaches a message away, the two decks each team presents, and the community vote. Participants use it through the dashboard and the hackathon command line; coaches and the jury through the dashboard."
+description: "Antasphere Hackathon is the platform a hackathon runs on: one event with a shared clock, one repository per team, the coaches a message away, the three decks each team makes, and the community vote. Participants use it through the dashboard and the hackathon command line; coaches and the jury through the dashboard."
 ---
 
 {/* GENERATED from antasphere/hackathon docs/index.md — edit there, then run `npm run sync`. */}
@@ -18,7 +18,7 @@ import { HeroBand } from "/snippets/HeroBand.jsx";
 ## Who is who
 
 - **Participants** build. A team is a group of participants with one repository; a solo entrant is a team
-  of one and gets the same repository, the same two decks and the same place in the vote.
+  of one and gets the same repository, the same three decks and the same place in the vote.
 - **Coaches** (the platform calls them advisors) help every team. They read every team's chat, take the
   help requests and answer in their threads. They have no team, no submission and no ballot.
 - **The jury** watches the pitches and scores on paper. On the platform the jury reads the Teams page, with
@@ -32,18 +32,17 @@ the platform matches you on it: an account the roster does not name is refused.
 ## How an event unfolds
 
 1. **Before the day.** The organizers set the schedule and create each team's repository from the event's
-   starter, inviting each member's GitHub account. You install the hackathon plugin in Claude Code
-   (`/plugin marketplace add antasphere-hackathon/plugin`) and say `/plugin:join`: it installs the CLI,
-   connects you and sets up your team's app on your machine
-   ([Your hackathon, step by step](/hackathon/getting-started/participants)).
+   starter, inviting each member's GitHub account. You paste one prompt into your coding agent: it installs
+   the CLI and the hackathon skills, connects you and sets up your team's app on your machine
+   ([Start here](/hackathon/getting-started/start-here)).
 2. **The build.** The clock runs on the server. You push to your team's repository, early and often, and
    check on the Home page that the platform received your last revision. Your team's chat and the help
    requests are on the Chats page, the whole event's feed beside them.
 3. **The end of the build.** The build ends at the time the schedule says. Fifteen minutes of grace follow,
    for your final push. Then the freeze: the platform keeps a copy of the last revision it received, and
    nothing pushed after that counts. [The clock, the grace and the freeze](/hackathon/concepts/the-clock)
-4. **The pitches.** Each team hands in two Slideless links, a demo deck the jury can play alone and the
-   presentation given on stage, and presents live. When the organizers turn the vote on, participants rank
+4. **The pitches.** Each team hands in three Slideless links, a demo deck the jury reads alone, the
+   presentation given on stage and a vote presentation for the other participants, and presents live. When the organizers turn the vote on, participants rank
    the other teams. [Decks and the community vote](/hackathon/concepts/decks-and-voting)
 
 ## The pages

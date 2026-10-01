@@ -187,6 +187,11 @@ Antasphere login that Antasphere no longer accepts is replaced once: the CLI
 says `The stored Antasphere login was rejected: signing in again.` and asks
 for the email and the code.
 
+**From an agent (no terminal)**, sign in in two commands, the same `--email` in both:
+`hackathon login --email <email> --send-only` mails the code and exits (`--json`:
+`{"ok":true,"sent":true,"email":…}`); `hackathon login --email <email> --code <code>`
+ends the sign-in with that code, without sending a new one. Works on a self-hosted instance too.
+
 **On a self-hosted instance** it is the instance's own email code, both legs
 in the one command:
 
@@ -295,19 +300,21 @@ there is no team app to set up.
 An assigned repository carries `repository.access`, your standing on it as
 GitHub reports it for your GitHub username, read live by the server:
 `standing` is `no_username` (the roster has no GitHub username for you),
-`none` (GitHub knows no access: an organizer provisions or resumes the
-repositories), `invited` (an invitation waits, accept it at `invitationUrl`),
+`none` (GitHub knows no access: the invitation did not go through, run
+`connect --github` again or ask an organizer), `invited` (an invitation waits, accept it at `invitationUrl`),
 `member` (`canPush` says whether the permission allows a push) or `unknown`
 (GitHub did not answer). `fix` is one sentence of what to do, or null.
 
 **`--github <login>`** (on `connect` and on `setup`) saves your GitHub username
-on your own roster row (`PUT /bootstrap/github`), so the team repository
-invites that account. It is checked first by GitHub's rule (letters, digits and
+on your own roster row (`PUT /bootstrap/github`), and the server invites that
+account at once: a participant on the team repository (maintain), a coach on
+every team repository (read; the answer's `coach` counts the repositories and
+the invitations GitHub took). It is checked first by GitHub's rule (letters, digits and
 single hyphens, 39 at most, a leading `@` dropped): a login that breaks it is
 exit 2 and nothing goes on the wire. The command then prints
 `GitHub username: <login> (<standing>)` and the rest of the run reads the
-standing the server answered. An organizer, a jury viewer or an advisor has no
-repository to be invited on and is refused with `not_a_participant` (exit 3); a
+standing the server answered. An organizer or a jury viewer has no repository
+to be invited on and is refused with `not_a_participant` (exit 3); a
 username another person on the roster already named is refused with
 `github_login_taken` (exit 3).
 
@@ -695,7 +702,7 @@ a vote presentation, each a Slideless share link the team made
 (`https://<host>/v/<token>/`). The Teams page shows them as plain links,
 `Demo deck`, `Presentation` and `Vote presentation`. The vote presentation is
 the deck the other participants watch on the Vote page and rank, made with
-`/plugin:vote`; a team is a vote candidate once it is set.
+the `hackathon-deck-vote` skill; a team is a vote candidate once it is set.
 
 ```bash
 hackathon decks link --demo https://share.example.com/v/abc123/ --pitch https://share.example.com/v/def456/

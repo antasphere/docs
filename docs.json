@@ -229,7 +229,7 @@
       },
       {
         "product": "Antasphere Hackathon",
-        "description": "The platform a hackathon runs on. One event with a shared clock, a repository per team, the coaches in the chat, the two decks each team presents, and the community vote. A dashboard, a CLI and an MCP endpoint.",
+        "description": "The platform a hackathon runs on. One event with a shared clock, a repository per team, the coaches in the chat, the three decks each team makes, and the community vote. A dashboard, a CLI and an MCP endpoint.",
         "icon": "flag-checkered",
         "tabs": [
           {
@@ -240,6 +240,7 @@
                 "group": "Getting started",
                 "pages": [
                   "hackathon/index",
+                  "hackathon/getting-started/start-here",
                   "hackathon/getting-started/participants",
                   "hackathon/getting-started/access",
                   "hackathon/getting-started/coaches-and-jury",

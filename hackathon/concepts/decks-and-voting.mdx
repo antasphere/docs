@@ -1,6 +1,6 @@
 ---
 title: "Decks and the community vote"
-description: "Every team hands the jury two links, a demo deck and a presentation, and when the organizers open the vote, participants rank the other teams. The jury's own scoring is on paper, not in the application."
+description: "Every team hands in three links, a demo deck and a presentation for the jury and a vote presentation for the other participants, and when the organizers open the vote, participants rank the other teams. The jury's own scoring is on paper, not in the application."
 ---
 
 {/* GENERATED from antasphere/hackathon docs/concepts/decks-and-voting.md — edit there, then run `npm run sync`. */}
@@ -15,32 +15,34 @@ import { HeroBand } from "/snippets/HeroBand.jsx";
   compact={true}
 />
 
-Every team hands the jury two links, a demo deck and a presentation, and when the organizers open the vote, participants rank the other teams. The jury's own scoring is on paper, not in the application.
+Every team hands in three links, a demo deck and a presentation for the jury and a vote presentation for the other participants, and when the organizers open the vote, participants rank the other teams. The jury's own scoring is on paper, not in the application.
 
 ## The jury result is on paper
 
 The jury watches each team present live and scores on paper. The application holds no jury score and no
 jury ranking. The community result is never the jury result, and nothing combines the two.
 
-## Your team's two decks
+## Your team's three decks
 
-Each team has two links of its own, each a Slideless share link the team made:
+Each team has three links of its own, each a Slideless share link to a deck the team made from the template
+the organizers published in the organization's Slideless workspace:
 
-- **the demo deck**: how to try what you built, step by step, so the jury can play it alone;
-- **the presentation**: the pitch you give on stage.
+- **the demo deck** (the `hackathon-deck-demo` skill): what you built shown working, in one to three episodes of real
+  screenshots of your running app, so the jury can follow it alone;
+- **the presentation** (the `hackathon-deck-pitch` skill): the pitch you give on stage, three to five minutes;
+- **the vote presentation** (the `hackathon-deck-vote` skill): your elevator pitch with the gaps filled, the deck the other
+  participants read on the Vote page and rank. A team is a vote candidate once it is set.
 
-Set them from the command line, either one alone or both at once:
+The skills publish each deck and set its link. From the command line, one at a time or all at once:
 
 ```bash
-hackathon decks link --demo https://<host>/v/<token>/ --pitch https://<host>/v/<token>/
+hackathon decks link --demo https://<host>/v/<token>/ --pitch https://<host>/v/<token>/ --vote https://<host>/v/<token>/
 hackathon decks show        # what the platform holds for your team
 ```
 
-The team is the one of the signed-in participant. A link that is not a Slideless share link is refused.
-A third link, the **vote presentation** (`hackathon decks link --vote https://<host>/v/<token>/`, made with
-`/plugin:vote`), is the deck the other participants watch on the Vote page and rank: a team is a vote
-candidate once it is set.
-The **Teams** page shows every team's two links, `Demo deck` and `Presentation`, and `hackathon decks
+The team is the one of the signed-in participant. A link that is not a Slideless share link is refused, and
+so is a link on a host the platform does not frame.
+The **Teams** page shows every team's three links, `Demo deck`, `Presentation` and `Vote presentation`, and `hackathon decks
 gallery` prints one line per team.
 
 ## The community vote

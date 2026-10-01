@@ -47,6 +47,9 @@ takes a URL: the command knows the hackathon lives at `https://app.hackathon.ant
 whose organizations do not open the hackathon reads Antasphere's refusal and exits with code 3
 ([Who can sign in](/hackathon/getting-started/access)).
 
+A coding agent without a terminal signs in in two commands: `hackathon login --email <email> --send-only`
+mails the code, then `hackathon login --email <email> --code <code>` finishes with it.
+
 ```bash
 hackathon whoami   # the identity behind your API key
 hackathon logout   # forget the stored key and disconnect from Antasphere
@@ -132,10 +135,10 @@ evidence and the exceptions. Another team's submission is not readable.
 
 After a push, check the last received revision against `git rev-parse HEAD`.
 
-## Your two decks
+## Your three decks
 
 ```bash
-hackathon decks link --demo <url> --pitch <url>   # set your team's deck links
+hackathon decks link --demo <url> --pitch <url> --vote <url>   # set your team's deck links
 hackathon decks show                              # your team's three links
 hackathon decks gallery                           # one line per team
 ```

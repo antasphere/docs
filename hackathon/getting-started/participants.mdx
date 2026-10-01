@@ -17,30 +17,20 @@ import { HeroBand } from "/snippets/HeroBand.jsx";
 
 This page walks a participant through the hackathon, from installing the plugin to ranking the other teams. Your team is one project of the event, and a solo entrant is a team of one.
 
-## Start here: the hackathon plugin
+## The fast way: one prompt
 
-If you work with Claude Code, install the hackathon's plugin and let it do steps 1 to 4 with you. In Claude
-Code:
+Paste the prompt of [Start here](/hackathon/getting-started/start-here) into your coding agent: it does steps 1 to 4 with you. The
+steps below are the same thing by hand.
 
-```
-/plugin marketplace add antasphere-hackathon/plugin
-/plugin install plugin@antasphere-hackathon
-```
-
-Then run the join skill:
+The hackathon skills install in any agent with one command:
 
 ```
-/plugin:join
+npx -y skills add antasphere-hackathon/plugin --global --skill '*' --yes
 ```
 
-It installs the command line, signs you in, asks your GitHub username, waits while you accept the
-repository invitation, clones your team's repository, starts the app and opens it. It asks you before
-anything that is yours to decide: your email, your GitHub username, the folder. The sign-in code and the
-GitHub invitation are always yours to type and accept.
-
-The plugin has two more skills. `/plugin:check` runs the checks of step 4, walks you through what they say
-and reads the clock of step 6. `/plugin:demo` takes screenshots of your running app, builds your demo deck
-from them, hosts it on Slideless and hands its link to the platform (step 9). The plugin is public, at
+`hackathon-doctor` runs the checks of step 4, walks you through what they say and reads the clock of step 6. `hackathon-deck-demo`,
+`hackathon-deck-pitch` and `hackathon-deck-vote` make your team's three decks from the organizers' templates, host them on Slideless and
+hand their links to the platform (step 9). The skills are public, at
 [github.com/antasphere-hackathon/plugin](https://github.com/antasphere-hackathon/plugin).
 
 Either way, an organizer has put your email on the roster and added you to the event's organization
@@ -177,21 +167,27 @@ participants and coaches post plain text, up to 4000 characters; the jury reads 
 
 From the command line: `hackathon feed list` and `hackathon feed post <your words>`.
 
-## 9. Hand in your two decks
+## 9. Hand in your three decks
 
-Before the pitches, your team hands in two Slideless share links, a demo deck the jury can play alone and
-the presentation you give on stage:
+Before the pitches, your team hands in three Slideless share links, each a deck started from the template
+the organizers published in your organization's Slideless workspace:
+
+- **the demo deck**: your app shown working in one to three episodes of real screenshots, read by the jury
+  alone (`hackathon-deck-demo` plays your running app with Playwright and takes them);
+- **the presentation**: the pitch one of you gives on stage, three to five minutes (the `hackathon-deck-pitch` skill);
+- **the vote presentation**: your elevator pitch with the gaps filled, read by the other participants on the
+  **Vote** page before they rank the teams (the `hackathon-deck-vote` skill); your team is a vote candidate once it is set.
+
+Each skill fills its template from your repository, checks it on a laptop and a phone, publishes it on
+Slideless with a share link and registers the link for you. By hand:
 
 ```bash
-hackathon decks link --demo https://<host>/v/<token>/ --pitch https://<host>/v/<token>/
+hackathon decks link --demo https://<host>/v/<token>/ --pitch https://<host>/v/<token>/ --vote https://<host>/v/<token>/
 hackathon decks show
 ```
 
-Either link alone updates just that link. `/plugin:demo` makes the demo deck from screenshots of your
-running app, hosts it on Slideless and runs `decks link --demo` for you. A third link, the vote presentation, is the short deck the other
-participants watch on the **Vote** page and rank (`hackathon decks link --vote https://<host>/v/<token>/`, or
-`/plugin:vote` with your agent); your team is a vote candidate once it is set. The **Teams** page shows every
-team's `Demo deck` and `Presentation`. What each deck holds, and how the vote works, is on
+Any link alone updates just that link. The **Teams** page shows every team's `Demo deck`,
+`Presentation` and `Vote presentation`. What each deck holds, and how the vote works, is on
 [Decks and the community vote](/hackathon/concepts/decks-and-voting).
 
 ## 10. Rank the other teams

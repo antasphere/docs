@@ -62,8 +62,8 @@ dashboard's **Try it** page says the same.
 
 ### How to start
 
-1. **Clone your team's repository**: say `/plugin:join` to Claude Code once the plugin below is installed,
-   or do it with the hackathon command line, as on
+1. **Clone your team's repository**: paste the prompt of [Start here](/hackathon/getting-started/start-here)
+   into your coding agent, or do it with the hackathon command line, as on
    [Your hackathon, step by step](/hackathon/getting-started/participants): `npm i -g @antasphere/hackathon`,
    `hackathon login`, `hackathon connect`, then `hackathon setup --no-start`. The clone lands in
    `~/Antasphere/hackathon/<your-team>`, with the agent files installed and the app not started yet: the
@@ -109,25 +109,26 @@ starter run "What is the main heading of example.com?" --wait   # polls until do
 An agent connects to `http://localhost:3000/mcp` and finds the same verbs as tools: `starter_voice_speak`,
 `starter_voice_transcribe`, `starter_run_start`, `starter_run_get` and `starter_list_runs`.
 
-### The hackathon plugin
+### The hackathon skills
 
-The participant skills are not in the repository: they are the hackathon's Claude Code plugin. Install it
-once, in Claude Code:
+The participant skills are not in the repository: they install in any coding agent with one command (the
+prompt of [Start here](/hackathon/getting-started/start-here) runs it for you):
 
 ```
-/plugin marketplace add antasphere-hackathon/plugin
-/plugin install plugin@antasphere-hackathon
+npx -y skills add antasphere-hackathon/plugin --global --skill '*' --yes
 ```
 
-- **`/plugin:join`** does the start above with you: the command line, the sign-in, your GitHub username and
+- **`hackathon-setup`** does the start above with you: the command line, the sign-in, your GitHub username and
   invitation, the clone, the `.env` file (it fills the database password and leaves your two keys for you to
   paste), then the start and the app opened.
-- **`/plugin:check`** runs `hackathon doctor` and walks you through each failed check, restarts the app when
+- **`hackathon-doctor`** runs `hackathon doctor` and walks you through each failed check, restarts the app when
   it is down, then reads `hackathon event status`: the phase, the deadlines and the freeze.
-- **`/plugin:demo`** makes your demo deck: it plays your running app with Playwright, takes one screenshot
-  per step, builds the deck from them (one slide per step, so the jury can follow alone in five minutes,
-  ending with what is not finished yet), hosts it on Slideless and hands its link to the platform with
-  `hackathon decks link`.
+- **`hackathon-deck-demo`** makes your demo deck: it plays your running app with Playwright, takes one screenshot
+  per step and fills the organizers' Demo deck template with one to three episodes (so the jury can follow
+  alone in five minutes, ending with what is not finished yet), hosts it on Slideless and hands its link to
+  the platform with `hackathon decks link --demo`.
+- **`hackathon-deck-pitch`** and **`hackathon-deck-vote`** do the same for the presentation you give on stage and for the vote
+  presentation, the elevator pitch with the gaps filled that the other participants read on the Vote page.
 
 The `add-resource` skill of the starter walks a new resource through every layer of the tool, from the
 table to the dashboard page, the way the placeholder was added. Rename the tool when it becomes yours:
@@ -143,7 +144,7 @@ example to follow, then replace, with your own.
 ## At the end of the day
 
 Push before the freeze, and check on the Home page that the platform received your last revision. Hand in
-your two Slideless links with `hackathon decks link`, or say `/plugin:demo` to your agent for the demo deck. The jury opens the
-demo decks after the event, so never share a link with a password or an expiry before Friday evening. The
-third link, the vote presentation the other participants rank on the Vote page, goes in with
-`hackathon decks link --vote`, or say `/plugin:vote` to your agent.
+your three Slideless links, the demo deck, the presentation and the vote presentation: ask your agent for
+the `hackathon-deck-demo`, `hackathon-deck-pitch` and `hackathon-deck-vote` skills, or set them by hand with `hackathon decks link --demo <url> --pitch
+<url> --vote <url>`. The jury opens the demo decks after the event, so never share a link with a password or
+an expiry.
