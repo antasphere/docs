@@ -1,0 +1,114 @@
+---
+title: "Decks and the community vote"
+description: "Every team hands the jury two links, a demo deck and a presentation, and when the organizers open the vote, participants rank the other teams. The jury's own scoring is on paper, not in the application."
+---
+
+{/* GENERATED from antasphere/hackathon docs/concepts/decks-and-voting.md — edit there, then run `npm run sync`. */}
+
+import { HeroBand } from "/snippets/HeroBand.jsx";
+
+<HeroBand
+  eyebrow={"Concepts"}
+  title={"Decks and the community vote"}
+  drawing={"meridians"}
+  seed={3215971213}
+  compact={true}
+/>
+
+Every team hands the jury two links, a demo deck and a presentation, and when the organizers open the vote, participants rank the other teams. The jury's own scoring is on paper, not in the application.
+
+## The jury result is on paper
+
+The jury watches each team present live and scores on paper. The application holds no jury score and no
+jury ranking. The community result is never the jury result, and nothing combines the two.
+
+## Your team's two decks
+
+Each team has two links of its own, each a Slideless share link the team made:
+
+- **the demo deck**: how to try what you built, step by step, so the jury can play it alone;
+- **the presentation**: the pitch you give on stage.
+
+Set them from the command line, either one alone or both at once:
+
+```bash
+hackathon decks link --demo https://<host>/v/<token>/ --pitch https://<host>/v/<token>/
+hackathon decks show        # what the platform holds for your team
+```
+
+The team is the one of the signed-in participant. A link that is not a Slideless share link is refused.
+A third link, the **vote presentation** (`hackathon decks link --vote https://<host>/v/<token>/`, made with
+`/plugin:vote`), is the deck the other participants watch on the Vote page and rank: a team is a vote
+candidate once it is set.
+The **Teams** page shows every team's two links, `Demo deck` and `Presentation`, and `hackathon decks
+gallery` prints one line per team.
+
+## The community vote
+
+The Vote section is off unless the organizers turn it on. When it is on, participants rank the other teams
+on the **Vote** page, and `hackathon community status` prints the same.
+
+### Who votes, who is ranked
+
+Before the vote opens, an organizer locks who takes part: the candidate teams, and the voters, every
+participant on a team. The lock is a snapshot: a later change of the roster does not change who votes or
+who is ranked.
+
+### The window
+
+A ballot is accepted from the vote's opening to its closing, on the server's clock. A ballot that reaches
+the server one instant after the close is refused.
+
+### The ballot
+
+- **One ballot per participant.** You rank every other candidate, best first. Your own team is listed
+  apart and cannot be ranked.
+- **Draft and submit.** _Save draft_ keeps a ranking in progress, complete or not. _Submit ballot_ needs
+  every other team exactly once. A submission replaces the previous one; only the submitted ranking counts.
+- **Edits until the close.** You can submit again until the vote closes; the last submission is the one that
+  counts.
+- **Privacy.** You see your own ballot and nobody else's. There is no live leaderboard.
+
+From the command line: `hackathon community ballot show`, `hackathon community ballot save --ranking
+<ids>` and `hackathon community ballot submit --ranking <ids>`, the project ids best first.
+
+### The scoring rule
+
+For a submitted ballot that ranks `m` teams, the team at rank `r` (1 is the best) gets:
+
+```text
+points = (m - r) / (m - 1), when m > 1
+points = 1, when m = 1
+```
+
+A team's community score is the mean of its points over the submitted ballots that were allowed to rank it.
+The members of a team cannot rank it, so they are not in its count. The number of contributing ballots is
+shown beside each score. A team no submitted ballot could rank is unranked, not scored zero.
+
+Teams are sorted by score, highest first. Equal scores share a rank (1, 1, 3).
+
+**Example.** Three solo teams A, B and C. A ranks B then C; B ranks C then A; C ranks B then A. Each ballot
+ranks two teams, so first place is worth 1 point and second place 0.
+
+| Team | Points received        | Score |
+| ---- | ---------------------- | ----- |
+| A    | 0 (from B), 0 (from C) | 0     |
+| B    | 1 (from A), 1 (from C) | 1     |
+| C    | 0 (from A), 1 (from B) | 0.5   |
+
+**A bigger team casts more ballots.** Every participant has one ballot, so a team of three casts three
+ballots and a solo team one. None of them can rank their own team.
+
+### After the close
+
+The vote closes at its closing time, or earlier when an organizer closes it. An organizer then calculates the
+result and releases it, and it appears on the **Vote** page for every participant. A later calculation stays
+unreleased until an organizer releases it.
+
+## Generated decks
+
+When the Vote section is on, the platform can also generate two decks per team from the frozen submission,
+a jury deck for a five-minute presentation and a community deck for a quick comparison of the teams. An
+organizer reviews each one and releases it; a released deck opens as a read-only view from the **Teams**
+page, and a deck not released yet shows as pending. Every claim on a generated deck cites the file it comes
+from, or is marked unverified, and the generation never runs the team's code.

@@ -58,8 +58,8 @@ at the same time. Their teams in other organizations are not affected.
 
 ## From the command line
 
-The [`antasphere` CLI](/antasphere/agents/cli) works on the teams of the active organization:
+The [`antasphere` CLI](/antasphere/agents/cli) works on the teams of the organization it acts on:
 `antasphere teams list` lists them, `antasphere teams members <team>` shows who is in one, and
 `create`, `rename`, `delete`, `add <team> <email>` and `remove <team> <email>` change them. Reads
 need a key with `account:read`; changes need a key with `account:write` held by an owner or an
-admin of the organization (the key `antasphere login` stores carries both). With several organizations, add `--org <id>`, or run `antasphere org use <id>` once after `antasphere login` (a key set in the environment alone has no profile to remember the choice on).
+admin of the organization (the key `antasphere login` stores carries both). With several organizations, add `--org <id or name>` to the command, or run `antasphere org use <id or name>` once: it sets your default organization on your account, which every command and every tool CLI then act on.

@@ -1,0 +1,61 @@
+---
+title: "For coaches and the jury"
+description: "A coach helps every team from the Chats page; the jury reads the Teams page and scores the pitches on paper. Both sign in with their Antasphere account, on the email the organizers put on the roster."
+---
+
+{/* GENERATED from antasphere/hackathon docs/getting-started/coaches-and-jury.md — edit there, then run `npm run sync`. */}
+
+import { HeroBand } from "/snippets/HeroBand.jsx";
+
+<HeroBand
+  eyebrow={"Getting started"}
+  title={"For coaches and the jury"}
+  drawing={"lattice"}
+  seed={2519146703}
+  compact={true}
+/>
+
+A coach helps every team from the Chats page; the jury reads the Teams page and scores the pitches on paper. Both sign in with their Antasphere account, on the email the organizers put on the roster.
+
+## Coaches
+
+The platform calls a coach an advisor. A coach has no team, no submission and no ballot, and reads what every
+team reads and more:
+
+- **Every team's chat**, on the **Chats** page, beside the general channel. Post in a team's chat like any
+  member of it; the team, the other coaches and the organizers read it, no other team does.
+- **Every team's help requests.** A participant opens a request for their team, a one-line title and what
+  they need. Claim it, so the other coaches know it is taken, and answer in its thread. Let it go with an
+  unclaim when someone else should take it. A member of the team resolves it when it is sorted; the thread
+  then reads only, until someone reopens the request.
+- **Every team's repository, read-only.** When the organizers put your GitHub username on the roster, GitHub
+  invites you to read each team's repository. Accept the invitations (by email, or on github.com/notifications),
+  then clone or pull any team's code to help them. You cannot push to it.
+- **The Home page**, with the clock and the notices every participant sees, and the **Teams** page with each
+  team's demo deck and presentation once they are handed in.
+
+From the command line, after `npm i -g @antasphere/hackathon`, `hackathon login` and `hackathon connect`:
+
+```bash
+hackathon requests list --status open        # what waits for a coach
+hackathon requests show <requestId>          # the request, its team, its thread
+hackathon requests claim <requestId>         # take it
+hackathon requests unclaim <requestId>       # let it go
+hackathon chats list                         # every channel you can read
+hackathon chats read <channelId>             # one page of a channel's posts
+hackathon chats replies <channelId> <postId> # the replies of one thread
+hackathon chats post <channelId> <your words>
+hackathon chats post <channelId> --thread <postId> <your words>   # answer in a thread
+```
+
+## The jury
+
+The jury watches each team present live and scores on paper: the application holds no jury score and no jury
+ranking. On the platform a jury member reads:
+
+- the **Teams** page: every team, with its `Demo deck` and its `Presentation`, the two Slideless links the team
+  handed in. The demo deck is written to be played alone, step by step, before or after the pitch;
+- the **Vote** page's leaderboard, once the organizers have released the community result. The jury never
+  casts a ballot: the community vote is the participants', and nothing combines it with the jury's scoring.
+
+The Chats and the submissions are not open to the jury.

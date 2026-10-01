@@ -51,6 +51,11 @@
           "icon": "presentation-screen"
         },
         {
+          "anchor": "Hackathon",
+          "href": "https://app.hackathon.antasphere.com",
+          "icon": "flag-checkered"
+        },
+        {
           "anchor": "antasphere.com",
           "href": "https://antasphere.com",
           "icon": "globe"
@@ -76,7 +81,8 @@
               {
                 "group": "Tools",
                 "pages": [
-                  "antasphere/tools/slideless"
+                  "antasphere/tools/slideless",
+                  "antasphere/tools/hackathon"
                 ]
               }
             ]
@@ -215,6 +221,74 @@
                 "group": "Changelog",
                 "pages": [
                   "slideless/changelog"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "product": "Antasphere Hackathon",
+        "description": "The platform a hackathon runs on. One event with a shared clock, a repository per team, the coaches in the chat, the two decks each team presents, and the community vote. A dashboard, a CLI and an MCP endpoint.",
+        "icon": "flag-checkered",
+        "tabs": [
+          {
+            "tab": "Getting started",
+            "icon": "rocket",
+            "groups": [
+              {
+                "group": "Getting started",
+                "pages": [
+                  "hackathon/index",
+                  "hackathon/getting-started/participants",
+                  "hackathon/getting-started/access",
+                  "hackathon/getting-started/coaches-and-jury",
+                  "hackathon/getting-started/commands"
+                ]
+              },
+              {
+                "group": "Concepts",
+                "pages": [
+                  "hackathon/concepts/the-clock",
+                  "hackathon/concepts/decks-and-voting"
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "Malt × Antasphere 2026",
+            "icon": "calendar-day",
+            "groups": [
+              {
+                "group": "The event",
+                "pages": [
+                  "hackathon/events/malt-antasphere-2026"
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "Agents",
+            "icon": "terminal",
+            "groups": [
+              {
+                "group": "Agents",
+                "pages": [
+                  "hackathon/getting-started/connect-an-agent",
+                  "hackathon/agents/cli",
+                  "hackathon/agents/mcp-connector"
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "Changelog",
+            "icon": "list",
+            "groups": [
+              {
+                "group": "Changelog",
+                "pages": [
+                  "hackathon/changelog"
                 ]
               }
             ]

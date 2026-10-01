@@ -1,0 +1,60 @@
+---
+title: "Who can sign in"
+description: "The hackathon is a restricted Antasphere tool. Your Antasphere account opens it only when one of your organizations has been granted the hackathon, and only Antasphere staff grant it. The organizers give Antasphere the list of participants, coaches and jury; Antasphere adds each person to the event's organization and grants that organization the hackathon. Nothing on your side opens it: no plan, no invitation you could accept, no setting of your account."
+---
+
+{/* GENERATED from antasphere/hackathon docs/getting-started/access.md — edit there, then run `npm run sync`. */}
+
+import { HeroBand } from "/snippets/HeroBand.jsx";
+
+<HeroBand
+  eyebrow={"Getting started"}
+  title={"Who can sign in"}
+  drawing={"lattice"}
+  seed={97073060}
+  compact={true}
+/>
+
+The hackathon is a restricted Antasphere tool. Your Antasphere account opens it only when one of your
+organizations has been granted the hackathon, and only Antasphere staff grant it. The organizers give
+Antasphere the list of participants, coaches and jury; Antasphere adds each person to the event's
+organization and grants that organization the hackathon. Nothing on your side opens it: no plan, no
+invitation you could accept, no setting of your account.
+
+## What you see when you are in
+
+`hackathon login` signs you in, `hackathon connect` finds your place on the roster, and the dashboard at
+[app.hackathon.antasphere.com](https://app.hackathon.antasphere.com) shows the event's organization as
+your workspace. If you belong to several organizations, only the ones granted the hackathon appear here;
+the others stay at [account.antasphere.com](https://account.antasphere.com), where every organization of
+yours is listed.
+
+## What you see when you are not
+
+The command line prints the refusal Antasphere gives and exits with code 3:
+
+```
+Error: This account has no access to Antasphere Hackathon in any of its organizations
+```
+
+`hackathon doctor` shows the same sentence on its `credential` line. The dashboard's sign-in ends on a page
+that says the same, with the organizations Antasphere knows for you.
+
+It means one of two things. Either you signed in with another email than the one the organizers gave
+Antasphere. The Antasphere login is stored once for every Antasphere tool, so `hackathon logout` does not
+touch it: clear it with the account CLI, then sign in again with the email on the roster:
+
+```bash
+npx @antasphere/cli logout
+hackathon login
+```
+
+Or the organizers have not sent your email yet: ask them. Antasphere then adds you, and the same command
+works within a minute; nothing to reinstall, nothing to reconfigure.
+
+## What the refusal is not
+
+A refusal is not a wrong password, a missing key or an expired session. Those read differently: `connect`
+and `doctor` name the login to redo and exit with code 3 as well, since the reason is on the account's
+side. A usage mistake, a wrong flag or a network error, exits with code 1
+or 2. The full table is on [The commands](/hackathon/getting-started/commands).

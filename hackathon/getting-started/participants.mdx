@@ -1,0 +1,207 @@
+---
+title: "Your hackathon, step by step"
+description: "This page walks a participant through the hackathon, from installing the plugin to ranking the other teams. Your team is one project of the event, and a solo entrant is a team of one."
+---
+
+{/* GENERATED from antasphere/hackathon docs/getting-started/participants.md — edit there, then run `npm run sync`. */}
+
+import { HeroBand } from "/snippets/HeroBand.jsx";
+
+<HeroBand
+  eyebrow={"Getting started"}
+  title={"Your hackathon, step by step"}
+  drawing={"lattice"}
+  seed={1152069596}
+  compact={true}
+/>
+
+This page walks a participant through the hackathon, from installing the plugin to ranking the other teams. Your team is one project of the event, and a solo entrant is a team of one.
+
+## Start here: the hackathon plugin
+
+If you work with Claude Code, install the hackathon's plugin and let it do steps 1 to 4 with you. In Claude
+Code:
+
+```
+/plugin marketplace add antasphere-hackathon/plugin
+/plugin install plugin@antasphere-hackathon
+```
+
+Then run the join skill:
+
+```
+/plugin:join
+```
+
+It installs the command line, signs you in, asks your GitHub username, waits while you accept the
+repository invitation, clones your team's repository, starts the app and opens it. It asks you before
+anything that is yours to decide: your email, your GitHub username, the folder. The sign-in code and the
+GitHub invitation are always yours to type and accept.
+
+The plugin has two more skills. `/plugin:check` runs the checks of step 4, walks you through what they say
+and reads the clock of step 6. `/plugin:demo` takes screenshots of your running app, builds your demo deck
+from them, hosts it on Slideless and hands its link to the platform (step 9). The plugin is public, at
+[github.com/antasphere-hackathon/plugin](https://github.com/antasphere-hackathon/plugin).
+
+Either way, an organizer has put your email on the roster and added you to the event's organization
+at [account.antasphere.com](https://account.antasphere.com). Sign in with that email: the roster is matched
+on it. The hackathon opens only to the organizations Antasphere grants it; [Who can sign in](/hackathon/getting-started/access)
+says what that means for you.
+
+Without Claude Code, or to see what the plugin runs, the steps below are the same thing by hand.
+
+## 1. Install the command line
+
+The command line is the npm package `@antasphere/hackathon`, and its command is `hackathon`:
+
+```bash
+npm i -g @antasphere/hackathon
+hackathon --version
+```
+
+## 2. Sign in and connect
+
+```bash
+hackathon login
+hackathon connect
+```
+
+`login` asks for your Antasphere email, then for the code it sends you. That is your Antasphere account,
+the one that opens every Antasphere tool, and it is stored once on this machine: `antasphere login` from the
+account CLI, if you use it, signs in the same way and to the same place. The command knows where the
+hackathon lives, `https://app.hackathon.antasphere.com`, so it takes no URL.
+
+`connect` checks that the roster names you, then prints who you are, your team, your repository (`not
+assigned yet` until the organizers have created it), the dashboard URL and the next command. An account
+the roster does not name is refused: ask an organizer to add the email you sign in with. An account whose
+organizations do not open the hackathon reads the refusal Antasphere gives, and the command exits with
+code 3 ([Who can sign in](/hackathon/getting-started/access)).
+
+Your team's repository invites your GitHub account. If the roster has no GitHub username for you, or the
+wrong one, name yours:
+
+```bash
+hackathon connect --github <your-github-username>
+```
+
+GitHub then sends you an invitation to the repository, by email and on the repository's page. Accept it
+with that same GitHub account before you set up.
+
+## 3. Set up your team's app
+
+```bash
+hackathon setup
+```
+
+`setup` clones your team's repository into `~/Antasphere/hackathon/<your-team>`. To put it somewhere else,
+name the folder: `hackathon setup --directory ~/code/my-team`. It prints each command before it runs it:
+
+1. reads your team and your repository;
+2. checks that GitHub lets your account push to the repository. If you have not named your GitHub username
+   yet, or the invitation is still waiting, it stops and tells you what to do;
+3. checks Git, Docker, the Docker daemon and Compose;
+4. clones your team's repository with your own Git access. An existing clone of the right repository is kept
+   as it is: it is never reset and no change is discarded;
+5. writes the agent files (`--agent claude-code`, the default, or `--agent codex`);
+6. starts the app with Docker Compose and waits until it is ready;
+7. prints the local app URL, the dashboard URL and a summary.
+
+Running `setup` again is safe. It resumes where it stopped and keeps your work. A repository that needs an
+environment file before it starts, as the Malt × Antasphere starter does, is set up in two runs:
+`hackathon setup --no-start` clones and installs without starting, you write the file, then `hackathon setup`
+again builds and starts the app ([the Malt × Antasphere page](/hackathon/events/malt-antasphere-2026)).
+
+## 4. Check your machine
+
+```bash
+hackathon doctor
+```
+
+`doctor` changes nothing. It checks Git and the name and email your commits carry, Node.js 22 or later,
+Docker, the Docker daemon, Compose, the free disk space, your sign-in, your place on the roster, your
+repository and your access on GitHub, then your clone and the app. If you cloned outside the default folder,
+pass it: `hackathon doctor --directory ~/code/my-team`.
+
+It also proves that you can push: it runs `git push --dry-run` in your clone, so GitHub checks your access
+with the credential of this machine, and nothing is sent. If GitHub refuses, `doctor` says which account
+GitHub saw. Accept the invitation with the account on the roster, or sign in to GitHub on this machine with
+that account (`gh auth login`, or an SSH key on it).
+
+Each failed check prints what to do, written for your system: macOS, Linux or Windows. Every command exits
+with a code that says what went wrong; the table is on [The commands](/hackathon/getting-started/commands).
+
+## 5. Build and push
+
+Work in your clone and push to your team's designated branch. `setup` and the Home page's submission card
+name it.
+
+What counts is the last push the platform **received** before the freeze, not the last commit on your
+machine. Read [The clock, the grace and the freeze](/hackathon/concepts/the-clock) before the event. In short:
+
+- push early, and push often;
+- after a push, open the Home page and check **Last received revision** on your submission card against
+  `git rev-parse HEAD`. `hackathon submissions list` shows the same line;
+- the build ends at the build end. You then have exactly 15 minutes of grace to push your final changes.
+  At the freeze, intake closes: a push received from then on is recorded and never counts.
+
+## 6. Watch the clock
+
+The Home page shows the phase, a countdown to the next deadline and every deadline in the event's time
+zone, and a small timer stays on every page. The countdown follows the server's clock, not your device's.
+The notices appear 15, 5 and 1 minute before the build end, at the start of the grace, 5 and 1 minute
+before the freeze, and at the freeze. If an organizer moves the build end, you see a notice with the reason.
+
+From the command line: `hackathon event status`.
+
+## 7. Your team's chat and the help requests
+
+The **Chats** page lists the channels open to you: the general one, your team's chat, and the thread of
+each of your team's help requests. Your team, the coaches and the organizers read your team's chat. No
+other team does.
+
+Each channel works like a team chat app. Reply to a message in its thread, so the channel keeps only its
+top-level messages. Edit or delete your own messages. React with an emoji, and mention anyone who reads the
+channel with `@`. New messages, reactions and who is typing appear live, without a reload.
+
+When you are stuck, open a request: a one-line title and what you need. A coach claims it and answers in
+its thread. When it is sorted, anyone on your team resolves it; the thread then reads only, until someone
+reopens the request.
+
+From the command line: `hackathon requests open --title "…" --body "…"`, `hackathon chats list`,
+`hackathon chats post <channelId> <your words>`.
+
+## 8. The feed
+
+The general channel is the event's feed. The organizers pin announcements at the top. Organizers,
+participants and coaches post plain text, up to 4000 characters; the jury reads nothing here.
+
+From the command line: `hackathon feed list` and `hackathon feed post <your words>`.
+
+## 9. Hand in your two decks
+
+Before the pitches, your team hands in two Slideless share links, a demo deck the jury can play alone and
+the presentation you give on stage:
+
+```bash
+hackathon decks link --demo https://<host>/v/<token>/ --pitch https://<host>/v/<token>/
+hackathon decks show
+```
+
+Either link alone updates just that link. `/plugin:demo` makes the demo deck from screenshots of your
+running app, hosts it on Slideless and runs `decks link --demo` for you. A third link, the vote presentation, is the short deck the other
+participants watch on the **Vote** page and rank (`hackathon decks link --vote https://<host>/v/<token>/`, or
+`/plugin:vote` with your agent); your team is a vote candidate once it is set. The **Teams** page shows every
+team's `Demo deck` and `Presentation`. What each deck holds, and how the vote works, is on
+[Decks and the community vote](/hackathon/concepts/decks-and-voting).
+
+## 10. Rank the other teams
+
+When the organizers turn the vote on and open it, the **Vote** page lists every other team. Your own team is
+listed apart: you cannot rank it.
+
+- Order the teams, best first.
+- **Save draft** keeps a ranking in progress. It may be incomplete.
+- **Submit ballot** needs every other team exactly once. You can submit again until the vote closes; the
+  last submission replaces the one before. Only a submitted ballot counts.
+
+You have one ballot. After the close, an organizer releases the result, and it appears on the same page.

@@ -1,0 +1,268 @@
+---
+title: "The commands"
+description: "This page lists the commands you type during the hackathon, taken from the CLI's own help. The complete reference, written for agents, is the CLI reference."
+---
+
+{/* GENERATED from antasphere/hackathon docs/getting-started/commands.md — edit there, then run `npm run sync`. */}
+
+import { HeroBand } from "/snippets/HeroBand.jsx";
+
+<HeroBand
+  eyebrow={"Getting started"}
+  title={"The commands"}
+  drawing={"meridians"}
+  seed={523086640}
+  compact={true}
+/>
+
+This page lists the commands you type during the hackathon, taken from the CLI's own help. The complete
+reference, written for agents, is [the CLI reference](/hackathon/agents/cli).
+
+## Install
+
+```bash
+npm i -g @antasphere/hackathon
+hackathon --version
+```
+
+This installs the `hackathon` command. The second line prints the version number, so you know the install
+worked.
+
+```bash
+hackathon completion zsh   # or bash, or fish
+```
+
+`hackathon completion` prints a completion script for bash, zsh or fish.
+
+## Sign in
+
+```bash
+hackathon login
+hackathon connect
+```
+
+`hackathon login` asks your Antasphere email and the code it sends, and stores that Antasphere login once for
+every Antasphere tool on this machine. `hackathon connect` then checks your place on the roster. Neither
+takes a URL: the command knows the hackathon lives at `https://app.hackathon.antasphere.com`. An account
+whose organizations do not open the hackathon reads Antasphere's refusal and exits with code 3
+([Who can sign in](/hackathon/getting-started/access)).
+
+```bash
+hackathon whoami   # the identity behind your API key
+hackathon logout   # forget the stored key and disconnect from Antasphere
+```
+
+`hackathon whoami` shows the identity behind your API key. `hackathon logout` forgets the stored API key of
+the active profile. A profile connected through the hub also disconnects from Antasphere, and its cached key
+is revoked.
+
+## Your team's app
+
+### connect
+
+```bash
+hackathon connect                        # sign in and check your place on the roster
+hackathon connect --github <login>       # also save your GitHub username
+```
+
+- `--github <login>` is your GitHub username. It is saved on your roster row, and it is the account the team
+  repository invites.
+
+### setup
+
+```bash
+hackathon setup                          # clone, install the agent files, start the app
+hackathon setup --directory <path>       # put the clone somewhere else
+hackathon setup --github <login>         # save your GitHub username before the clone
+hackathon setup --agent codex            # install the files for Codex instead of Claude Code
+hackathon setup --port <n>               # run the app on another host port
+hackathon setup --no-start               # clone and install, do not build or start
+hackathon setup --timeout <seconds>      # wait longer for the app to be ready
+```
+
+`hackathon setup` clones your team's repository, installs the agent files and starts the app locally.
+
+- `--directory <path>` is where the clone goes. It must be a missing or empty directory, or the existing
+  clone. The default is `~/Antasphere/hackathon/<team>`.
+- `--github <login>` is your GitHub username. It is saved on your roster row before the clone, as with
+  `connect --github`.
+- `--agent <name>` is the agent whose file conventions are installed. It is `claude-code` or `codex`, and the
+  default is `claude-code`.
+- `--port <n>` is the host port of the app. The default is the template's.
+- `--no-start` clones and installs the files. It does not build or start the app.
+- `--timeout <seconds>` is how long to wait for the readiness probe. The default is 180.
+
+### doctor
+
+```bash
+hackathon doctor                         # check everything, change nothing
+hackathon doctor --directory <path>      # check a clone in another folder
+hackathon doctor --port <n>              # check another host port
+```
+
+`hackathon doctor` checks the machine, the instance, the credential, the roster and the clone. It changes
+nothing.
+
+- `--directory <path>` is the clone to check (the push, the installer skill, the manifest, the app). The
+  default is the folder `setup` uses.
+- `--port <n>` is the host port to check instead of the template's.
+
+## The clock
+
+```bash
+hackathon event status          # the phase, the deadlines, your role and team, the teams
+hackathon event status --json   # the same, as JSON
+```
+
+`hackathon event status` prints the phase, the deadlines, your role and team, and the teams. The phase and the
+deadlines are the server's clock. The details are in
+[The clock, the grace and the freeze](/hackathon/concepts/the-clock).
+
+## Your submission
+
+```bash
+hackathon submissions list              # the intake, and your team's line
+hackathon submissions show <project>    # your team's submission in full
+```
+
+`hackathon submissions list` prints the intake and, for a participant, one line: your own team's, with the
+state, the readiness, the last received revision and the frozen evidence (an organizer sees every team).
+`hackathon submissions show` prints your team's submission in full: the repository, the receipts, the frozen
+evidence and the exceptions. Another team's submission is not readable.
+
+After a push, check the last received revision against `git rev-parse HEAD`.
+
+## Your two decks
+
+```bash
+hackathon decks link --demo <url> --pitch <url>   # set your team's deck links
+hackathon decks show                              # your team's three links
+hackathon decks gallery                           # one line per team
+```
+
+`hackathon decks link` sets your team's demo deck, presentation and vote presentation links. Each one is a
+Slideless share link.
+
+- `--demo <url>` is the demo deck, an https Slideless share link (`/v/<token>/`).
+- `--pitch <url>` is the presentation deck, an https Slideless share link (`/v/<token>/`).
+- `--vote <url>` is the vote presentation, the deck the other participants watch on the Vote page and rank,
+  an https Slideless share link (`/v/<token>/`).
+- `--team <team>` is the team's name or id. An organizer passes it. A participant gets their own team by
+  default.
+
+`hackathon decks show` shows your team's demo deck, presentation and vote presentation links. `hackathon decks gallery` prints
+one line per team, with the jury deck, the community deck and the view of each released one. How the decks are
+used is in [Decks and the community vote](/hackathon/concepts/decks-and-voting).
+
+## Chats and help requests
+
+```bash
+hackathon chats list                              # the channels you can read
+hackathon chats read <channelId>                  # one page of posts, newest first
+hackathon chats read <channelId> --limit <n>      # a page size from 1 to 100
+hackathon chats read <channelId> --cursor <cursor>   # the next page
+hackathon chats post <channelId> <words>          # post a message
+hackathon chats post <channelId> --file <path>    # post a message read from a file
+```
+
+`hackathon chats list` shows the channels you can read. The general channel comes first, then the team chats,
+then the request threads. `hackathon chats read` shows one page of a channel's posts, newest first.
+`hackathon chats post` posts a plain-text message of 1 to 4000 characters in a channel you can read. Its words
+are joined by one space.
+
+- `--file <path>` reads the message from a UTF-8 file instead.
+- `--limit <n>` is the page size, from 1 to 100.
+- `--cursor <cursor>` resumes from a previous `nextCursor`.
+
+```bash
+hackathon requests list                                  # your team's requests, newest first
+hackathon requests list --status open                    # only one status
+hackathon requests show <requestId>                      # one request and its thread
+hackathon requests open --title <text> --body <text>     # ask the advisors for help
+hackathon requests resolve <requestId>                   # mark a request resolved
+hackathon requests reopen <requestId>                    # open a request again
+```
+
+`hackathon requests list` shows the requests you can see, newest first. A participant sees their team's
+requests. `hackathon requests show` shows one request with its team, its status, who claimed and resolved it,
+its body and its thread. `hackathon requests open` asks the advisors for help for your own team.
+`hackathon requests resolve` marks a request resolved. `hackathon requests reopen` opens it again and clears
+its claim. A member of the team, the claiming advisor or an organizer can resolve or reopen a request.
+
+- `--status <status>` shows only one status, `open`, `claimed` or `resolved`.
+- `--limit <n>` is the page size, from 1 to 100.
+- `--cursor <cursor>` resumes from a previous `nextCursor`.
+- `--title <text>` is one line of 1 to 200 characters.
+- `--body <text>` is what you need, in 1 to 4000 characters.
+
+### For coaches
+
+```bash
+hackathon requests claim <requestId>     # take a request
+hackathon requests unclaim <requestId>   # let a claimed request go
+```
+
+The CLI calls coaches advisors. An advisor takes a request with `hackathon requests claim`. The claiming
+advisor or an organizer lets a claimed request go with `hackathon requests unclaim`. An advisor also sees
+every team's requests in `hackathon requests list`.
+
+## The feed
+
+```bash
+hackathon feed show                  # the pinned posts, newest pin first
+hackathon feed list                  # one page of posts, newest first
+hackathon feed post <words>          # post a message
+hackathon feed post --file <path>    # post a message read from a file
+```
+
+The feed is the event's general channel. `hackathon feed show` shows the channel and its pinned posts, newest
+pin first. `hackathon feed list` shows one page of posts, newest first, and takes `--limit` and `--cursor`
+like `chats read`. `hackathon feed post` posts a plain-text message of 1 to 4000 characters. `--file <path>`
+reads the message from a UTF-8 file instead.
+
+## The vote
+
+The Vote section is off unless the organizers turn it on.
+
+```bash
+hackathon community status                             # the vote state, your standing, the candidates
+hackathon community ballot show                        # the candidates, your draft, your submission
+hackathon community ballot save --ranking <ids>        # keep a draft while voting is open
+hackathon community ballot submit --ranking <ids>      # submit a complete ranking
+```
+
+`hackathon community status` shows the vote state, the window, your standing and ballot line, the candidates
+and the released results. `hackathon community ballot show` shows the candidates you may rank, your draft and
+your submission. `hackathon community ballot save` keeps a draft while voting is open, and the draft may be
+partial. `hackathon community ballot submit` submits a complete ranking of every candidate. It replaces your
+previous submission.
+
+- `--ranking <ids>` is the project ids, comma-separated, best first.
+- `--eligibility-version <n>` is the eligibility version you read. By default the CLI reads it first.
+- `--expected-revision <n>` is the ballot revision you read, 0 for none. By default the CLI reads it first.
+
+## Machine output and exit codes
+
+Add `--json` to any command for machine-readable JSON output.
+
+| Code | Class       | When                                                                                                                                                                                                                                                                   |
+| ---- | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0    | ok          | Done.                                                                                                                                                                                                                                                                  |
+| 1    | error       | An unexpected failure (a server 500, a bug).                                                                                                                                                                                                                           |
+| 2    | usage       | A flag missing or wrong.                                                                                                                                                                                                                                               |
+| 3    | access      | No credential, an expired or refused one, a refusal by Antasphere (no organization of yours opens the hackathon), an account not on the roster, no event yet, no team yet, no repository assigned yet, no push access on GitHub, GitHub refused the clone or the push. |
+| 4    | environment | Git, its identity, Node.js, Docker, the daemon or Compose missing or failing; less than 2 GiB free; the port taken; the installer digest not matching; the manifest invalid; the app not ready in time; the push probe failing for another reason than access.         |
+| 5    | conflict    | The directory is not empty and is not the assigned clone.                                                                                                                                                                                                              |
+
+## Which workspace
+
+A key belongs to a person, and a person can belong to several organizations. `hackathon workspaces` lists
+yours and marks the one the commands run in with `*`. Nothing is saved on your machine: a command runs in
+your Antasphere default organization, and `--org <name or id>` names another one for that command only.
+The organizers' event is the organization they added you to, so for a participant the default is the
+right one.
+
+```bash
+hackathon workspaces                            # list your organizations
+hackathon event status --org "Malt × Antasphere"  # one command in another organization
+```

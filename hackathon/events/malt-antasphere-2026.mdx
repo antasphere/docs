@@ -1,0 +1,149 @@
+---
+title: "Malt × Antasphere Hackathon 2026"
+description: "The Malt × Antasphere AI Hackathon is a one-day sprint for Belgium's senior AI freelancers on Friday 2 October 2026 at WAT, Brussels: one tool for an agent that uses a computer, coaches in the room, a jury at six. This page is the platform side of that day and the starter every team begins from."
+---
+
+{/* GENERATED from antasphere/hackathon docs/events/malt-antasphere-2026.md — edit there, then run `npm run sync`. */}
+
+import { HeroBand } from "/snippets/HeroBand.jsx";
+
+<HeroBand
+  eyebrow={"The event"}
+  title={"Malt × Antasphere Hackathon 2026"}
+  drawing={"latitudes"}
+  seed={4095267426}
+  compact={true}
+/>
+
+The Malt × Antasphere AI Hackathon is a one-day sprint for Belgium's senior AI freelancers on Friday 2 October 2026 at WAT, Brussels: one tool for an agent that uses a computer, coaches in the room, a jury at six. This page is the platform side of that day and the starter every team begins from.
+
+Everything else about the event, the theme, the eight directions, the jury, the coaches, the partners, the
+prizes and the rules, is on [hackathon.antasphere.com](https://hackathon.antasphere.com); the scoring grid,
+six criteria on a 1 to 5 scale, is at
+[hackathon.antasphere.com/evaluation](https://hackathon.antasphere.com/evaluation).
+
+## The day
+
+| When                      | What                                                                                            |
+| ------------------------- | ----------------------------------------------------------------------------------------------- |
+| Thursday 1 October, 19:00 | By email: your team, the briefing, the Slack channel, the partners' docs and walkthrough video. |
+| Friday 2 October, 08:00   | Doors and breakfast at WAT, Rue Volta 6A, Ixelles.                                              |
+| 08:30                     | Kick-off: thirty minutes on the theme and the people. The clock starts.                         |
+| 09:00                     | The build sprint, coaches in the room all day.                                                  |
+| 12:30                     | Working lunch, at the desks.                                                                    |
+| 18:00                     | Pitches, jury and prizes. The clock stops.                                                      |
+| 19:00                     | Drinks.                                                                                         |
+
+On the platform, the build end, the fifteen minutes of grace and the freeze are the schedule the organizers
+set; the Home page counts down to them on the server's clock
+([The clock, the grace and the freeze](/hackathon/concepts/the-clock)).
+
+## What a team gets
+
+- **A private repository of your own**, created by the organizers from the event's starter, with each
+  member's GitHub account invited. Your team keeps it after the day.
+- **The starter**, a working tool with hands, ears and a voice, described below.
+- **Access to the two sponsored services for the day**: H Company's computer-use agents and Gradium's voice
+  API. The site says what each partner gives and when it reaches you: the Gradium code once your seat is
+  confirmed, H's docs and walkthrough the night before.
+- **The coaches**, on the Chats page and in the room.
+
+## The starter: hands, ears and voice
+
+The starter is a working tool you build on: a dashboard, a command-line client (`starter`) and an MCP
+endpoint an agent connects to, over one API. It comes wired to two services:
+
+- **Gradium, the voice**: it speaks a text as a wav file, and it turns a recording back into text.
+- **H, an agent in a cloud browser**: you say what to do on the web in plain words, it does it in a real
+  browser you can watch live, and it answers in plain text.
+
+A key left out stops nothing: the routes that need it answer with a sentence naming the key to set, and the
+dashboard's **Try it** page says the same.
+
+### How to start
+
+1. **Clone your team's repository**: say `/plugin:join` to Claude Code once the plugin below is installed,
+   or do it with the hackathon command line, as on
+   [Your hackathon, step by step](/hackathon/getting-started/participants): `npm i -g @antasphere/hackathon`,
+   `hackathon login`, `hackathon connect`, then `hackathon setup --no-start`. The clone lands in
+   `~/Antasphere/hackathon/<your-team>`, with the agent files installed and the app not started yet: the
+   starter needs its environment file first.
+2. **Write `.env`** at the root of the clone: a database password, and your two keys, `GRADIUM_API_KEY`
+   (a key from the Gradium console, gradium.ai) and `HAI_API_KEY` (a key from H's platform,
+   platform.hcompany.ai). A key you do not have yet can stay empty; add it later and restart the app.
+
+   ```bash
+   cd ~/Antasphere/hackathon/<your-team>
+   cat > .env <<ENV
+   POSTGRES_PASSWORD=$(openssl rand -hex 16)
+   GRADIUM_API_KEY=<your Gradium key>
+   HAI_API_KEY=<your H key>
+   ENV
+   chmod 600 .env
+   ```
+
+3. **Start the app**: `hackathon setup` again. It keeps the clone, builds the image, starts the app on
+   `http://localhost:3000` and waits until it answers. `hackathon doctor` checks it all without changing
+   anything.
+4. **Claim your instance.** On the first boot the dashboard asks for the owner account and the setup
+   token, which the server writes to its log. The setup runs the app under the compose project
+   `hackathon-<your-team>`, so read the token with
+   `docker compose -p hackathon-<your-team> logs app | grep 'claim the instance'` from the clone.
+5. **Try it.** Sign in, open **Try it** in the menu: the two integrations with their state, a text to speak,
+   a microphone to transcribe, and an instruction to run in a browser, with its live view and its answer.
+
+The same from the command line, from the clone. First create a key on the **API keys** page with the write
+box ticked (the dialog defaults to read only), then build the CLI once and define `starter` as a shell
+function:
+
+```bash
+pnpm install && pnpm turbo build --filter=@antasphere/starter
+STARTER_DIR="$PWD"; starter() { node "$STARTER_DIR/packages/cli/dist/bin.js" "$@"; }
+starter login --api-url http://localhost:3000 --api-key <the key you created>
+
+starter speak "Bonjour"                                          # writes speech.wav
+starter transcribe speech.wav                                    # prints the text
+starter run "What is the main heading of example.com?" --wait   # polls until done, then the answer
+```
+
+An agent connects to `http://localhost:3000/mcp` and finds the same verbs as tools: `starter_voice_speak`,
+`starter_voice_transcribe`, `starter_run_start`, `starter_run_get` and `starter_list_runs`.
+
+### The hackathon plugin
+
+The participant skills are not in the repository: they are the hackathon's Claude Code plugin. Install it
+once, in Claude Code:
+
+```
+/plugin marketplace add antasphere-hackathon/plugin
+/plugin install plugin@antasphere-hackathon
+```
+
+- **`/plugin:join`** does the start above with you: the command line, the sign-in, your GitHub username and
+  invitation, the clone, the `.env` file (it fills the database password and leaves your two keys for you to
+  paste), then the start and the app opened.
+- **`/plugin:check`** runs `hackathon doctor` and walks you through each failed check, restarts the app when
+  it is down, then reads `hackathon event status`: the phase, the deadlines and the freeze.
+- **`/plugin:demo`** makes your demo deck: it plays your running app with Playwright, takes one screenshot
+  per step, builds the deck from them (one slide per step, so the jury can follow alone in five minutes,
+  ending with what is not finished yet), hosts it on Slideless and hands its link to the platform with
+  `hackathon decks link`.
+
+The `add-resource` skill of the starter walks a new resource through every layer of the tool, from the
+table to the dashboard page, the way the placeholder was added. Rename the tool when it becomes yours:
+`pnpm instantiate <slug> --name "<Name>"`.
+
+### What the starter also carries
+
+The starter is an Antasphere tool like the platform itself: members and workspaces, API keys, an audit log,
+files, a versioned HTTP API with its OpenAPI document, a dashboard in English and French, background jobs,
+and the MCP endpoint. The placeholder resource, `items`, goes through every one of those layers and is the
+example to follow, then replace, with your own.
+
+## At the end of the day
+
+Push before the freeze, and check on the Home page that the platform received your last revision. Hand in
+your two Slideless links with `hackathon decks link`, or say `/plugin:demo` to your agent for the demo deck. The jury opens the
+demo decks after the event, so never share a link with a password or an expiry before Friday evening. The
+third link, the vote presentation the other participants rank on the Vote page, goes in with
+`hackathon decks link --vote`, or say `/plugin:vote` to your agent.

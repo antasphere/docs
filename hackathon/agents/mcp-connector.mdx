@@ -1,0 +1,162 @@
+---
+title: "The MCP connector"
+description: "Every instance serves a streamable-HTTP MCP endpoint at /mcp, protected by the instance's own built-in OAuth 2.1 authorization server: an MCP host needs the URL and nothing else."
+---
+
+{/* GENERATED from antasphere/hackathon docs/agents/mcp-connector.md — edit there, then run `npm run sync`. */}
+
+## claude.ai / Claude Desktop (OAuth)
+
+Add a custom connector with the URL:
+
+```
+https://hackathon.example.com/mcp
+```
+
+The client discovers everything itself: the 401 challenge points at the RFC
+9728 resource metadata, which points at this instance as the authorization
+server; the client self-registers (RFC 7591), the member signs in and
+approves the consent screen, and the connector holds a 15-minute access
+token with a rotating refresh token. Deactivating the member kills the
+connector instantly (tokens are re-checked against the live membership on
+every call).
+
+**The grant is user-scoped, not workspace-scoped.** A connected client acts
+as you in every workspace you belong to: consent binds no workspace and there
+is no per-workspace consent. Each tool takes an optional `workspace` id and
+defaults to your default workspace. Connect a client only where you would
+trust it with all of them.
+
+## Claude Code / CLIs (API key)
+
+`/mcp` also accepts the instance's API keys directly — no OAuth dance:
+
+```bash
+claude mcp add --transport http hackathon https://hackathon.example.com/mcp \
+  --header "Authorization: Bearer hck_..."
+```
+
+Mint keys in the dashboard (API keys → Create key). Scopes gate what tools can do:
+`hackathon:read` for reads, `hackathon:write` for mutations.
+
+## Verify an instance
+
+```bash
+curl -s https://hackathon.example.com/.well-known/oauth-protected-resource/mcp | jq
+npx @modelcontextprotocol/inspector   # connect → OAuth dance → call get_me
+```
+
+`get_me` returning your identity proves discovery, registration, login,
+consent, token exchange, JWKS verification, and the live membership check in
+one call.
+
+## The tool set
+
+The endpoint lists 73 tools: the two every instance of the platform serves
+(`get_me`, `list_files`) and the 71 under the tool's prefix: `hackathon_whoami`
+(registered by the platform under that prefix), the eleven project tools and the two team reads every
+Antasphere tool serves (registered by the platform too: a project is a subgroup
+of the workspace, a project being a subgroup of the workspace; in the hackathon
+each team is one), the nine event tools
+(the hackathon's clock, phase, deadlines, roster, the GitHub organization and template of the teams, and the Vote section's switch), the one bootstrap tool
+(a participant's own place, team, repository and installer), the eight
+submission tools (what each team pushed, received and froze, and the
+provisioning of the team repositories), the twelve community tools (the
+vote: the eligibility an organizer locks, a voter's ballot, the results) and the
+seven feed tools (the event's general channel: its posts, the organizer's pins
+and moderation, and the three chat tools: the general channel, each team's
+channel and each request's thread), the ten deck tools (the gallery, each
+team's two deck links, each team's showcase, the generation runs, the review and the release) and the seven request tools (a
+team's help requests to the advisors). All act as the
+connected user: identity always comes from the verified credential (OAuth token
+or API key), never from a tool parameter. A read tool needs `hackathon:read`, a
+write tool `hackathon:write`; the API's fail-closed allowlist applies unchanged.
+Start with `hackathon_whoami`.
+
+| Tool                                | Scope             | Does                                                                                                                                                                                                                          |
+| ----------------------------------- | ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `get_me`                            | `hackathon:read`  | The connected user (`id`, `email`, `name`), the workspace the call resolved to, the role, how the caller signed in, the scopes, and every workspace (an alias of `hackathon_whoami`)                                          |
+| `list_files`                        | `hackathon:read`  | A workspace's files, newest first, with a `nextCursor` for the next page. `limit` is 1 to 100, 50 by default                                                                                                                  |
+| `hackathon_whoami`                  | `hackathon:read`  | Who is connected, the scopes, and every organization the user can name in the `workspace` argument, with role and default flag                                                                                                |
+| `hackathon_list_projects`           | `hackathon:read`  | The projects you belong to, newest first, each with your own `myRole`; `archived` lists the archived ones or both. A project is a subgroup of the workspace                                                                   |
+| `hackathon_get_project`             | `hackathon:read`  | One project, with your own role on it (a project you are not on answers `not_found`, never a refusal)                                                                                                                         |
+| `hackathon_list_project_members`    | `hackathon:read`  | A project's members and their roles (`viewer` < `editor` < `manager`), with a `nextCursor`                                                                                                                                    |
+| `hackathon_create_project`          | `hackathon:write` | Creates a project; you become its first manager. Confirm-first                                                                                                                                                                |
+| `hackathon_update_project`          | `hackathon:write` | Renames a project, changes its description or replaces its `metadata` object (manager). Confirm-first                                                                                                                         |
+| `hackathon_archive_project`         | `hackathon:write` | Archives a project, out of the default list and read-only, or brings one back with `archived: false` (manager). A project is never deleted. Confirm-first                                                                     |
+| `hackathon_add_project_member`      | `hackathon:write` | Puts one of the workspace's own active members on a project by `userId` or `email`, with a role (manager). Invites nobody, mints no account. Confirm-first                                                                    |
+| `hackathon_set_project_member_role` | `hackathon:write` | Changes a project member's role (manager). Confirm-first                                                                                                                                                                      |
+| `hackathon_remove_project_member`   | `hackathon:write` | Takes someone off a project (manager; anyone may remove themselves). They stay a workspace member. Destructive, confirm-first                                                                                                 |
+| `hackathon_set_project_team_role`   | `hackathon:write` | Changes the role a team holds on a project (manager). Confirm-first                                                                                                                                                           |
+| `hackathon_remove_project_team`     | `hackathon:write` | Takes a team off a project (manager). Its people keep their own entries; the team stays in the workspace. Destructive, confirm-first                                                                                          |
+| `hackathon_list_teams`              | `hackathon:read`  | The workspace's teams (named groups of its members), with a `nextCursor`. On a workspace managed by the Antasphere account site they come from there; teams are shaped on the People page or the account site, never over MCP |
+| `hackathon_list_team_members`       | `hackathon:read`  | One team's members, with a `nextCursor` (`role` is their workspace role)                                                                                                                                                      |
+
+| `hackathon_get_event_status` | `hackathon:read` | GetEventStatus: `serverTime`, the `phase` (scheduled, building, grace, closed), the event with its deadlines (`freezeAt` = `buildEndsAt` + 900 s) and `configVersion`, the `nextDeadline`, the notice schedule, `me` (role, project) and the teams you may see with their submission state. `event_not_configured`, `not_on_roster` |
+| `hackathon_configure_event` | `hackathon:write` | ConfigureEvent (organizer): creates the event with `expectedVersion` 0 or reschedules it with the version read; once started the start is fixed and moving `buildEndsAt` needs a `reason`; after the freeze both are fixed; before the start a new schedule starts ahead of now; once voting was opened the vote window is fixed. `version_conflict`, `event_started`, `event_closed`, `reason_required`, `starts_past`, `vote_window_locked`. Confirm-first |
+| `hackathon_configure_github` | `hackathon:write` | SetEventGitHub (organizer): the GitHub `organization` the teams' repositories are created in, the `templateRepository` (`owner/name`) they start from and the `designatedBranch` (left out, the stored one is kept; `main` on a new event); returns the four settings with `installationId`, cleared when the organization or the template changes. The three are fixed once a team repository exists (`repositories_provisioned`); the branch is the template's default branch. Confirm-first |
+| `hackathon_set_vote` | `hackathon:write` | SetEventVote (organizer): turns the Vote section on or off; off by default. Off, the community tools and the deck generation answer `vote_off` and change nothing, and the dashboard hides the Vote page. Returns the event with `voteEnabled`. Confirm-first |
+| `hackathon_check_github` | `hackathon:write` | CheckEventGitHub (organizer): reads the App installation on the organization and the template, live; returns `installation`, `template`, `installUrl`, `problems` (plain sentences) and `ok`, and records the installation id whenever it finds the App; an event naming nothing is checked on the instance's defaults. `github_not_configured` (neither names one), `github_unavailable`. Confirm-first |
+| `hackathon_get_roster` | `hackathon:read` | The roster (organizer): every row with email, name, role (organizer, participant, jury), team, `github` (the GitHub username, null until set) and `userId` once the person signed in, plus `lockedAt` |
+| `hackathon_import_roster` | `hackathon:write` | Imports the WHOLE roster (organizer): rows upserted by email, rows absent from the list removed and reported, teams no row names dissolved (their project archived) and reported; a participant names a team (created as a project when new); a row's optional `github` sets the username the team repository invites, a row without it keeps the stored one. `roster_locked` once locked. Destructive, confirm-first |
+| `hackathon_lock_roster` | `hackathon:write` | Locks the roster before voting (organizer); idempotent. Confirm-first |
+| `hackathon_unlock_roster` | `hackathon:write` | Unlocks the roster (organizer) while voting has not opened (`voting_open` otherwise); idempotent. Confirm-first |
+| `hackathon_get_bootstrap` | `hackathon:read` | GetBootstrap: the verified `user`, `serverTime`, your `eligibility` to set up a team app (`role`, `eligible`, `reason`), the `event` with its phase and deadlines, your team (`project`), the `repository` assignment (`pending` until provisioned, else the clone URL and branch), the `installer` skill (version, sha256 digest) and the safe `setup` data. `event_not_configured`, `not_on_roster` |
+| `hackathon_list_submissions` | `hackathon:read` | The intake (closed at the freeze; "capture requires attention" while a project is not settled) and one overview per team: repository and readiness, submission state (`waiting`, `capturing`, `frozen`, `missing`, `error`), last accepted revision and its receipt time, frozen evidence, receipt and snapshot counts. An organizer every team, a participant their own |
+| `hackathon_get_submission` | `hackathon:read` | One team's submission in full: the repository, the last 50 deliveries with their receipt sequence, the snapshots, the frozen evidence, the exceptions. Another team's project answers `project_not_found` |
+| `hackathon_list_capture_failures` | `hackathon:read` | Admin capture failures (organizer): the projects needing attention, the refused deliveries with their code, the late deliveries, the webhook's signature-failure counter |
+| `hackathon_reconcile_freeze` | `hackathon:write` | ReconcileFreeze (organizer): run the retry-safe sweep now: capture every pending revision (the exact sha, never a later HEAD), freeze every project past its deadline on its latest accepted receipt before the freeze. Confirm-first |
+| `hackathon_record_submission_exception` | `hackathon:write` | Records an organizer exception on a frozen project (after the freeze, before the eligibility lock and before voting opens): freeze the given `sha` instead (captured now; `capture_failed` when GitHub cannot produce it) or mark the project missing (`sha` null), with `invalidateDecks` and `invalidateVoting` stated. `event_not_closed`, `judging_started`. Destructive, confirm-first |
+| `hackathon_plan_provisioning` | `hackathon:read` | PlanProvisioning (organizer, dry run): the template revision, one repository per team with its members (maintain on its own repository only) and the event's coaches (`viewers`, read on every repository), what is already mapped, the conflicts read from GitHub before any write |
+| `hackathon_apply_provisioning` | `hackathon:write` | ApplyProvisioning (organizer): creates or resumes the operation of `idempotencyKey`; the sample project runs create → invite → grant → readback → baseline and gates the rest; done steps skipped, failed ones retried, the invitations and the readback re-run (a coach added since is invited to read). `plan_conflicts`, `github_unavailable`. Confirm-first |
+| `hackathon_get_provisioning` | `hackathon:read` | One provisioning operation (organizer): its status and, per team, the repository, its readiness, the next action and every step |
+| `hackathon_get_community` | `hackathon:read` | GetCommunity: the vote as you see it: `voting.state` (unlocked, locked, scheduled, open, closed), the eligibility version and the vote window, `me.voter` (may you vote, your own team, why not), `me.ballot` (your own line: state, revision, `submittedAt`), the candidates, and the released results (null until released). No other ballot, no live score |
+| `hackathon_get_ballot` | `hackathon:read` | GetBallot (voter): the candidates you may rank (your own team excluded), `canSubmit`, and your ballot: `draft`, `submitted` (the only ranking that counts), `revision`. `not_eligible_voter` when you are not in the locked eligibility |
+| `hackathon_save_ballot` | `hackathon:write` | SaveBallot (voter): keeps a draft (partial allowed) while voting is open, never withdraws a submission; needs the `eligibilityVersion` and `expectedRevision` read. Returns the receipt (`revision`, `acceptedAt`). `voting_not_open`, `voting_closed`, `eligibility_stale`, `revision_conflict`, `invalid_ballot`. Confirm-first |
+| `hackathon_submit_ballot` | `hackathon:write` | SubmitBallot (voter): a complete ordering of every candidate exactly once, best first; replaces the previous submission, editable until the close. Returns the receipt. Refused at or after the close (`voting_closed`), on a stale revision, on an incomplete ranking (`invalid_ballot`, `details.reason`). Confirm-first |
+| `hackathon_get_eligibility` | `hackathon:read` | The eligibility review (organizer): the draft from the roster before a lock, the locked snapshot after it, every exclusion with its reason, each candidate's `ready` and `readiness`, and `rosterLockedAt` |
+| `hackathon_lock_eligibility` | `hackathon:write` | Locks the eligibility (organizer) as a new version: the candidates, the voters and their own teams, immutable while voting runs; `excludedProjects` and `excludedVoters` with a reason each, `confirmedProjects`. `eligibility_locked` while a lock stands, `invalid_eligibility` on an unknown project or email. Confirm-first |
+| `hackathon_unlock_eligibility` | `hackathon:write` | Unlocks the eligibility (organizer) while voting has not opened (`voting_open` otherwise); the next lock is a new version. Idempotent. Confirm-first |
+| `hackathon_open_voting` | `hackathon:write` | OpenVoting (organizer): ballots are accepted inside the vote window from now. Needs the roster locked (`roster_not_locked`), the eligibility locked (`eligibility_not_locked`), a candidate (`no_candidates`), every candidate ready (`candidates_not_ready`, `details.projects`). Idempotent. Confirm-first |
+| `hackathon_close_voting` | `hackathon:write` | CloseVoting (organizer): closes the vote at the server time; the window end closes it too. Idempotent. Confirm-first |
+| `hackathon_get_results` | `hackathon:read` | Every calculation (organizer): the scores as exact fractions with a decimal, the contributing ballot count and competition ranks, the ties, the coverage, the input digest, and which version is released |
+| `hackathon_calculate_results` | `hackathon:write` | CalculateResults (organizer, after close): the positional rule over the submitted, non-invalidated ballots of the locked eligibility; the same ballot set answers the same version, a changed set the next one. `voting_not_closed` before the close. Confirm-first |
+| `hackathon_release_results` | `hackathon:write` | ReleaseResults (organizer): releases one `version` to the participants; a later version stays unreleased until released. Confirm-first |
+| `hackathon_get_feed` | `hackathon:read` | GetFeed: the event's general channel and its pinned posts, newest pin first (`channel`, `pinned`). An organizer or a participant; a jury viewer is refused (`insufficient_event_role`). `event_not_configured`, `not_on_roster` |
+| `hackathon_list_feed_posts` | `hackathon:read` | ListFeed: the posts of the general channel (its top-level posts; thread replies are counted on their root), newest first, with a `nextCursor`; `limit` is 1 to 100, 50 by default. Each post: `author`, `authorRole`, plain-text `body`, `createdAt`, `pinnedAt`, `hidden`, `replyCount`, `lastReplyAt`, `editedAt`, `deleted`, `reactions`, `mentions`. An organizer also receives the hidden posts with `hidden: { at, reason, by }`; everyone else never does |
+| `hackathon_post_feed_message` | `hackathon:write` | PostMessage: posts in the general channel as the connected user, 1 to 4000 characters of plain text (no Markdown). Ten posts per minute per account (`rate_limited`). Confirm-first |
+| `hackathon_pin_feed_post` | `hackathon:write` | PinMessage (organizer): pins a post at the top of the feed; idempotent; a hidden post answers `post_hidden`. Confirm-first |
+| `hackathon_unpin_feed_post` | `hackathon:write` | Unpins a post (organizer); idempotent. Confirm-first |
+| `hackathon_hide_feed_post` | `hackathon:write` | Hides a post with a `reason` (organizer, 1 to 500 characters): participants no longer see it, organizers see it with the reason; a pinned post is unpinned and its reactions are cleared; audited. Destructive, confirm-first |
+| `hackathon_list_chats` | `hackathon:read` | ListChats: the channels you may read: the general channel, the team channels (an organizer and an advisor every team's, a participant their own), then the request threads. A jury viewer is refused (`insufficient_event_role`) |
+| `hackathon_list_chat_posts` | `hackathon:read` | ListChatPosts: one page of a channel's posts, newest first, like `hackathon_list_feed_posts`. A channel you may not read answers `channel_not_found` |
+| `hackathon_post_chat_message` | `hackathon:write` | PostChatMessage: posts in one channel you may read, 1 to 4000 characters of plain text; the feed's ten posts per minute per account; a resolved request's thread answers `request_resolved`. Confirm-first |
+| `hackathon_restore_feed_post` | `hackathon:write` | Restores a hidden post (organizer); idempotent; it is not pinned again. Confirm-first |
+| `hackathon_get_deck_links` | `hackathon:read` | GetDeckLinks: a team's three links, the demo deck, the presentation deck and the vote presentation (a Slideless share link or null). A participant reads their own team's; an organizer names the team (`team`: its name or id) |
+| `hackathon_set_deck_links` | `hackathon:write` | SetDeckLinks: sets a team's `demo`, `pitch` and/or `vote` link, each an https Slideless share link (`/v/<token>/`) on a host the instance allows (else `invalid_deck_link`); the vote presentation makes the team a vote candidate. A participant sets their own team's (another team: `not_your_team`); an organizer names the team (`team_required` without one); a coach or a jury viewer is refused. Works whatever the vote switch says. Confirm-first |
+| `hackathon_get_team_showcase` | `hackathon:read` | GetTeamShowcase: a team's `product`, `tagline` and `description` (plain text or null). A participant reads their own team's; an organizer names the team (`team`: its name or id) |
+| `hackathon_set_team_showcase` | `hackathon:write` | SetTeamShowcase: sets a team's `product` (at most 24 characters), `tagline` (at most 140) and/or `description` (at most 4000), plain text; an empty string or null clears one. The product name is the name of what you built, 24 characters at most; the Vote page shows it on your team's tile. The same who as `hackathon_set_deck_links`. Confirm-first |
+| `hackathon_list_gallery` | `hackathon:read` | ListGallery: one entry per team with, per kind (jury, community), the released deck (its exact version, its release time, the read-only `viewUrl`) or the pending state; an organizer reads the real state (none, generating, review, failed), a participant or a jury viewer pending or released only; the next useful action before any deck is released |
+| `hackathon_generate_presentations` | `hackathon:write` | GenerateAllPresentations (organizer): a durable run over every project with a frozen submission, both kinds, answered at once with its id; completed work skipped unless `newRevision`. `event_not_closed`, `run_in_progress`, `content_pinned`. Confirm-first |
+| `hackathon_list_generation_runs` | `hackathon:read` | The generation runs of the event (organizer), newest first, with their revision, status and job counts |
+| `hackathon_get_generation_run` | `hackathon:read` | GetGenerationRun (organizer): the run with every job per project and kind: its state, attempts, next attempt, last error, private log, and the deck once published. `run_not_found` |
+| `hackathon_review_deck` | `hackathon:write` | Review a deck (organizer): approve it for release, or reject it with a note; rejecting the released deck takes it out of the gallery unless the vote pinned it (`content_pinned`). Audited. Confirm-first |
+| `hackathon_release_project_decks` | `hackathon:write` | ReleaseProjectDecks (organizer): release the latest approved deck of each kind of a project to the gallery, superseding the released ones. `not_approved`, `content_pinned`, `evidence_replaced`. Audited. Confirm-first |
+| `hackathon_list_requests` | `hackathon:read` | ListRequests: the help requests you may see (an organizer and an advisor every team's, a participant their own team's), newest first, optionally one `status` (open, claimed, resolved), with a `nextCursor` |
+| `hackathon_get_request` | `hackathon:read` | GetRequest: one request you may see, with its thread (`channelId`). `request_not_found` |
+| `hackathon_open_request` | `hackathon:write` | OpenRequest (a participant on a team): a `title` and a plain-text `body`, for your own team (the roster names it). Audited. Confirm-first |
+| `hackathon_claim_request` | `hackathon:write` | ClaimRequest (an advisor): idempotent for you; `request_claimed` when another advisor holds it, `request_resolved` once resolved. Audited. Confirm-first |
+| `hackathon_unclaim_request` | `hackathon:write` | UnclaimRequest (the advisor who claimed it, or an organizer): open again; idempotent. Audited. Confirm-first |
+| `hackathon_resolve_request` | `hackathon:write` | ResolveRequest (a member of the team, the advisor who claimed it, or an organizer); its thread takes no new post; idempotent. Audited. Confirm-first |
+| `hackathon_reopen_request` | `hackathon:write` | ReopenRequest (the same people as resolve): a claimed or resolved request is open again, its claim cleared; idempotent. Audited. Confirm-first |
+
+A guest of a workspace is refused every project tool, exactly as through the
+API. The event and community tools
+answer `not_on_roster` to a member the roster does not name, on every credential,
+and the ballot tools `not_eligible_voter` to anyone outside the locked eligibility,
+an organizer included.
+
+Each tool takes an optional `workspace` id and defaults to your default
+workspace. No tool uploads or downloads a file: that happens through the API
+or the CLI ([CLI reference](/hackathon/agents/cli)). The `/mcp` transport caps request
+bodies at 1 MiB.

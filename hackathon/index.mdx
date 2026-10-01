@@ -1,0 +1,77 @@
+---
+title: "Antasphere Hackathon"
+description: "Antasphere Hackathon is the platform a hackathon runs on: one event with a shared clock, one repository per team, the coaches a message away, the two decks each team presents, and the community vote. Participants use it through the dashboard and the hackathon command line; coaches and the jury through the dashboard."
+---
+
+{/* GENERATED from antasphere/hackathon docs/index.md — edit there, then run `npm run sync`. */}
+
+import { HeroBand } from "/snippets/HeroBand.jsx";
+
+<HeroBand
+  eyebrow={"Antasphere Hackathon"}
+  title={"One day, one tool, one team"}
+  lede={"The clock, your team's repository, the coaches and the vote, in one place."}
+  drawing={"lattice"}
+  seed={20261002}
+/>
+
+## Who is who
+
+- **Participants** build. A team is a group of participants with one repository; a solo entrant is a team
+  of one and gets the same repository, the same two decks and the same place in the vote.
+- **Coaches** (the platform calls them advisors) help every team. They read every team's chat, take the
+  help requests and answer in their threads. They have no team, no submission and no ballot.
+- **The jury** watches the pitches and scores on paper. On the platform the jury reads the Teams page, with
+  each team's demo deck and presentation, and the vote's result once it is released.
+- **The organizers** run the event: the schedule, the roster, the team repositories, the vote. Nothing an
+  organizer does is on these pages.
+
+Everyone signs in with their Antasphere account. The organizers put your email on the event's roster, and
+the platform matches you on it: an account the roster does not name is refused.
+
+## How an event unfolds
+
+1. **Before the day.** The organizers set the schedule and create each team's repository from the event's
+   starter, inviting each member's GitHub account. You install the hackathon plugin in Claude Code
+   (`/plugin marketplace add antasphere-hackathon/plugin`) and say `/plugin:join`: it installs the CLI,
+   connects you and sets up your team's app on your machine
+   ([Your hackathon, step by step](/hackathon/getting-started/participants)).
+2. **The build.** The clock runs on the server. You push to your team's repository, early and often, and
+   check on the Home page that the platform received your last revision. Your team's chat and the help
+   requests are on the Chats page, the whole event's feed beside them.
+3. **The end of the build.** The build ends at the time the schedule says. Fifteen minutes of grace follow,
+   for your final push. Then the freeze: the platform keeps a copy of the last revision it received, and
+   nothing pushed after that counts. [The clock, the grace and the freeze](/hackathon/concepts/the-clock)
+4. **The pitches.** Each team hands in two Slideless links, a demo deck the jury can play alone and the
+   presentation given on stage, and presents live. When the organizers turn the vote on, participants rank
+   the other teams. [Decks and the community vote](/hackathon/concepts/decks-and-voting)
+
+## The pages
+
+- **Home**: your place (your role, your team), the clock with its countdown, the notices, and your team's
+  submission card with the last received revision.
+- **Teams**: every team, its repository and its two decks.
+- **Chats**: the general channel, your team's chat and the threads of your help requests, live.
+- **Vote**: rank the other teams, and read the leaderboard once it is released. The page appears when the
+  organizers turn the vote on.
+
+## The command line and agents
+
+The `hackathon` command line signs in with your Antasphere account, sets up your team's app, checks your
+machine, and does from the terminal what the pages do. [The commands](/hackathon/getting-started/commands) is the
+page a participant reads; [the CLI reference](/hackathon/agents/cli) names every command for an agent. Every
+instance also serves an MCP endpoint for agents, with 71 `hackathon_` tools:
+[connect an agent](/hackathon/getting-started/connect-an-agent).
+
+## The Malt × Antasphere Hackathon
+
+The first event on the platform is the [Malt × Antasphere AI Hackathon](/hackathon/events/malt-antasphere-2026)
+of 2 October 2026 at WAT, Brussels, and its starter: a tool with hands, ears and a voice.
+
+## License
+
+Antasphere Hackathon is [fair-code](https://faircode.io), distributed under the
+[Sustainable Use License](https://github.com/antasphere/hackathon/blob/HEAD/LICENSE): the source is
+open to read, and you may self-host it, modify it and use it for your own internal business or
+personal purposes, free of charge. You may not sell it or offer it to others as a paid or hosted
+service. It is source-available, not open source.

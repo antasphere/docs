@@ -1,0 +1,82 @@
+---
+title: "Connect an agent to the platform"
+description: "This page shows how to point an agent at Antasphere Hackathon: the command line for terminal agents, and the MCP endpoint for MCP hosts. Both act as the connected person, with what that person may do on the event."
+---
+
+{/* GENERATED from antasphere/hackathon docs/getting-started/connect-an-agent.md — edit there, then run `npm run sync`. */}
+
+- **The CLI**, for terminal agents (Claude Code, shell loops, CI): connect, set up the team's app, check
+  the machine, read the clock, post in the chats, hand in the decks, vote. Full reference:
+  [cli.md](/hackathon/agents/cli).
+- **The MCP endpoint**, for MCP hosts (claude.ai connectors, Claude Desktop, Claude Code, any MCP client):
+  `get_me`, `list_files` and 71 `hackathon_` tools over streamable HTTP at `/mcp`. Full reference:
+  [mcp-connector.md](/hackathon/agents/mcp-connector).
+
+## The CLI
+
+Install it, sign in once with your Antasphere account, and connect:
+
+```bash
+npm i -g @antasphere/hackathon
+hackathon login
+hackathon connect
+```
+
+The CLI knows where the hackathon lives: every command resolves its target as the `--api-url` flag, then
+the `HACKATHON_URL` variable, then the profile's URL, then `https://app.hackathon.antasphere.com`. `login`
+stores your Antasphere login once for every Antasphere tool on this machine (`antasphere login`, the
+account CLI, writes the same thing), and exchanges it for a hackathon key it keeps on the `cloud` profile.
+
+A dashboard key works too. Mint it on the **API keys** page (**Create key**; tick `hackathon:write` there,
+the dialog pre-selects `hackathon:read` only), then:
+
+```bash
+hackathon login --api-key hck_...
+hackathon verify    # exit 0 when the instance and the key work
+```
+
+**The agent loop**: environment variables, then any command with `--json`:
+
+```bash
+export HACKATHON_URL=https://app.hackathon.antasphere.com
+export HACKATHON_API_KEY=hck_...
+
+hackathon whoami --json
+hackathon event status --json | jq -r '.phase'
+```
+
+`--json` on any command except `files download` prints the wire shape for machine parsing.
+
+## The MCP endpoint
+
+The platform serves MCP at:
+
+```
+https://app.hackathon.antasphere.com/mcp
+```
+
+Two ways in:
+
+**OAuth (claude.ai and Claude Desktop connectors).** Add the URL as a custom connector, and that is the
+whole configuration: the client discovers the authorization server from the endpoint itself, you sign in
+and approve the consent screen, and the connector holds a short-lived token it refreshes by itself.
+
+**API key (Claude Code, headless hosts).** `/mcp` accepts the `hck_` keys directly:
+
+```bash
+claude mcp add --transport http hackathon https://app.hackathon.antasphere.com/mcp \
+  --header "Authorization: Bearer hck_..."
+```
+
+Tools act as the connected person: the identity always comes from the verified credential, never from a
+tool parameter. Start with `hackathon_whoami`. The tool set is tabled in [mcp-connector.md](/hackathon/agents/mcp-connector).
+
+## Scopes and revocation
+
+| Credential     | Granted                                                                                         | Revoke                                                 |
+| -------------- | ----------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
+| `hck_` API key | The scopes chosen at mint: `hackathon:read`, `hackathon:write`, the opt-in `data:export`; a TTL | The **API keys** page, at once                         |
+| OAuth token    | The scopes approved on the consent screen; short-lived access tokens, rotating refresh          | Revoke the client's consent, or leave the organization |
+
+A key or a token reaches only what its scopes open, and a person removed from the event's organization
+loses their agents' access in the same moment.

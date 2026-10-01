@@ -1,0 +1,41 @@
+---
+title: "Hackathon"
+description: "Antasphere Hackathon runs a hackathon from one place: the event's clock, one repository per team, the coaches in the chat, the two decks each team presents, and the community vote. A participant sets up the team's app from the command line, pushes, and the platform keeps what the team pushed before the freeze."
+---
+
+{/* GENERATED from antasphere/hub docs/tools/hackathon.md — edit there, then run `npm run sync`. */}
+
+import { HeroBand } from "/snippets/HeroBand.jsx";
+
+<HeroBand
+  eyebrow={"Tools"}
+  title={"Hackathon"}
+  drawing={"latitudes"}
+  seed={1502901918}
+  compact={true}
+/>
+
+[Antasphere Hackathon](https://app.hackathon.antasphere.com) runs a hackathon from one place: the
+event's clock, one repository per team, the coaches in the chat, the two decks each team presents,
+and the community vote. A participant sets up the team's app from the command line, pushes, and
+the platform keeps what the team pushed before the freeze.
+
+- **One event, one clock.** The build ends at a fixed time, fifteen minutes of grace follow, then
+  the freeze. Every page counts down on the server's clock, never on your device's.
+- **A repository per team.** The organizers create it from the event's starter and invite each
+  member. `hackathon setup` clones it, installs the agent files and starts the app.
+- **Coaches a message away.** A chat per team, a help request the coaches claim and answer, and
+  one feed for the whole event.
+- **Two decks and a vote.** Each team hands in a demo deck and a presentation as Slideless links;
+  when the organizers open it, participants rank the other teams.
+- **Agents as first-class users.** The `hackathon` CLI, an MCP endpoint, and scoped API keys.
+
+## Sign in with your Antasphere account
+
+Antasphere Hackathon signs you in with your Antasphere account. The organizers put your email on
+the event's roster and add you to the event's organization at
+[account.antasphere.com](https://account.antasphere.com); once signed in to Antasphere, opening the
+hackathon connects you without a second login.
+
+The full Hackathon documentation, from the first command to the vote, is in
+[its own section](/hackathon/index).

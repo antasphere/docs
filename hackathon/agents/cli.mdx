@@ -1,0 +1,1238 @@
+---
+title: "The Antasphere Hackathon CLI"
+description: "hackathon is the typed command-line client for an Antasphere Hackathon instance. It signs in with your Antasphere account on the cloud, or with an email code or a key on a self-hosted instance, picks a workspace, manages the workspace's projects and files and the hackathon (the event, the submissions, the community vote, the feed, the decks) and exports the workspace; for a participant it connects, sets up the team's app and checks the machine (connect, setup, doctor). What each release added is the Changelog page of the docs site, generated from the repository's release tags; this page describes the current CLI."
+---
+
+{/* GENERATED from antasphere/hackathon docs/agents/cli.md — edit there, then run `npm run sync`. */}
+
+## Install
+
+`npm i -g @antasphere/hackathon` exposes the `hackathon` binary (the package
+publishes under the Antasphere org's npm scope; the binary name is unchanged).
+The published package is a single self-contained bundle (`dist/bin.js`, built
+with esbuild): the workspace-internal `@app/contract`, `@app/sdk`,
+`@antasphere/cli-core`, and commander are inlined at build time, so the
+published manifest carries **zero runtime dependencies** — nothing internal or
+git-pinned leaks into a public install.
+
+## Configuration: profiles, flags, environment
+
+Config lives in the **shared Antasphere CLI config home** (provided by
+`@antasphere/cli-core` — one home for the whole tool family), under the
+`hackathon` namespace: `$XDG_CONFIG_HOME/antasphere/tools/hackathon.json`
+(default `~/.config/antasphere/tools/hackathon.json`), directories `0700`,
+file `0600`:
+
+```json
+{
+  "activeProfile": "cloud",
+  "profiles": {
+    "cloud": { "connectKeys": { "default": { "apiKey": "hck_…", "email": "ada@example.com" } } },
+    "hackathon.example.com": {
+      "apiKey": "hck_…",
+      "baseUrl": "https://hackathon.example.com",
+      "email": "ada@example.com"
+    }
+  }
+}
+```
+
+Nothing in the file names a workspace: a command names its organization or its
+workspace itself (below).
+
+**A profile is an instance.** Each profile names one Antasphere Hackathon instance by its
+`baseUrl` and holds how you sign in there: the instance's own key (`apiKey`),
+or the keys your Antasphere login was exchanged for there (`connectKeys`, one
+per Antasphere login). The profile `cloud` exists before anything is on disk:
+it is the Antasphere cloud, `https://app.hackathon.antasphere.com`, and it carries
+no `baseUrl` because that is its default. So a command on a clean machine runs
+on the cloud. `--api-url https://hackathon.example.com` selects the profile of that
+instance, or makes one named for its host (`hackathon.example.com`; a local
+instance on port 3000 gets `localhost:3000`). A self-hosted instance is named
+once, as a profile. No command renames a profile: the config file is yours,
+and you can edit a name there. `hackathon use <profile>` switches the active
+profile, and `hackathon login` and `hackathon connect` make their profile the active one.
+`hackathon profiles` lists them: the active mark, the name, the url, and how
+each signs in:
+
+```
+   localhost:3000         http://localhost:3000                  hck_EVzvc7vX_…QKkI
+*  cloud                  https://app.hackathon.antasphere.com   via Antasphere (ada@example.com)
+   hackathon.example.com  https://hackathon.example.com          hck_GT2pAduD_…zobU
+```
+
+A profile with no key reads `(not signed in)`. Every command selects its
+profile in this order: `--profile <name>`, then the profile of the
+`--api-url` / `HACKATHON_URL` instance, then the active profile (`use`), then
+`cloud`. A key cached by the Antasphere login is only ever sent to the
+instance its profile names.
+
+Every command accepts `--api-url` (alias `--url`), `--api-key`,
+`--api-key-stdin`, `--profile`, `--org`, `--workspace`, and `--json`.
+Resolution order:
+
+| Setting      | 1st           | 2nd                   | 3rd               | Otherwise                                                                              |
+| ------------ | ------------- | --------------------- | ----------------- | -------------------------------------------------------------------------------------- |
+| Base URL     | `--api-url`   | `HACKATHON_URL`       | profile `baseUrl` | the cloud, `https://app.hackathon.antasphere.com`                                      |
+| API key      | `--api-key`   | `HACKATHON_API_KEY`   | profile `apiKey`  | the Antasphere login (cloud, below) — else the public commands work and the rest error |
+| Organization | `--org`       | `HACKATHON_ORG`       | (nothing saved)   | your default organization                                                              |
+| Workspace    | `--workspace` | `HACKATHON_WORKSPACE` | (nothing saved)   | the server's default workspace                                                         |
+
+**Choosing the organization or the workspace**: an API key identifies a
+person, and a person can belong to several workspaces. On the cloud, each
+workspace is an Antasphere organization. `--org <id or name>` (or
+`HACKATHON_ORG`) names the organization a command runs in, by the id the
+account site shows or by its name; the instance maps it to its workspace.
+`--workspace <id or name>` (or `HACKATHON_WORKSPACE`) names a workspace of the
+instance, by the Antasphere Hackathon workspace id `hackathon workspaces` prints or by its
+name. A self-hosted instance has no organization ids, so there you use
+`--workspace`. Passing both is an error. A name is matched without regard to
+case; a name that matches several workspaces, or none, is an error that lists
+the candidates. An id is sent as it is, and a name costs one extra request to
+look it up. Nothing is saved on the machine: with no selection, the server
+picks your default workspace. The server's default is yours to choose:
+`hackathon workspace default <id or name>` on a self-hosted instance; on the
+cloud it is a setting of your Antasphere account, and the command answers with
+the page. `hackathon workspaces` lists your memberships, with
+`organization <id>` on the rows that have one. `hackathon whoami` shows the
+workspace the command ran in, its organization id, what chose it, what the
+command signed in with, and the Antasphere login (used, not used and why, or
+`not connected`).
+A key pinned to one workspace only ever acts there: selecting another one is
+refused, and the error names the pin.
+A file lives in one workspace: a file id asked of another workspace answers
+"not found", and the error names the workspace that was asked and what
+selected it.
+
+**Keeping secrets out of `argv`**: a value passed as `--api-key hck_…` is
+visible to every process on the machine (`ps`) and lands in the shell
+history. Two alternatives do not touch the command line: `--api-key-stdin` reads the key from the first line of stdin
+(`pass show hackathon | hackathon --api-key-stdin files list`), `HACKATHON_API_KEY`
+carries it in the environment. stdin can only be spent
+once per invocation — asking twice is a usage error rather than two commands
+silently sharing one secret.
+
+### Cloud instances: one login for the whole family
+
+On an **Antasphere-cloud** instance you sign in with your Antasphere account,
+once for every Antasphere tool CLI. `hackathon login` does it inline (see
+[Sign in](#sign-in)); `antasphere login`, the family entry, does the same when
+the account CLI is installed. After it, `hackathon` needs no flag on a clean
+machine:
+
+```bash
+hackathon login        # once: your Antasphere email, the code, then the exchange
+hackathon files list   # served from the cache — no hub call, no new key
+```
+
+When no direct key resolves, the CLI asks discovery (`GET /api/v1/instance`)
+whether the instance signs in through the hub (`auth.methods` contains
+`antasphere`); if so, it exchanges the stored Antasphere login
+for a **user-scoped** tool-local `hck_` key (hub → tool; see
+your Antasphere account) and
+caches it in the profile **per Antasphere login** (`connectKeys` — ONE
+key per Antasphere account, valid for every organization; the organization is
+a per-command selection, `--org`, never part of the credential).
+
+- The exchange names **no organization** (the Antasphere login identifies the
+  USER, never one organization); a single cached key serves whatever
+  organization a command names. Second and later runs make zero hub calls and
+  mint nothing.
+- The hub key is sent to the **hub only**; the instance sees a short-lived
+  user-scoped JWT (plus its own one-time offline grant, relayed once and
+  never stored by the CLI) and answers with an ordinary local key.
+- A cached key is only ever sent to the instance its profile names (the
+  profile's `baseUrl` scopes the cache).
+- A cached key the instance refuses (401: revoked at Antasphere, a membership
+  removed) is evicted and exchanged again once, and the command is retried
+  once. The CLI says so on stderr:
+  `The cached key was refused; signed in again through Antasphere.`
+- When Antasphere refuses the exchange (for example, an organization not
+  granted the tool: `tool_access_denied`), the CLI prints Antasphere's own
+  sentence and exits 3. Exit 1 is a usage or wire error.
+- `hackathon logout` revokes the cached key(s) server-side (see
+  [Sign in](#sign-in)), then forgets them.
+
+Self-hosted (`oss`) instances never take this branch: `hackathon login` there
+is the instance's own email code or a pasted key, and the hub is never
+contacted.
+
+## Sign in
+
+`hackathon login` is the one sign-in command. With no URL it signs in on the
+selected profile: the active one, else the cloud. It makes its profile the
+active one.
+
+**On the cloud** it is your Antasphere account:
+
+```bash
+hackathon login
+```
+
+When no Antasphere login is stored on this machine, it asks your email and
+the code sent to it, inline (prompts `Antasphere email: ` and `Code: `;
+`--email` skips the first). This is the same sign-in `antasphere login` does,
+against `https://account.antasphere.com` (`ANTASPHERE_URL` overrides it), and
+the key is stored where `antasphere login` stores it, so every other
+Antasphere tool CLI is signed in too. It then exchanges that login for the
+Antasphere Hackathon key and ends with:
+
+```
+Signed in as Ada <ada@example.com> in Acme (organization …) on https://app.hackathon.antasphere.com.
+Your workspaces: Acme, Beta. Pass --org <name> (or --workspace <name>) to work in another.
+```
+
+The second line appears only when you have several organizations. A stored
+Antasphere login that Antasphere no longer accepts is replaced once: the CLI
+says `The stored Antasphere login was rejected: signing in again.` and asks
+for the email and the code.
+
+**On a self-hosted instance** it is the instance's own email code, both legs
+in the one command:
+
+```bash
+hackathon login --api-url https://hackathon.example.com                             # prompts Email: then Code:
+hackathon login --api-url https://hackathon.example.com --email you@example.com     # prompts Code: only
+```
+
+The flow needs the instance to have a delivering email driver
+(`EMAIL_DRIVER=smtp|resend|brevo`); it signs in **existing accounts only** —
+sign-up stays closed (accounts enter via setup or workspace invitations). It
+mints an `hck_` API key server-side (scopes `hackathon:read` +
+`hackathon:write`, never `data:export`) and saves it on the instance's
+profile. Once that profile is active, `hackathon login` alone signs in there
+again. Accounts with 2FA enabled are refused (`two_factor_required`), and an
+instance with no email driver has no email code at all. For those, mint a key
+in the dashboard (**API keys**, **Create key**; tick `hackathon:write`, which
+the dialog leaves unchecked, when the key must also write) and paste it:
+
+```bash
+hackathon login --api-url https://hackathon.example.com --api-key hck_…
+pass show hackathon | hackathon login --api-url https://hackathon.example.com --api-key-stdin
+```
+
+A pasted key must start with `hck_`, and the CLI checks it against the
+instance before it saves it. `--key-name <name>` names the key the sign-in
+mints, as the dashboard lists it, and `--expires-in-days <n>` gives it a TTL
+(it never expires otherwise). On the cloud that key is the Antasphere account
+key; on a self-hosted instance it is the instance key.
+
+Profile management:
+
+```bash
+hackathon whoami            # identity, instance + profile, workspace + organization, what chose it,
+                            # what the command signed in with, the Antasphere login
+hackathon verify            # exit 0 iff instance + key work
+hackathon profiles          # list profiles: active mark, name, url, how each signs in (keys redacted)
+hackathon use <profile>     # switch the active profile (`use cloud` works before cloud is on disk)
+hackathon logout            # revoke every key the profile holds on its instance, then forget them
+hackathon config show       # config path + redacted contents
+hackathon config clear      # delete the config file
+```
+
+`hackathon logout` works on the active profile, or the one `--profile` names.
+Every key the profile holds (its own key and each Antasphere login's key) is
+revoked on the instance the profile names, never on an `--api-url` one:
+`DELETE /cli/auth/key`, where the presenting key revokes exactly itself. Then
+the keys are forgotten. The profile stays, with its url. An older instance
+whose machine allowlist predates the self-revoke refuses it (403): the CLI
+says the key `STAYS VALID server-side; revoke it from the dashboard`, and
+forgets the local copy. The Antasphere login itself stays stored for the other
+tool CLIs.
+
+## Connect and set up (participants)
+
+The participant journey of the hackathon: `connect`, `setup`,
+`doctor`, beside the chassis's `whoami` and `logout` and the event's
+`event status`. Every one takes `--json` (the answer on stdout, the progress on
+stderr, a refusal as `{ "ok": false, "error": { "code", "message" } }`), and
+every refusal exits with the class of what went wrong (the table below). The
+commands hold no organizer credential: your own Antasphere login and your own
+GitHub access do the work. On the cloud nothing names the instance: sign in
+once, then connect.
+
+```bash
+hackathon login                                             # once: your Antasphere email, then the code it sends
+hackathon connect                                           # the roster check (the cloud: no URL to pass)
+hackathon connect --api-url https://hackathon.example.com   # a self-hosted instance, named once
+hackathon connect --github ada-l                            # name your GitHub username on your roster row
+hackathon connect --json                                    # the GetBootstrap payload, the profile, the default folder
+hackathon setup                                             # clone into ~/Antasphere/hackathon/<team>, install, start
+hackathon setup --directory ./hackathon-atlas               # clone somewhere else
+hackathon setup --github ada-l                              # name the GitHub username first, then set up
+hackathon setup --directory . --agent codex --port 3200     # another agent's file conventions, another host port
+hackathon setup --directory . --no-start --timeout 600      # clone and install only; or wait longer for the probe
+hackathon doctor --json                                     # every check and the push proof, changes nothing
+hackathon doctor --directory ./hackathon-atlas              # the same, on a clone outside the default folder
+hackathon event status --json                               # the phase and the deadlines by the server clock
+hackathon logout                                            # revoke the profile's keys on its instance, then forget them
+```
+
+**`connect`** resolves the instance (`--api-url`, `HACKATHON_URL`, the
+profile, else the cloud, `https://app.hackathon.antasphere.com`) and the
+credential through the usual chain (`--api-key`, `HACKATHON_API_KEY`, the
+profile, the cached key, the exchange of the Antasphere login on a cloud
+instance). When nothing resolves on a cloud instance and no Antasphere login
+is stored, it says to run `hackathon login` once, then `hackathon connect`
+again (exit 3); on a self-hosted instance it names
+`hackathon login --api-url <url>` (exit 3). A stored Antasphere login the hub
+no longer accepts names `hackathon login` again (exit 3). When the hub refuses
+the person (`tool_access_denied`: no organization of the account opens this
+tool), the hub's own sentence is printed as it is, exit 3. Then it asks the
+server (`GET /bootstrap`): an account the roster does not name is
+refused with `not_on_roster` (exit 3), a workspace with no event with
+`event_not_configured` (exit 3). On success it saves the instance on the
+profile of that instance (`cloud` on the cloud, the host's name otherwise),
+with the key when `--api-key` or stdin carried it, makes it the active
+profile, and prints who you
+are, your team, the repository assignment (`not assigned yet` until an
+organizer provisions it), the installer skill's version and digest, the
+dashboard URL and the next command (`Next: hackathon setup`). `--json` adds
+`defaultDirectory`, the folder `setup` clones into when no `--directory` is
+given. An organizer, a jury viewer or an advisor connects fine and is told
+there is no team app to set up.
+
+An assigned repository carries `repository.access`, your standing on it as
+GitHub reports it for your GitHub username, read live by the server:
+`standing` is `no_username` (the roster has no GitHub username for you),
+`none` (GitHub knows no access: an organizer provisions or resumes the
+repositories), `invited` (an invitation waits, accept it at `invitationUrl`),
+`member` (`canPush` says whether the permission allows a push) or `unknown`
+(GitHub did not answer). `fix` is one sentence of what to do, or null.
+
+**`--github <login>`** (on `connect` and on `setup`) saves your GitHub username
+on your own roster row (`PUT /bootstrap/github`), so the team repository
+invites that account. It is checked first by GitHub's rule (letters, digits and
+single hyphens, 39 at most, a leading `@` dropped): a login that breaks it is
+exit 2 and nothing goes on the wire. The command then prints
+`GitHub username: <login> (<standing>)` and the rest of the run reads the
+standing the server answered. An organizer, a jury viewer or an advisor has no
+repository to be invited on and is refused with `not_a_participant` (exit 3); a
+username another person on the roster already named is refused with
+`github_login_taken` (exit 3).
+
+The participant journey is a plain member's: a workspace owner or admin is an
+organizer whatever the roster says, so `connect` tells them there
+is no team app to set up even when a roster row seats them on a team.
+
+**`setup`** runs these steps in order and prints each command it
+runs on stderr as `$ …` before running it. Without `--directory` the clone goes
+to `~/Antasphere/hackathon/<hackathon-team>` (the folder name is the server's
+`setup.directoryName`); `--directory <path>` puts it anywhere else.
+
+1. the assignment (`connect`, then: a participant on a team, with a repository
+   assigned; else exit 3 saying who to ask);
+2. the access gate: `repository.access` must allow a push. `no_username`,
+   `none`, `invited`, or `member` without `canPush` is exit 3 before any command
+   runs, with the server's `fix` (or the CLI's own sentence: run
+   `hackathon connect --github <your-username>`; accept the invitation at its
+   URL with the account on the roster; ask an organizer). `unknown` (GitHub did
+   not answer) goes on: the clone tells;
+3. the installer skill, downloaded from the instance and verified against the
+   sha256 digest GetBootstrap announced before a byte of it is read (a mismatch
+   is exit 4 and installs nothing);
+4. Git, Docker, the Docker daemon and Compose (`git --version`, `docker
+--version`, `docker info`, `docker compose version`; the first missing or
+   failing one is exit 4 with what to install or start, in the words of your
+   operating system);
+5. the clone: `git clone --branch <branch> -- <url> <path>` into a missing or
+   empty directory, with an https URL that carries no credential (your Git
+   authentication does the clone; GitHub refusing it is exit 3 with what to
+   accept or configure; a branch the repository does not have is exit 3
+   naming the organizer);
+6. the resume: a directory that already is the assigned clone (its `origin`
+   names the same repository over https, ssh or the scp-like form, whatever
+   the case of the owner and the name) is kept as it is (one `git fetch
+origin`, never a merge or a reset; local changes are counted and kept); any other non-empty directory is exit 5 and nothing is
+   touched;
+7. the agent files (`--agent claude-code`, the default, or `codex`): the
+   instructions file is created only when absent (`CLAUDE.md` or `AGENTS.md`,
+   pointing at `AGENTS.md`); the installer skill is written under the agent's
+   skills folder (`.claude/skills/hackathon-installer/` or
+   `.codex/skills/hackathon-installer/`), always at the verified version;
+   the template's own `/init` skill is reported present or absent;
+8. the template's runtime needs (`hackathon.json`: the compose file, the
+   service, the host port, the readiness path; the port `--port` overrides),
+   the port checked free (a port held by the app of a previous run is not a
+   collision), then `docker compose -f <file> -p hackathon-<team> up -d
+--build` and the readiness probe polled every second, `--timeout` seconds
+   at most (180 by default; exit 4 with the `docker compose logs` command
+   otherwise). A repository with no `hackathon.json` yet is not refused: the
+   start is skipped (as with `--no-start`), the `manifest` step reads
+   `absent, the app is not started by setup`, and the answer says so
+   (`app: null` in JSON). A `hackathon.json` that is present but invalid is exit 4;
+9. the local URL, the dashboard URL and the diagnostic (`--json`: the
+   directory, the repository, the installer, the app, the steps).
+
+**`doctor`** runs the checks and changes nothing. Without `--directory` it
+checks the folder `setup` uses by default, once the assignment is known. One
+line per check, in this order, with the fix on a failed one:
+
+| Check                 | What it proves                                                                                | Class       |
+| --------------------- | --------------------------------------------------------------------------------------------- | ----------- |
+| `git`                 | `git --version` answers                                                                       | environment |
+| `git identity`        | `git config user.name` and `user.email` are both set                                          | environment |
+| `node`                | `node --version` is 22 or later                                                               | environment |
+| `docker`              | `docker --version` answers                                                                    | environment |
+| `docker daemon`       | `docker info` reaches the daemon                                                              | environment |
+| `docker compose`      | `docker compose version` answers (Compose v2)                                                 | environment |
+| `disk`                | 2 GiB free at the clone's parent folder (the home folder when no clone is known)              | environment |
+| `instance`            | `GET /instance` answers                                                                       | environment |
+| `credential`          | `GET /me` accepts the credential (a hub refusal: the hub's own sentence)                      | access      |
+| `roster`              | `GET /bootstrap` names you                                                                    | access      |
+| `repository`          | a repository is assigned to your team                                                         | access      |
+| `github access`       | GitHub reports that your username can push (`unknown` passes: the push check tells)           | access      |
+| `directory`           | the folder is the assigned clone (not another repository, or not cloned yet)                  | conflict    |
+| `push`                | `git -C <dir> push --dry-run origin HEAD` is accepted: this machine can push, nothing is sent | access      |
+| `installer (<agent>)` | the installed skill's version is the current one                                              | environment |
+| `app`                 | the readiness path answers (or the port is free, or taken by something else)                  | environment |
+| `manifest`            | `hackathon.json` is valid, or absent (optional)                                               | environment |
+
+The fixes are written for the operating system the CLI runs on: Git from the
+Xcode Command Line Tools or `brew install git` on macOS, the package manager on
+Linux, `winget install Git.Git` on Windows; Node.js with `brew install node@22`
+on macOS, the NodeSource 22.x line on Linux, `winget install OpenJS.NodeJS.LTS`
+on Windows (or the installer from nodejs.org everywhere); Docker Desktop on
+macOS, Docker Engine with `sudo systemctl start docker` and the docker group on
+Linux, Docker Desktop with the WSL 2 backend on Windows.
+
+The push proof is the one check that asks GitHub from this machine with this
+machine's credential. GitHub refusing it (`Permission to <owner>/<repo>.git
+denied to <account>`, over HTTPS or SSH) fails with the account GitHub saw and
+the fix: accept the invitation for your roster username, or sign in with that
+account (`gh auth login`, or an SSH key on it). No credential at all (`could
+not read Username`, `Permission denied (publickey)`) fails with
+`no GitHub credential on this machine` and the fix `gh auth login`. Anything
+else (a network error, a timeout after 60 s) fails in the environment class.
+The check never runs `git push` without `--dry-run`.
+
+`--json` is `{ "ok", "platform", "checks": [{ "name", "ok", "detail", "fix"?,
+"cls"? }] }`, `cls` being the exit class a failed check belongs to (`access`,
+`environment`, `conflict`). Every failure exits with the class of the first
+failed check.
+
+`hackathon.json` in a team's repository is what the installer reads and it is
+validated: `version` 1, `app.compose` a file name in the repository root,
+`app.service` a compose service name, `app.port` an integer between 1024 and
+65535, `app.readyPath` an absolute path. Nothing in it is a command: the
+installer runs exactly `docker compose -f <file> -p <project> up -d --build`
+with `HACKATHON_APP_PORT` set to the port, and polls the path.
+
+### Exit codes
+
+| Code | Class       | When                                                                                                                                                                                                                                                           |
+| ---- | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0    | ok          | Done.                                                                                                                                                                                                                                                          |
+| 1    | error       | An unexpected failure (a server 500, a bug).                                                                                                                                                                                                                   |
+| 2    | usage       | A flag missing or wrong.                                                                                                                                                                                                                                       |
+| 3    | access      | No credential, an expired or refused one, a refusal by Antasphere (its own sentence), an account not on the roster, no event yet, no team yet, no repository assigned yet, no push access on GitHub, GitHub refused the clone or the push.                     |
+| 4    | environment | Git, its identity, Node.js, Docker, the daemon or Compose missing or failing; less than 2 GiB free; the port taken; the installer digest not matching; the manifest invalid; the app not ready in time; the push probe failing for another reason than access. |
+| 5    | conflict    | The directory is not empty and is not the assigned clone.                                                                                                                                                                                                      |
+
+Every diagnostic the commands print (a Git or Docker output, a `detail` in the
+JSON) is redacted first: API keys of the tool family, GitHub tokens, bearer
+headers and credentials in URLs are replaced by `[redacted]`.
+
+## Event
+
+The hackathon of the workspace: one event per workspace, its schedule, and its
+roster. The server clock decides everything: the phase is `scheduled` before
+the start, `building` from the start to the build end, `grace` from the build
+end to the freeze, and `closed` from the freeze on. The freeze is always the
+build end + 15 minutes; nothing pushed after it counts. The vote opens at the
+freeze or later.
+
+A key needs `hackathon:read` for `event status`, `event agenda show` and `event roster show`, and
+`hackathon:write` for `event configure`, `event agenda set`, `event roster import`, `event roster lock`
+and `event roster unlock`. Everything but `event status` and `event agenda show` is for an organizer
+(a workspace owner or admin, or a roster row with the organizer role). An
+account that is a member of the workspace but not on the roster is refused
+with `not_on_roster`: `Your account is not on the roster of this event. Ask an
+organizer to add your email to the roster.`
+
+```bash
+hackathon event status                           # phase, deadlines, next deadline and time left, your role and team, the teams
+hackathon event status --json                    # the wire payload verbatim
+hackathon event configure --expected-version 0 --name "Hack" --timezone Europe/Paris \
+  --starts-at 2026-10-01T08:00:00Z --build-ends-at 2026-10-01T18:00:00Z \
+  --vote-opens-at 2026-10-01T18:30:00Z --vote-closes-at 2026-10-01T20:00:00Z
+hackathon event configure --expected-version 3 … --build-ends-at 2026-10-01T18:30:00Z --reason "Power cut"
+hackathon event roster show                      # email, role, team, linked, name
+hackathon event roster import --file roster.json # replace the roster; lists what it removed
+hackathon event roster lock                      # before voting
+hackathon event roster unlock                    # only while voting has not opened
+```
+
+**`event status`** prints the event name, the phase, the server time, the five
+deadlines (start, build end, freeze, vote open, vote close) as ISO instants, the
+next deadline with the time left as `Hh MMm SSs`, your role and team, and one
+line per team with its submission state. The time left is computed from the
+server's time in the answer, never from your machine's clock. An organizer sees
+every team, a participant their own. A workspace with no event answers
+`event_not_configured`.
+
+**`event configure`** sends the whole configuration every time. Every option is
+required except `--reason`: `--expected-version <n>` (the `version` that
+`event status` printed; `0` creates the event), `--name <name>`,
+`--timezone <tz>` (an IANA name such as `Europe/Paris`, for display; every
+instant is UTC on the wire), `--starts-at <iso>`, `--build-ends-at <iso>`,
+`--vote-opens-at <iso>` and `--vote-closes-at <iso>` (ISO 8601 with a zone).
+It prints `Created <name> (version 1)` or `Configured <name> (version <n>)`.
+If someone changed the event since you read it, the refusal names the current
+version: `The event changed since you read it: its version is now 5. Check it
+with hackathon event status, then pass --expected-version 5.` Once the event
+has started its start cannot move (`event_started`); moving the build end while
+it runs needs `--reason <text>`, which every participant sees
+(`reason_required` otherwise); once frozen, the schedule is closed
+(`event_closed`), and a build end whose freeze would already be past is refused
+(`build_end_past`): a reschedule never closes the event on the spot. Before the
+start, a change of the start or the build end must start ahead of now
+(`starts_past`), so a date typo never closes the event; an event created with
+a past schedule and never run (nothing was frozen or locked for it) can still
+be given a real one. Once voting was opened the vote window is fixed
+(`vote_window_locked`): `community voting close` ends the vote early.
+
+**`event roster import --file <path>`** is declarative: the file IS the roster,
+and a row absent from it is removed. The file holds `{ "participants": [...] }`
+or a bare array of entries `{ "email", "name"?, "role"?, "team"? }`: the role
+is `participant` (the default, which names a team), `organizer`, `jury` or
+`advisor` (which name none). A file that cannot be read or is not JSON is refused before
+any request. The command prints `Imported <n> rows`, then one
+`Removed <email> (<team>)` line per row the import removed, then one
+`Dissolved team <name>` line per team no row names any more (its project is
+archived and leaves the event), so nothing leaves silently. The file is the whole roster: an empty list removes everyone and
+dissolves every team, with no further confirmation. A locked roster refuses the
+import (`roster_locked`); a team whose project an organizer archived through
+`projects archive` refuses it too (`team_archived`): unarchive it or name another
+team.
+
+**`event roster show`** prints one row per person: email, role, team (or `-`),
+`yes` or `no` for whether the person signed in yet, and name; then
+`Roster locked since <iso>` when it is locked. **`event roster lock`** and
+**`event roster unlock`** are idempotent; unlock is refused once voting has
+opened (`voting_open`). Every event command takes `--json`.
+
+```bash
+hackathon event github --organization acme-hackathon --template acme-hackathon/starter --branch main
+```
+
+**`event github --organization <login> --template <owner/repo> [--branch <name>]`**
+sets where the teams' repositories are created: the GitHub organization, the
+template repository of that organization every team starts from, and the branch
+the teams push to (`--branch`, `main` when left out). It is for an organizer.
+It prints the organization, the template and the branch, then the next command
+to run.
+
+```bash
+hackathon event github-check --json
+```
+
+**`event github-check`** reads the App's installation on the organization and
+the template repository, live from GitHub, and lists the problems it finds. It
+exits non-zero when provisioning cannot run, so a script can stop before
+`admin provision`.
+
+```bash
+hackathon event vote --on
+```
+
+**`event vote --on|--off`** turns the Vote section on or off. It is off by
+default. While it is off, every `community` command and the deck generation
+(`decks generate`, `decks runs`, `decks run`, `decks list`,
+`decks show <deckId>`, `decks review`, `decks release`, `decks templates`) are
+refused with `vote_off` and change nothing, and the dashboard hides the Vote
+page. `decks gallery`, `decks link` and `decks show` without a deck id still
+work. Exactly one of `--on` or `--off` (neither or both is a usage error,
+exit 2). It is for an organizer.
+
+```bash
+hackathon event agenda show                       # start, end, kind, title, sorted by start
+hackathon event agenda set --file programme.json  # replace the whole programme
+```
+
+The programme is the organizers' agenda of the day (lunch, a talk, the
+presentations and the jury, the winner announcement), apart from the schedule
+above: it moves no phase and no deadline, and an item may fall at any time,
+during the build included. **`event agenda show`** prints one line per item,
+sorted by start: the start and the end as ISO instants (`-` when the item has
+no end), the kind and the title. Every attendee reads it, the jury included
+(`hackathon:read`). **`event agenda set --file <path>`** replaces the whole
+programme (an organizer, `hackathon:write`): the file holds `{ "items": [...] }`
+or a bare array of items `{ "title", "kind", "startsAt", "endsAt"? }`, where
+the title is one line of 1 to 80 characters, the kind is `break`, `meal`,
+`talk`, `presentations`, `announcement` or `other`, the instants are ISO 8601
+with a zone, and the end, when set, is after the start. At most 30 items; an
+empty list clears the programme. A file that cannot be read or is not JSON is
+refused before any request; an item the server refuses is named by its index
+and field (`items.2.endsAt`). It prints the number of items, then the
+programme as `show` does.
+
+```json
+{
+  "items": [
+    {
+      "title": "Lunch",
+      "kind": "meal",
+      "startsAt": "2026-10-01T10:30:00Z",
+      "endsAt": "2026-10-01T11:30:00Z"
+    },
+    { "title": "Winner announcement", "kind": "announcement", "startsAt": "2026-10-01T18:00:00Z" }
+  ]
+}
+```
+
+## Submissions
+
+What each team pushed, what the platform received, and what it froze at the
+deadline. A push reaches the platform through the signed GitHub webhook
+(`POST /webhooks/github/{eventId}`, configured by the organizer on the
+organization); the eligible submission is the last accepted push of the
+designated branch RECEIVED before the freeze, by receipt order, never by
+commit time: push early and verify the received revision before the deadline.
+At the freeze a sweep (every minute, at boot, and on demand) captures the
+selected revision's bytes as immutable evidence and freezes it; a team that
+never pushed is frozen on its initial template.
+
+A key needs `hackathon:read` for `submissions list`, `submissions show`,
+`submissions failures`, `submissions artifact` and `admin provision --dry-run`
+(a dry run is a read), and `hackathon:write` for `submissions reconcile`,
+`submissions exception` and `admin provision --key`. A participant reads
+their own team; everything else is for an organizer (a workspace owner or
+admin, or a roster row with the organizer role).
+
+```bash
+hackathon submissions list                         # the intake and one line per team
+hackathon submissions show <project>               # repository, receipts, frozen evidence, exceptions
+hackathon submissions failures                     # what an organizer must act on
+hackathon submissions reconcile                    # run the freeze sweep now
+hackathon submissions exception <project> --reason "Wrong branch" --sha <40-hex> --invalidate-decks
+hackathon submissions exception <project> --reason "Withdrawn" --missing
+hackathon submissions artifact <project> --dir ./evidence
+hackathon admin provision --dry-run                # the plan, nothing written
+hackathon admin provision --key run-1 --sample <projectId>
+hackathon admin generate-all-presentations         # the same as decks generate (see Decks)
+hackathon admin generation-status --run <runId>    # the same as decks run (see Decks)
+```
+
+**`submissions list`** prints the intake sentence (`Intake is open…`,
+`Submissions are frozen.`, or `Deadline passed, capture requires attention.`),
+the server time, the freeze, the attention count, then one line per team:
+the state (`waiting`, `capturing`, `frozen`, `missing`, `error`), the
+repository readiness (`planned`, `created`, `invited`, `ready`, `attention`,
+or `unassigned`), the last received revision with its receipt time (`late`
+when it came after the freeze and is not a candidate), the frozen sha
+(`template only` when the team submitted only its initial template), the
+repository and the team.
+
+**`submissions show <project>`** prints one team: the state, the repository
+with its designated branch and readiness, the last received revision with
+its receipt sequence, the frozen evidence, the freeze instant, the attention
+sentence and the next action when there is one, then the last 50 receipts
+(sequence, receipt time, verdict with the refusal code, sha, capture state)
+and the exceptions. Another team's project answers `project_not_found`:
+`No such project here, or not one you can read: a team reads its own
+submission only.`
+
+**`submissions failures`** is the Admin capture failures view: the signature
+failure counter of the webhook (count, first, last, reason), the projects
+needing attention with why, the refused deliveries with their code
+(`installation_mismatch`, `unknown_repository`, `wrong_branch`, `deleted`,
+`unresolvable_revision`), and the late deliveries.
+
+**`submissions reconcile`** runs the retry-safe sweep now and prints what it
+did: `Reconciled at <iso>: n captured, n frozen, n capturing, n missing, n
+errors`. The cutoff never moves; a retry captures the exact selected sha,
+never a later HEAD.
+
+**`submissions exception <project>`** records an organizer exception after
+the freeze and before voting opens: `--reason <text>` (required) and exactly
+one of `--sha <sha>` (the full 40-hex sha to freeze instead, captured now) or
+`--missing` (mark the project missing on purpose); `--invalidate-decks` and
+`--invalidate-voting` state what the correction invalidates. Refused with
+`event_not_closed` before the freeze, `judging_started` once the eligibility
+is locked or voting opened (unlock the eligibility first, before the open),
+and `capture_failed` when GitHub cannot produce the sha (nothing recorded).
+
+**`submissions artifact <project> --dir <path>`** downloads the frozen
+evidence, a tar.gz named `submission-<sha12>.tar.gz`, written contained in
+the directory (default `.`); `not_frozen` while nothing is frozen.
+
+**`admin provision`** plans with `--dry-run` (the organization, the template
+revision, the sample team, one repository per team with its members at
+`maintain` and the coaches at `read`, the coaches listed once with their
+GitHub usernames, the conflicts) or applies with `--key <key>`: the same key
+resumes the same operation (a step already done is skipped, a failed one
+retried, the invitations and the readback re-run so accepted invitations move
+a team to `ready` and a coach added to the roster since is invited on every
+repository; a new key after a finished run does the same); `--sample
+<projectId>` names the team provisioned first and read back before the rest.
+The roster is the server's (`event roster import`). A plan with conflicts is
+refused (`plan_conflicts`) with every conflict listed. Every command takes
+`--json`.
+
+## Decks
+
+Two decks per team, generated from the frozen submission: a jury deck (a
+five-minute live presentation, six to eight screens) and a community deck (a
+quick, consistent comparison, three to four screens). A generation run reads
+every team with frozen evidence, fills both templates from a structured
+summary of the archive (every claim cites its evidence or is marked
+unverified), publishes each deck as an exact version and validates it. An
+organizer reviews every deck, then releases a team's approved decks to the
+gallery; nothing reaches the gallery unreviewed.
+
+A key needs `hackathon:read` for `decks gallery`, `decks templates`, `decks runs`,
+`decks run`, `decks list`, `decks show` and `admin generation-status`, and
+`hackathon:write` for `decks link`, `decks generate`, `decks review`, `decks release` and
+`admin generate-all-presentations`. The generation, the review and the release
+are refused with `vote_off` while the Vote section is off (`event vote`). Every roster role reads the gallery (a
+participant or a jury viewer sees `pending` for a deck not released yet);
+everything else is for an organizer, and a participant is refused with
+`insufficient_event_role`: `This needs an organizer of the event.`
+
+Each team also has three links of its own: a demo deck, a presentation deck and
+a vote presentation, each a Slideless share link the team made
+(`https://<host>/v/<token>/`). The Teams page shows them as plain links,
+`Demo deck`, `Presentation` and `Vote presentation`. The vote presentation is
+the deck the other participants watch on the Vote page and rank, made with
+`/plugin:vote`; a team is a vote candidate once it is set.
+
+```bash
+hackathon decks link --demo https://share.example.com/v/abc123/ --pitch https://share.example.com/v/def456/
+hackathon decks link --pitch https://share.example.com/v/def456/            # either link alone
+hackathon decks link --vote https://share.example.com/v/ghi789/             # the vote presentation
+hackathon decks link --team "Team Alpha" --demo https://share.example.com/v/abc123/   # an organizer
+hackathon decks link --clear vote                                           # clear a link (repeatable)
+hackathon decks show                                                        # your team's three links
+hackathon decks show --team "Team Alpha"                                    # an organizer
+```
+
+**`decks link --demo <url> --pitch <url> --vote <url> [--clear <link>] [--team <team>]`** sets
+the team's demo deck, presentation and vote presentation links; any flag alone
+sets that link and keeps the others. `--clear demo|pitch|vote` (repeatable)
+clears that link instead; a team whose vote presentation is cleared is no
+longer a vote candidate until it sets one again. Who acts is read from the signed-in account: a participant sets
+their own team's links (no `--team`; naming another team is refused 403
+`not_your_team`); an organizer names the team by its name or id (without
+`--team`: `You are not on a team; pass --team <team>.`); a coach (advisor) or
+a jury viewer is refused 403. A link that is not an https Slideless share
+link, path `/v/<token>/`, is refused (exit 2 before the request), and so is a
+link on a host the instance does not allow (400 `invalid_deck_link` from the
+server, whose sentence names the allowed Slideless hosts). Once voting has
+opened, a participant's `--vote` is refused 409 `vote_link_frozen` (exit 1): the
+vote presentation is fixed, and only an organizer can replace it. It prints the team
+and its three links, and works whatever the Vote section says.
+
+**`decks show [--team <team>]`**, without a deck id, prints the team's three
+links, `-` for one not set yet, with the same rules as `decks link`.
+
+### Showcase
+
+A team's own product name (at most 24 characters), tagline (at most 140) and
+description (at most 4000), plain text, shown on its card on the Teams page and
+on its team page. The product name is the name of what you built, 24 characters
+at most; the Vote page shows it on your team's tile. Who acts
+is the same as for `decks link`: a participant their own team, an organizer
+names it with `--team`, a coach or a jury viewer refused 403. A key needs
+`hackathon:read` for `showcase show` and `hackathon:write` for `showcase set`.
+
+```bash
+hackathon showcase show                                          # your team's product name, tagline and description
+hackathon showcase set --product "Invoice Hands"                 # the name of what you built
+hackathon showcase set --tagline "Receipts in, expense report out"
+hackathon showcase set --description-file ./pitch.txt           # line breaks kept
+hackathon showcase set --team "Team Alpha" --description "…"    # an organizer
+hackathon showcase set --clear-product --clear-tagline --clear-description
+```
+
+**`showcase set [--product <name>] [--tagline <text>] [--description <text> | --description-file <path>] [--clear-product] [--clear-tagline] [--clear-description] [--team <team>]`**
+sets any of the three; a field left out keeps its value, and an empty value or
+its `--clear-…` flag removes it. Nothing to set, a value beside its clear, or a
+field over its cap is a usage error (exit 2 before the request). **`showcase
+show [--team <team>]`** prints the team, its product name, its tagline and its description, `-`
+for one not set. Both take `--json`.
+
+```bash
+hackathon decks gallery                            # one line per team: jury and community
+hackathon decks templates                          # the two contracts and the current pins
+hackathon decks generate                           # start a run; completed work is skipped
+hackathon decks generate --new-revision            # generate every team again
+hackathon decks runs                               # the runs, newest first
+hackathon decks run <runId> --log                  # one run, one line per job, the private log
+hackathon decks list                               # every deck, every version
+hackathon decks show <deckId>                      # the head, the validation, every screen's claims
+hackathon decks review <deckId> --approve
+hackathon decks review <deckId> --reject --note "The journey screen invents a feature"
+hackathon decks release <projectId>
+hackathon admin generate-all-presentations --new-revision
+hackathon admin generation-status --run <runId>
+```
+
+**`decks gallery`** prints one line per team: `<team>  jury: <state>
+community: <state>`, the state `none`, `generating`, `review`, `failed`,
+`invalidated`, `evidence_changed`, `pending` or `released vN` (followed by
+`(evidence changed)` when the released deck is not of the project's current
+frozen evidence); a released deck prints its read-only view on the next
+indented line. While a kind is not released, the gallery ends with the
+next useful action.
+
+**`decks templates`** prints the two template contracts (the kind, the schema
+version, the screen count range, the screen headings) and the Slideless
+reference each kind is pinned to now, with its version.
+
+**`decks generate`** starts a generation run over every team with a frozen
+submission, both kinds, and prints `Run <id> started at revision <n>: <n>
+pending, <n> skipped` and one line per skipped job with its reason. Work
+already completed at the current revision is skipped; `--new-revision`
+generates every team again, the old decks kept. Refused with
+`event_not_closed` before the freeze, `run_in_progress` while a run is still
+processing, and `content_pinned` for a new revision once the eligibility lock
+or the open vote pinned a deck.
+
+**`decks runs`** prints the current revision, then one line per run: the id,
+the revision, the status (`running`, `done`), the creation time and the
+counts (pending, running, review, failed, skipped).
+
+**`decks run <runId>`** prints the run head, then one line per job: the team,
+the kind, the status (`pending`, `running`, `review`, `failed`, `skipped`),
+the attempts, and the last error or the deck's version. `--log` also prints
+each job's private generation log, indented. `run_not_found` for an unknown
+run.
+
+**`decks list`** prints every deck of the event, every version: the id, the
+kind, the version, the review state (`pending`, `approved`, `rejected`), the
+release (`released`, `superseded`, `not released`) and the team.
+
+**`decks show <deckId>`** prints one deck: the team, the kind, the version,
+the template it was filled from, the review, the release and the read-only
+view, the validation findings when there are any, then each screen's heading
+and its claims, an unverified claim prefixed `[unverified]`. `deck_not_found`
+for an unknown deck.
+
+**`decks review <deckId>`** takes exactly one of `--approve` or `--reject`
+(neither or both is a usage error, exit 2) and an optional `--note <text>`
+kept on the review record. A released deck the vote pinned cannot be rejected
+(`content_pinned`).
+
+**`decks release <projectId>`** releases the newest approved deck of each kind
+of the team's current frozen evidence to the gallery and prints what it
+released and what it superseded. Refused with `not_approved` when a kind has
+neither a released deck nor an approved one, or when its deck of the current
+evidence still awaits approval, `content_pinned` once the eligibility lock or the
+open vote pinned the released deck, and `evidence_replaced` when the approved
+deck is not of the project's current frozen snapshot (an exception replaced the
+evidence it was generated from).
+
+**`admin generate-all-presentations`** is `decks generate` under another name, `--new-revision` included. **`admin generation-status
+--run <id>`** is `decks run <id>`, `--log` included. Every command takes
+`--json`.
+
+## Chats
+
+Three kinds of channel, one surface: the event's `general` channel (the Feed
+above), one `team` chat per team, and one `request` thread per help request.
+The server decides who reads which from the roster: an organizer and an advisor
+read every channel; a participant reads the general channel, their own team's
+chat and their team's request threads. Another team's channel answers
+`channel_not_found`, exactly like a channel that does not exist. A jury viewer
+is refused (`insufficient_event_role`), an account not on the roster too
+(`not_on_roster`). Posts, pagination, the rate limit and the moderation are
+the Feed's. A resolved request's thread is read-only: a post there is refused
+with `request_resolved` until someone reopens the request.
+
+A key needs `hackathon:read` for `chats list`, `chats read` and `chats replies`,
+and `hackathon:write` for `chats post`.
+
+```bash
+hackathon chats list                                   # kind, id and name of every channel you can read
+hackathon chats read <channelId> [--limit <n>] [--cursor <cursor>]   # one page of posts, newest first
+hackathon chats post <channelId> Can someone look at our deploy?     # the words, joined by one space
+hackathon chats post <channelId> --file message.txt    # the body from a UTF-8 file
+hackathon chats replies <channelId> <postId> [--limit <n>] [--cursor <cursor>]   # one thread's replies, oldest first
+hackathon chats post <channelId> --thread <postId> Pushed a fix, try again   # reply in that thread
+```
+
+**`chats list`** prints one row per channel: the kind (`general`, `team`,
+`request`), the id, then the name (`General`, the team's name, or the
+request's title), the general channel first, then the team chats, then the
+request threads, newest first. **`chats read`** prints the posts in the shape
+of `feed list`, with `[advisor]` on an advisor's post; an activity item the
+platform wrote in a team chat (a help request's card, a push, a pull request)
+prints `[request]`, `[push]` or `[pull request]` in place of the author, then
+its one-line summary (`--json` carries its `kind` and `activity`). A thread's replies are
+not in the channel's page, so a post that has some is followed by
+`↳ <n> replies: hackathon chats replies <channelId> <postId>`. **`chats
+replies`** prints one page of that thread, oldest first, in the same shape
+(`post_not_found` when the post is not one of the channel's you can read).
+**`chats post`** takes the body as words or with `--file <path>`, exactly one
+of the two, sends one fresh idempotency key per invocation (a retried request
+lands once) and prints `Posted <id> at <iso>`. **`--thread <postId>`** posts it
+as a reply in that post's thread: the post must be the thread's first post
+(`not_a_thread_root` otherwise), and a malformed id is a usage error before any
+request. Every chats command takes `--json`.
+
+## Requests
+
+A team asks the event's advisors for help. A participant on a team opens a
+request for their own team; an advisor claims it (another advisor's claim is
+refused with `request_claimed`; claiming your own claim again is a no-op); the
+claiming advisor or an organizer unclaims it; a member of the team, the
+claiming advisor or an organizer resolves it and reopens it (a reopen clears
+the claim). An organizer and an advisor see every team's requests; a
+participant sees their team's only, and any other request answers
+`request_not_found`. Each request has its thread, a chat channel of kind
+`request` (`chats read <channelId>`). A claim or an unclaim on a resolved
+request is refused with `request_resolved`; a role that may not act is refused
+with `insufficient_event_role`.
+
+A key needs `hackathon:read` for `requests list` and `requests show`, and
+`hackathon:write` for `requests open`, `requests claim`, `requests unclaim`,
+`requests resolve` and `requests reopen`.
+
+```bash
+hackathon requests list [--status open|claimed|resolved] [--limit <n>] [--cursor <cursor>]
+hackathon requests show <requestId>                    # every field, the thread command, the body
+hackathon requests open --title "Our build fails" --body "The CI runs out of memory."   # a participant
+hackathon requests claim <requestId>                   # an advisor; idempotent
+hackathon requests unclaim <requestId>                 # the claiming advisor or an organizer
+hackathon requests resolve <requestId>                 # the team, the claiming advisor or an organizer
+hackathon requests reopen <requestId>                  # the same people; the claim is cleared
+```
+
+**`requests list`** prints one block per request: the id, the status, the
+opening time and the team, then the title and, when claimed, `claimed by
+<name>`; it ends with `Next page: --cursor <cursor>` when more exist.
+`--status` and `--limit` (1 to 100) are checked before any request.
+**`requests open`** needs `--title` (one line, 1 to 200 characters) and
+`--body` (1 to 4000), both checked before any request, sends one fresh
+idempotency key per invocation and prints `Opened <id> (thread: hackathon
+chats read <channelId>)`. The four acts print `Claimed|Unclaimed|Resolved|Reopened
+<id> (now <status>)`. Every requests command takes `--json`.
+
+## Feed
+
+The event's general channel: one channel per event, where organizers,
+participants and advisors post and organizers pin and moderate. A post is plain
+text, 1 to 4000 characters (newlines kept, no Markdown, no control characters).
+An organizer, a participant and an advisor read and post; a jury viewer is refused on every
+feed command (`insufficient_event_role`: a jury viewer has presentation access
+only), and an account not on the roster is refused with `not_on_roster`.
+Pinning, unpinning, hiding and restoring are for an organizer. Each account may
+post ten times per minute; the eleventh post is refused (`rate_limited`: wait,
+then post again).
+
+A key needs `hackathon:read` for `feed show` and `feed list`, and `hackathon:write` for
+`feed post`, `feed pin`, `feed unpin`, `feed hide` and `feed restore`.
+
+```bash
+hackathon feed show                              # the channel name, then the pinned posts
+hackathon feed list [--limit <n>] [--cursor <cursor>]   # one page of posts, newest first
+hackathon feed post Lunch is served in room B    # the words, joined by one space
+hackathon feed post --file message.txt           # the body from a UTF-8 file
+hackathon feed pin <postId>                      # organizer; idempotent
+hackathon feed unpin <postId>                    # organizer; idempotent
+hackathon feed hide <postId> --reason "Off topic"   # organizer; participants no longer see it
+hackathon feed restore <postId>                  # organizer; visible again, not pinned again
+```
+
+**`feed list`** prints one block per post: a line with the ISO time, the author
+(`(erased account)` once the account is erased), `[organizer]` or `[advisor]`
+for a post an organizer or an advisor wrote, `[pinned]` and `[hidden: <reason>]` when they apply, then the
+body indented by two spaces. When more posts exist it ends with
+`Next page: --cursor <cursor>`. `--limit` is 1 to 100, checked before any
+request. **`feed show`** prints the channel name, then the pinned posts in the
+same shape, newest pin first. A hidden post is shown to organizers only, with
+its reason; a participant never receives it.
+
+**`feed post`** takes the body as words or with `--file <path>`, exactly one of
+the two (both, or neither, is refused before any request), and prints
+`Posted <id> at <iso>`. **`feed hide <postId> --reason <text>`** needs a reason
+of 1 to 500 characters, which only organizers see; a pinned post is unpinned
+and its reactions are cleared when it is hidden (a restore brings it back
+without them). A hidden post cannot be pinned (`post_hidden`): run
+`feed restore` first. An id that is not a post of this channel answers
+`No such post in this channel`. Every feed command takes `--json`. The pins
+and the moderation work the same on a post of any chat channel below: pass its
+post id.
+
+## Community
+
+The participants' vote: an organizer locks the eligibility (the candidate teams
+and the voters, with every exclusion and its reason), opens the vote, and after
+the close calculates and releases the result. Every participant with a team in
+the locked eligibility casts one ballot: a ranking of every other candidate,
+best first, never their own team. The server clock decides the window: a ballot
+write is accepted from the vote opening to the vote closing of the event, and
+never at or after the close.
+
+A key needs `hackathon:read` for `community status`, `community ballot show`,
+`community eligibility show`, `community ballots list` and
+`community results show`, and `hackathon:write` for every other command. The ballot
+commands are a voter's; `community eligibility`, `community voting`,
+`community ballots` and `community results` are an organizer's. An account that
+is not on the roster is refused with `not_on_roster`, as in the Event section.
+
+```bash
+hackathon community status                              # the state, the window, your standing and ballot, the candidates, the released results
+hackathon community ballot show                         # your candidates with an index and their ids, your draft and submission
+hackathon community ballot save --ranking <id>,<id>     # keep a draft (partial allowed, empty allowed)
+hackathon community ballot submit --ranking <id>,<id>,<id> --eligibility-version 2 --expected-revision 3
+hackathon community eligibility show                    # candidates and voters, exclusions, readiness, the lock
+hackathon community eligibility lock --file lock.json --confirm-all
+hackathon community eligibility unlock                  # only while voting has not opened
+hackathon community voting open                         # roster and eligibility locked, every candidate ready
+hackathon community voting close                        # closes at the server time
+hackathon community ballots list                        # email, state, revision, submitted, invalidated reason, name
+hackathon community ballots invalidate <id> --reason "Duplicate account"
+hackathon community results show                        # every version: rows, ties, coverage
+hackathon community results calculate                   # after close
+hackathon community results release 2                   # release version 2 to the participants
+```
+
+**`community status`** prints the vote state (`unlocked`, `locked`,
+`scheduled`, `open` or `closed`), the eligibility version, the window as two ISO
+instants, the server time, your role and whether you are a voter (your team, or
+why not), your ballot line (state, revision, submission time), one line per
+candidate with your own marked `(yours)`, and the released result when there is
+one: one row per candidate with its rank, its decimal score, the exact fraction
+`num/den`, the number of ballots and the name (`-` for an unranked candidate),
+then the notice that one ballot is cast per participant and that this is the
+community ranking, not the jury result.
+
+**`community ballot show`** prints the eligibility version, the state, the
+window, your team, your ballot revision (`0` before your first save) and whether
+you can submit, then the candidates you may rank, numbered, with their project
+ids, then your draft and your submission as ordered team names.
+
+**`community ballot save --ranking <ids>`** and
+**`community ballot submit --ranking <ids>`** take the project ids,
+comma-separated, best first. A draft may be partial or empty; a submission ranks
+every candidate exactly once, and an empty `--ranking` is refused before any
+request. `--eligibility-version <n>` and `--expected-revision <n>` name what you
+read; when either is left out, the command reads your ballot first and uses its
+eligibility version and revision (`0` when you have no ballot). Both must be
+whole numbers, checked before any request. The commands print
+`Draft saved (revision <n>, accepted at <iso>)` or
+`Ballot submitted (revision <n>, accepted at <iso>)`. A submission sends an
+`Idempotency-Key`, a fresh one per invocation, so a retried request counts once.
+A later submission replaces the previous one; a draft never withdraws a
+submission. The refusals read as sentences: someone changed your ballot since
+you read it (`revision_conflict`: `Your ballot changed since you read it: its
+revision is now 5. Check it with hackathon community ballot show, then pass
+--expected-revision 5.`); the eligibility moved (`eligibility_stale`, which
+names the new version); the ranking is not a ballot (`invalid_ballot`, which
+names the fault and the project id: a project named twice, your own team, an id
+that is not one of your candidates, or a candidate left out of a submission);
+you are not a voter (`not_eligible_voter`, with the reason); voting is not open
+yet (`voting_not_open`) or is closed (`voting_closed`); no eligibility is locked
+(`eligibility_not_locked`); there is no candidate to rank (`no_candidates`).
+
+**`community eligibility show`** prints the candidates (included or excluded,
+the number of members, confirmed or not, ready or not with the readiness answer,
+the name), the reason of every exclusion, then the voters (included or excluded,
+email, team, name) with the reason of every exclusion, then
+`Locked (version <n>) since <iso>` or `Not locked`, and `Roster locked` or
+`Roster not locked`.
+
+**`community eligibility lock`** locks a new version. `--file <path>` names a
+JSON file `{ "excludedProjects"?: [{ "projectId", "reason" }],
+"excludedVoters"?: [{ "email", "reason" }], "confirmedProjects"?: [projectId] }`,
+checked for shape before any request; without it the lock excludes nothing.
+`--confirm-all` reads the current draft first and confirms every included
+candidate, merged with the file's list. It prints
+`Eligibility locked (version <n>): <x> candidates (<y> excluded), <z> voters (<w> excluded)`.
+A locked eligibility refuses a second lock (`eligibility_locked`: unlock
+first), and a project that is no team of the event or an email that is no
+participant with a team is named in the refusal (`invalid_eligibility`).
+**`community eligibility unlock`** prints `Eligibility unlocked`; once voting
+has opened it is refused (`voting_open`).
+
+**`community voting open`** needs the roster locked (`roster_not_locked`), the
+eligibility locked (`eligibility_not_locked`), at least one candidate
+(`no_candidates`) and every candidate ready (`candidates_not_ready`, which lists
+each project as `name: reason`); a closed vote does not open again
+(`voting_closed`). It prints the state and the window on one line.
+**`community voting close`** prints `Voting closed at <iso>`; a vote that is not
+open cannot close (`voting_not_open`). Both are idempotent.
+
+**`community ballots list`** prints one row per ballot of the current
+eligibility: email, state, revision, submission time or `-`, invalidation reason
+or `-`, name. It never shows a ranking, and the read is audited.
+**`community ballots invalidate <id> --reason <text>`** invalidates a submitted
+ballot after the close, prints `Ballot of <email> invalidated`, and, when a
+result already existed, `Results recalculated: version <n>`. The vote must be
+closed (`voting_not_closed`), the ballot submitted (`ballot_not_submitted`) and
+not already invalidated (`ballot_invalidated`); an unknown id is `not_found`.
+
+**`community results show`** prints every calculation as
+`version <n> (eligibility v<n>, calculated <iso>, released|unreleased, digest <12 characters>)`,
+its rows (rank, decimal score, fraction, ballots, name), one
+`Tie at rank <r>: <names>` line per tie, and a coverage line (ballots submitted
+of the voters, invalidated, candidates and exclusions).
+**`community results calculate`** works after the close only
+(`voting_not_closed`) and prints `Calculated version <n>`, or
+`Version <n> already holds this ballot set` when the same ballots were already
+calculated. **`community results release <version>`** takes the version as an
+argument (a whole number, checked before any request; `--version` is the
+program's own flag) and prints `Released version <n>`; an unknown version is
+`not_found`. Every community command takes `--json`, which prints the wire
+payload verbatim.
+
+## Workspaces, files, export
+
+```bash
+hackathon instance            # public discovery — no key needed
+hackathon workspaces          # your workspaces: id, role, name, organization id; * = the one the commands run in,
+                              # (default) = the server's
+hackathon workspace default <id or name>   # self-hosted: choose the server's default, for every key and session of yours
+hackathon workspace default --clear        # remove the choice: the workspace you joined first is the default again
+hackathon files list [--all]
+hackathon files upload <path> [--name <stored name>] [--content-type <type>]
+hackathon files rm <id>
+hackathon files download <id> [--dir ./here]  # writes the stored name (basename only) into --dir
+hackathon files download <id> --out ./exact/path.bin   # …or a path you choose, verbatim
+hackathon export [-o file]    # workspace zip (key needs the opt-in data:export scope)
+```
+
+## Projects
+
+A project is a subgroup of the workspace: a name, a description, its own
+members with one of three roles (viewer < editor < manager). In the
+hackathon each team is a project, created by the roster import (`event roster
+import`). A workspace's owners and admins act as managers on every project;
+any other member creates one and becomes its first manager. A project is
+archived, never deleted: archived, it leaves the default list and takes no
+change but its unarchive. A key needs `hackathon:read` for the reads and
+`hackathon:write` for the writes, the same two scopes as every other command.
+
+```bash
+hackathon projects list                          # the projects you belong to
+hackathon projects list --archived all           # …the archived ones too (false | true | all)
+hackathon projects get <project>                 # one project, with your own role on it
+hackathon projects create "Atlas" --description "The launch work"
+hackathon projects create "Atlas" --metadata '{"client":"acme"}'
+hackathon projects update <project> --name "Atlas 2026" --description "…"
+hackathon projects update <project> --clear-description
+hackathon projects update <project> --metadata '{"client":"acme"}'
+hackathon projects archive <project>             # read-only, out of the default list. Never deleted
+hackathon projects unarchive <project>           # …and writable again
+hackathon projects members list <project>
+hackathon projects members add <project> ada@acme.co --role editor
+hackathon projects members add <project> <userId> --role manager
+hackathon projects members add <project> --team design --role editor   # a team: every member of it holds the role
+hackathon projects members role <project> <userId> viewer
+hackathon projects members role <project> design manager --team         # …a team's role
+hackathon projects members remove <project> <userId>
+hackathon projects members remove <project> design --team               # take a team off; its people keep their own entries
+```
+
+**The projects themselves** page like every other listing (`--cursor`,
+`--limit`, `--all`) and take `--json`. `list` shows the live projects;
+`--archived true` shows the archived ones and `--archived all` both.
+`create` makes you the project's first manager and takes `--description` and
+`--metadata` (a JSON object of your own, opaque to the server); `update` takes
+`--name`, `--description` or `--clear-description`, and `--metadata`, which
+replaces the whole object. `archive` takes a project out of the default listing
+and makes it read-only; nothing is ever deleted, and `unarchive` brings it back.
+
+**Members** come from the workspace's own roster, named by email (anything with
+an `@`) or by user id. `add` takes a required `--role viewer|editor|manager`.
+A manager removes anyone; anyone removes themselves. A stranger's address is
+`No active member of this workspace matches — check the user id or email. Only a
+member of the workspace can join a project.`, and a guest of the workspace is
+refused with `That person is a guest of the workspace, and a guest cannot be a
+project member. Invite them as a workspace member first.`
+
+**A team is a member too.** `add --team <team>` (a slug or an id, in place of
+the person) puts one of the workspace's [teams](#teams) on the project with the
+role, and every member of the team holds it; `role` and `remove` take `--team`
+to name a team as their second argument. `members list` prints a `person` or
+`team` column first, then the user id or the team's slug. A person's role on
+the project is the highest of their own entry and their teams' entries.
+
+The refusals every project verb shares read as sentences: `No such project, or it
+is not yours to read. (A project you are not a member of answers the same way:
+its existence is not probeable.)`, `You need the manager role on this project to
+do that.`, `This project is archived and read-only. Unarchive it first to change
+it.`, and `You are a guest of this workspace, and guests do not take part in
+projects.`
+
+## Teams
+
+A team is a named group of the workspace's people, which a project can take as a
+member. Every member of the workspace reads the teams; an owner or an admin
+shapes them. On a workspace managed by the Antasphere account site, the teams are
+read here and managed there.
+
+```bash
+hackathon teams list                             # every team: slug, name, members, yours, created
+hackathon teams get <team>                       # one team (<team> is a slug or an id)
+hackathon teams create "Design"                  # the slug is made from the name…
+hackathon teams create "Design" --slug design    # …or given
+hackathon teams rename <team> --name "Design Ops" --slug design-ops
+hackathon teams delete <team> --yes              # the people stay in the workspace
+hackathon teams members <team>                   # every member of the team
+hackathon teams add <team> ada@acme.co           # seat a member of the workspace, by email or user id
+hackathon teams remove <team> <userId>           # unseat them (an email works too)
+```
+
+`list` and `members` read every page, and every verb takes `--json` (the API
+answer verbatim). A team from the Antasphere account site is marked
+`(Antasphere)` in `list`. The refusals read as sentences: `Only an owner or an
+admin manages teams.`, `Teams of this workspace are managed on the Antasphere
+account site: <link>`, `A team of this workspace already uses the slug
+"design".`, and `ada@acme.co is already in this team.`
+
+## Demo links
+
+On a self-hosted instance whose operator turned demo sign-in on, an owner makes a link that signs one
+member in without a password, for a demonstration. The commands never use an API key: each one signs in
+as the owner for its own length (`--owner-email` or `HACKATHON_OWNER_EMAIL`; the password from
+`HACKATHON_OWNER_PASSWORD` or, with `--owner-password-stdin`, the first line of stdin) and signs out when
+it ends. On the cloud edition every demo command says that demo links are minted at the Antasphere hub.
+
+```bash
+export HACKATHON_OWNER_EMAIL=owner@example.com
+read -rs HACKATHON_OWNER_PASSWORD && export HACKATHON_OWNER_PASSWORD
+hackathon demo link --email ada@example.com                         # one link, a day, landing on /
+hackathon demo link --email ada@example.com --path /items --path /settings --hours 2
+hackathon demo link --email ada@example.com --email bob@example.com  # one sign-in, one pass each
+hackathon demo link --email ada@example.com --minutes 30 --json     # { passes: [{ pass, links: [{ path, url }] }], refused: [] }
+hackathon demo list                                                 # the passes, newest first
+hackathon demo revoke <id>                                          # and the sessions it opened
+pass show demo-owner | hackathon demo list --owner-email owner@example.com --owner-password-stdin
+```
+
+`demo link` mints one pass per member `--email` names and prints one link per `--path` (the first is the
+pass's own page, `/` when none); `--hours <n>` or `--minutes <n>` sets the lifetime (a day by default, a
+week at most). The links are the only place the secret ever appears: keep them like a password until they
+expire. `demo list` prints each pass with its expiry, its revocation and its uses; `demo revoke <id>` ends
+every session the pass opened.
+
+## Paging
+
+Every listing command (`projects list`, `projects members list`, `feed list`, `files list`) answers one page at a time, newest first:
+`--limit <n>` sets the page size (1 to 100) and `--cursor <cursor>` resumes
+from the `nextCursor` a previous page printed. `files list` and the
+two project listings also take `--all`, which follows the cursors until every page is fetched.
+
+## Shell completion
+
+```bash
+eval "$(hackathon completion bash)"     # or zsh
+hackathon completion fish | source      # fish
+```
+
+## Machine use
+
+Add `--json` to any command except `files download` for the wire shape; every error prints to stderr
+and exits non-zero: 1 for a usage or wire error, 3 when Antasphere refuses you (its own sentence
+is printed). On the cloud, the key variable is not needed once `hackathon login` has run. Typical
+agent loop on a self-hosted instance:
+
+```bash
+export HACKATHON_URL=https://hackathon.example.com
+export HACKATHON_API_KEY=hck_…
+hackathon event status --json | jq -r '.phase'
+hackathon files list --json | jq -r '.files[].id'
+```

@@ -1,6 +1,6 @@
 ---
 title: "CLI"
-description: "antasphere is the command-line client for your Antasphere account. One antasphere login signs you in with a code sent to your email and stores a personal API key in a local profile; every later command uses that profile. From the terminal you can check who you are, list and pick your organizations, manage files, export an organization's data, and follow its credits."
+description: "antasphere is the command-line client for your Antasphere account. One antasphere login signs you in with a code sent to your email and stores a personal API key in a local profile; every later command uses that profile, and so does every Antasphere tool CLI (slideless, …), which signs in through it the first time you use it. From the terminal you can check who you are, list your organizations and choose your default one, see which tools your organizations open to you and which this machine is connected to, manage files, export an organization's data, follow its credits, and disconnect everything at once."
 ---
 
 {/* GENERATED from antasphere/hub docs/agents/cli.md — edit there, then run `npm run sync`. */}
@@ -18,38 +18,48 @@ The published package is a single self-contained bundle with no runtime dependen
 ```bash
 antasphere login                 # prompts for your email and the 6-digit mailed code
 antasphere login --email you@example.com --key-name laptop --expires-days 90
-antasphere whoami                # you, your organizations, the active one
+antasphere whoami                # you, the organization this command acts on, your organizations
 antasphere logout                # revokes the key, clears the profile
+antasphere logout --all          # first disconnects every tool this login connected on this machine
 ```
 
 The code proves the mailbox; the key it mints is shown exactly once and goes straight into the
 profile. A first login with a new email address creates the account, its personal organization
 and the key in one flow. Accounts with two-factor authentication enabled cannot log in from the
-CLI: create an API key in the dashboard instead and pass it with `--api-key` or
-`ANTASPHERE_API_KEY`.
+CLI: create an API key on the account site instead, with **sso:exchange** ticked so the tool CLIs
+can sign in through it, and pass it with `--api-key` or `ANTASPHERE_API_KEY`.
 
-`logout` revokes the stored key on the server and removes the profile.
+`logout` revokes the stored key on the server, with the standing grants it minted for the tool
+CLIs, and removes the profile. The keys each tool minted for this machine are the tool's own and
+stay valid: plain `logout` names them and `logout --all` revokes each one on its tool first, then
+the hub key. A tool that refuses, or cannot be reached, keeps its key on this machine and is
+named, and the command exits 3.
 
 ## Configuration
 
 Profiles live at `~/.config/antasphere/config.json` (or under `$XDG_CONFIG_HOME`), readable by
-you alone since they hold the API key. `--profile <name>` selects one; `login` writes the selected
-profile and marks it active. Each setting resolves in this order:
+you alone since they hold the API key. A profile is an instance of the account service, named
+for its host: `cloud` is the implicit one at `https://account.antasphere.com`, and a self-hosted
+or local instance named with `--api-url` gets a profile of its own (`localhost:3000`). `--profile
+<name>` selects one; `login` writes the selected profile and marks it active. Each setting
+resolves in this order:
 
-| Setting  | Precedence                                                                  |
-| -------- | --------------------------------------------------------------------------- |
-| Base URL | `--api-url` → `ANTASPHERE_URL` → profile → `https://account.antasphere.com` |
-| API key  | `--api-key` → `ANTASPHERE_API_KEY` → profile                                |
+| Setting      | Precedence                                                                  |
+| ------------ | --------------------------------------------------------------------------- |
+| Base URL     | `--api-url` → `ANTASPHERE_URL` → profile → `https://account.antasphere.com` |
+| API key      | `--api-key` → `ANTASPHERE_API_KEY` → profile                                |
+| Organization | `--org` → `ANTASPHERE_ORG` → your default organization (see below)          |
 
 ## Commands
 
 ```bash
 antasphere login                          # email code → stored API key
-antasphere logout                         # revoke the stored key, clear the profile
-antasphere whoami                         # you, your organizations, the active one, scopes
-antasphere org list                       # your organizations (active org marked *)
-antasphere org use <id>                   # choose the organization tool CLIs work in
-antasphere org use --unset                # back to the organization you logged in to
+antasphere logout [--all]                 # revoke the stored key (and every tool key), clear the profile
+antasphere whoami                         # you, the organization acted on, your organizations (default marked *)
+antasphere org list                       # your organizations (default marked *)
+antasphere org use <id or name>           # set your default organization, here and in every tool CLI
+antasphere org use --unset                # clear it (the hub then acts on your oldest organization)
+antasphere tools                          # the tools: where each is open to you, and whether this machine is connected
 antasphere teams list                     # the organization's teams (yours marked)
 antasphere teams members <team>           # a team's members (<team> is its slug or id)
 antasphere teams add <team> <email>       # put a member in a team (owner or admin)
@@ -63,23 +73,39 @@ antasphere billing account                # the organization's credits (see Bill
 antasphere demo link --email <address>    # a demo link, on a demonstration installation (see Demo links below)
 ```
 
-The teams and tools commands act on the organization set with `antasphere org use <id>`, or the one named with `--org <id>`; without either, the key's default organization.
+### One organization, everywhere
 
-A login is bound to one organization; `whoami` and `org list` mark it with `*`. To work in another
-organization, log in again into a second profile: `antasphere --profile acme login`, the same
-model as `gcloud` or `gh`.
+Your login is yours, not an organization's: the same key reaches every organization you belong
+to. Which one a command acts on is settled the same way for every command, here and in the tool
+CLIs:
 
-`org use <id>` does something different: it stores the organization that the tool CLIs (the
-`slideless` CLI, for example) work in when you use them after one Antasphere login, and it checks
-the id against your memberships before storing it. `--unset` clears it, and a tool's own `--org`
-flag overrides it per command.
+- `--org <id or name>` on the command, or `ANTASPHERE_ORG` in the environment, names it for
+  that command. A name is matched against your organizations, case-insensitively; when two of
+  yours share a name the command lists their ids and asks for one.
+- Without either, the command acts on your **default organization**, the one your account
+  keeps on the server. `antasphere org use <id or name>` sets it and `antasphere org use --unset`
+  clears it; `whoami` and `org list` mark it with `*`. Because it is stored on your account, the
+  tool CLIs follow it too, on every machine you are signed in on.
 
-`teams` works on the teams of the active organization: `teams list` and `teams members <team>`
+Naming an organization you are not a member of is refused by the server, and the command says
+so. No organization choice is kept in the profile: `login` records the organization it signed you in to, for information only, and no command reads it.
+
+### The tools
+
+`antasphere tools` prints one row per Antasphere tool: `NAME  SLUG  URL  OPEN IN  CONNECTED`.
+`OPEN IN` lists the organizations of yours that open the tool to you (a tool Antasphere opens
+to organizations itself reads `restricted` with how many of yours have it). `CONNECTED` says
+whether this machine holds a key for the tool minted through the current login, the key the
+tool's own CLI keeps in its file under `~/.config/antasphere/tools/`; the tool is recognised by
+its address, so a self-hosted instance of a tool is never confused with the cloud one. `--json`
+carries the organizations denied too.
+
+`teams` works on the teams of the organization: `teams list` and `teams members <team>`
 (where `<team>` is the team's slug or id) need a key with `account:read`; `teams create`, `rename`,
 `delete`, `add <team> <email>` and `remove <team> <email>` need a key with `account:write` held by
 an owner or an admin of the organization. See [Teams](/antasphere/account/teams).
 
-`tools access` shows who in the active organization may use each tool: `TOOL  MODE  TEAMS`, for
+`tools access` shows who in the organization may use each tool: `TOOL  MODE  TEAMS`, for
 every tool or for the one named. `tools access <tool> --everyone` opens it to the whole
 organization; `--teams design,sales` narrows it to those teams (by slug), and `--teams ""` leaves
 it to the owners and admins, who always keep access. Setting needs a key with `account:write` held
@@ -103,8 +129,8 @@ deliberately not a CLI action: do it from the dashboard.
 
 Your organization pays for what the Antasphere tools do in **credits**. Every organization starts
 with a balance; each priced action a tool performs takes its credits from it, and every movement
-is recorded in the organization's credit ledger. The `billing` commands read the ACTIVE
-organization and are open to its owners and admins.
+is recorded in the organization's credit ledger. The `billing` commands act on the organization
+every command acts on (`--org`, else your default) and are open to its owners and admins.
 
 ```bash
 antasphere billing account                 # balance, currency, plan, low-balance and expiring credits, billing details
@@ -171,7 +197,8 @@ Managing the price book, the plan tiers, credit grants and vouchers is an Antasp
 matter, not covered here.
 
 Add `--json` to any command for machine-readable output. A failed request prints to stderr and
-exits non-zero; a key without the right scope gets a clean `403` message.
+exits non-zero: 1 for a usage or wire error, 3 when the server refused (a key without the right
+scope, a role the action needs, a suspended organization, a tool that would not revoke a key).
 
 ## Demo links
 
@@ -200,9 +227,9 @@ or `ANTASPHERE_OWNER_EMAIL`; the password is `ANTASPHERE_OWNER_PASSWORD` or, wit
 `--owner-password-stdin`, the first line of stdin. There is no password flag (a password on a
 command line lands in the shell history), and nothing (address, password, session) is written to
 the profile. The installation comes from the usual `--api-url` / `ANTASPHERE_URL` / profile, and
-the organization from `--org <id>` alone: without it the commands act on the owner's default
-organization, never on the one `antasphere org use` saved, which belongs to the installation
-your API key is for. An owner with a second
+the organization from `--org <id or name>`, resolved among the owner's own organizations on
+that installation: without it the commands act on the owner's default organization there. An
+owner with a second
 factor cannot use these commands: make that owner's links on the account site.
 
 | Flag                      | Command | Effect                                                                                             |
@@ -214,7 +241,7 @@ factor cannot use these commands: make that owner's links on the account site.
 | `--minutes <n>`           | `link`  | The same in minutes, instead of `--hours`                                                          |
 | `--owner-email <address>` | all     | The owner who signs in (else `ANTASPHERE_OWNER_EMAIL`)                                             |
 | `--owner-password-stdin`  | all     | Read the owner's password from the first line of stdin (else `ANTASPHERE_OWNER_PASSWORD`)          |
-| `--org <id>`              | all     | The organization to act on (else the one set with `antasphere org use`)                            |
+| `--org <id or name>`      | all     | The organization to act on (else the owner's default organization on that installation)            |
 | `--json`                  | all     | Machine-readable output                                                                            |
 
 **`demo link`** makes ONE link per `--email` and prints, for each, one URL per `--path`, all
@@ -245,6 +272,7 @@ that signed in is not one.`
 
 ```bash
 antasphere login --email agent@example.com     # once; the profile stores the key
+antasphere org use Acme                        # once; every command and every tool CLI act on Acme
 antasphere whoami --json | jq .workspace.name
 antasphere files upload ./out.csv --content-type text/csv --json | jq -r .file.id
 ```
@@ -254,5 +282,6 @@ Ephemeral environments can skip the config file entirely:
 ```bash
 export ANTASPHERE_URL=https://account.antasphere.com
 export ANTASPHERE_API_KEY=ant_xxx_yyy
+export ANTASPHERE_ORG=Acme                     # or an id; omit it to act on the key holder's default organization
 antasphere whoami --json
 ```

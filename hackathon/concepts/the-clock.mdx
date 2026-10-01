@@ -1,0 +1,94 @@
+---
+title: "The clock, the grace and the freeze"
+description: "The server's clock decides where the event stands, and what counts as your team's submission is the last push the platform received before the freeze. This page is the rule, written for the team that pushes."
+---
+
+{/* GENERATED from antasphere/hackathon docs/concepts/the-clock.md — edit there, then run `npm run sync`. */}
+
+import { HeroBand } from "/snippets/HeroBand.jsx";
+
+<HeroBand
+  eyebrow={"Concepts"}
+  title={"The clock, the grace and the freeze"}
+  drawing={"lattice"}
+  seed={2219153729}
+  compact={true}
+/>
+
+The server's clock decides where the event stands, and what counts as your team's submission is the last push the platform received before the freeze. This page is the rule, written for the team that pushes.
+
+## Four phases
+
+| Phase       | From                            | Until         |
+| ----------- | ------------------------------- | ------------- |
+| Not started | the organizers set the schedule | the start     |
+| Building    | the start                       | the build end |
+| Grace       | the build end                   | the freeze    |
+| Closed      | the freeze                      | for ever      |
+
+The freeze is always the build end plus 15 minutes. Those 15 minutes are for pushing your final changes,
+not for building more. At the freeze the intake closes: a push received from then on is recorded and never
+counts.
+
+The vote, when the organizers turn it on, has its own window, which opens at the freeze or later
+([Decks and the community vote](/hackathon/concepts/decks-and-voting)).
+
+## The countdown is the server's
+
+The **Home** page shows the phase, a countdown to the next deadline and every deadline in the event's time
+zone, and a small timer stays on every page. The countdown follows the server's clock, never your device's:
+a changed device clock or a sleeping tab never extends the event. The page reads the status again every 10
+seconds, after a reconnect and when the tab becomes visible again.
+
+From the command line, `hackathon event status` prints the phase, the deadlines, the next deadline with the
+time left, your role and your team.
+
+## The notices
+
+A notice appears 15, 5 and 1 minute before the build end, at the start of the grace, 5 and 1 minute before
+the freeze, and at the freeze. If the organizers move the build end while the event runs, every participant
+sees a notice with their reason. After a reconnect or a sleep, the dashboard shows the critical notices it
+missed, once.
+
+## What counts as your submission
+
+Each team has one repository and one designated branch. What the team pushes there before the freeze is its
+submission. At the freeze the platform keeps an immutable copy of that exact revision, and that copy is what
+the decks and the vote are built from.
+
+1. **The platform's receipt of the push is the evidence.** GitHub tells the platform about every push. The
+   platform records the moment it received the push, on its own clock.
+2. **The eligible submission is the last push of the designated branch received before the freeze.** Commit
+   dates play no part; the receipt order does.
+3. **A push received at or after the freeze is recorded and never selected.** It shows as late. It never
+   replaces the selection.
+4. **The platform captures the exact commit the push named.** It never reads a newer revision, and it never
+   falls back to an older push.
+5. **A push GitHub accepted just before the freeze, but which reached the platform after it, does not
+   count.** Delivery can take a few seconds or more. Do not push in the last seconds.
+
+A push to another branch, a deleted branch or a push from a repository that is not a team's is recorded for
+the organizers and is never a candidate.
+
+## Push early and verify
+
+A repository that exists is not a submission, and a commit on your machine is not one either. What counts is
+what the platform received:
+
+1. Push to the designated branch. The setup and the Home page name it.
+2. Open the Home page and read the last received revision on your team's submission card, with the time it
+   was received. `hackathon submissions list` prints the same line.
+3. Compare it with your last commit, `git rev-parse HEAD`. If they differ, or nothing was received, push
+   again and check again. Ask an organizer if the revision still does not arrive.
+
+Do this early in the build, and again before the freeze.
+
+## After the freeze
+
+The frozen copy does not change when the team pushes again, force-pushes, rewrites history or deletes the
+branch: the team keeps its rights on the repository, and the copy is not in it. A team that pushed nothing
+eligible is frozen on its starter, the revision captured when the repository was created, and is marked
+`template only`.
+
+You read your own team's submission and can download its frozen archive with
+`hackathon submissions artifact <project>`. Another team's submission is not readable.
