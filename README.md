@@ -10,7 +10,7 @@ Content is **generated, not authored here**. Each tool repo owns a public
 `docs/` folder (pages + a `nav.yml` sidebar contract); `sync/sync.mjs` pulls
 them in:
 
-- `antasphere/` and `slideless/` are wiped and rebuilt on every sync — edit the
+- `antasphere/`, `slideless/` and `hackathon/` are wiped and rebuilt on every sync — edit the
   source repo, never these trees.
 - `docs.json` branding is hand-owned; its `navigation` block (one tab per tool, plus the anchors) is
   generated from the tools' `nav.yml` files.

@@ -15,6 +15,9 @@ site:
     - anchor: Slideless
       href: https://slideless.antasphere.com
       icon: presentation-screen
+    - anchor: Hackathon
+      href: https://app.hackathon.antasphere.com
+      icon: flag-checkered
     - anchor: antasphere.com
       href: https://antasphere.com
       icon: globe
@@ -88,3 +91,27 @@ tools:
       lede: Agents push HTML decks; Slideless versions them and shares them by link.
       drawing: latitudes
       seed: 976086463
+  - slug: hackathon
+    repo: antasphere/hackathon
+    branch: prod
+    localPath: ../tools/hackathon/hackathon
+    icon: flag-checkered
+    tabs:
+      - tab: Getting started
+        icon: rocket
+        groups: [Getting started, Concepts]
+      - tab: Malt × Antasphere 2026
+        icon: calendar-day
+        groups: [The event]
+      - tab: Agents
+        icon: terminal
+        groups: [Agents]
+      - tab: Changelog
+        icon: list
+        groups: [Changelog]
+    plain: [Agents]
+    hero:
+      title: One day, one tool, one team
+      lede: The clock, your team's repository, the coaches and the vote, in one place.
+      drawing: lattice
+      seed: 20261002
