@@ -102,10 +102,14 @@ PHASE 2: THE APP RUNNING ON THIS MACHINE
 
 PHASE 3: THE H AND GRADIUM KEYS (during the build)
 
-1. Gradium (the voice): ask them to create an account in the Gradium console (https://gradium.ai), redeem the code HACK-MALT-ANTASPHERE-2610 (100,000 credits per participant), then create an API key.
-2. H (the agent in a cloud browser): ask them to create an account at https://platform.hcompany.ai (the free credits are enough to start), then create an API key at https://platform.hcompany.ai/settings/api-keys.
-3. The keys go in the clone's .env, as GRADIUM_API_KEY and HAI_API_KEY. Best: they paste them into .env themselves (open the file for them). Simpler: they paste them here and you write them into .env without printing them back; this is a local development key, so that is acceptable today.
-4. Once both keys are in .env and the build is done, restart the app so it reads them: `docker compose -p hackathon-<team> up -d` from the clone. Check that both are loaded (the dashboard's Try it page works, and a route missing its key answers 503 naming the key).
+1. Also during the build, prepare the demo now rather than at the end of the day on the venue's Wi-Fi: install the browser the hackathon-deck-demo skill plays the app with, outside the repository:
+   npm i --prefix ~/.cache/antasphere-hackathon/playwright playwright@1
+   npx --prefix ~/.cache/antasphere-hackathon/playwright playwright install chromium
+
+2. Gradium (the voice): ask them to create an account in the Gradium console (https://gradium.ai), redeem the code HACK-MALT-ANTASPHERE-2610 (100,000 credits per participant), then create an API key.
+3. H (the agent in a cloud browser): ask them to create an account at https://platform.hcompany.ai (the free credits are enough to start), then create an API key at https://platform.hcompany.ai/settings/api-keys.
+4. The keys go in the clone's .env, as GRADIUM_API_KEY and HAI_API_KEY. Best: they paste them into .env themselves (open the file for them). Simpler: they paste them here and you write them into .env without printing them back; this is a local development key, so that is acceptable today.
+5. Once both keys are in .env and the build is done, restart the app so it reads them: `docker compose -p hackathon-<team> up -d` from the clone. Check that both are loaded (the dashboard's Try it page works, and a route missing its key answers 503 naming the key).
 
 THE END
 
