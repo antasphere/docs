@@ -67,12 +67,15 @@ How to work:
 
 PHASE 1: CONNECTED
 
+On Windows, check HOME before anything else: the hackathon and Slideless CLIs find their saved login through it, and PowerShell and cmd do not set it. If it is empty (PowerShell: `echo $env:HOME` prints nothing), set it for good with `setx HOME "%USERPROFILE%"` and for the current shell with `$env:HOME = $env:USERPROFILE` (PowerShell) or `set HOME=%USERPROFILE%` (cmd). Git Bash already sets it.
+
 1. Check Node first, since everything installs through it: `node --version` must say 22 or later. If Node is missing or older, stop and tell the participant to install Node 22.
 2. Install the hackathon skills for this agent, then the CLIs:
    npx -y skills add antasphere-hackathon/plugin --global --skill '*' --yes
    npm i -g @antasphere/hackathon@latest @antasphere/slideless@latest
+   On Windows, add ` --copy` to the npx command (symlinks need Developer Mode there). On Linux, if `npm i -g` fails with EACCES (Node from the system packages), install Node with nvm, or run `npm config set prefix ~/.npm-global` and add `~/.npm-global/bin` to PATH, then install again.
    Check with `hackathon --version` (0.8.1 or later). The skills (hackathon-setup, hackathon-doctor, hackathon-deck-pitch, hackathon-deck-vote, hackathon-deck-demo, and two for coaches) may only load in a NEW session of this agent: keep following this prompt now, they serve later.
-3. Check the machine now: `hackathon doctor --json`. Fix every machine check before going on: git, git identity, node, docker, docker daemon, docker compose, disk. If Docker is installed but not running, start Docker Desktop (on macOS `open -a Docker`) and wait until `docker info` answers; if Docker or Git is missing, stop and tell the participant what to install. The checks about the sign-in, the roster, the repository, the clone and the app fail at this point, that is expected.
+3. Check the machine now: `hackathon doctor --json`. Fix every machine check before going on: git, git identity, node, docker, docker daemon, docker compose, disk. If Docker is installed but not running, start it and wait until `docker info` answers: on macOS `open -a Docker`; on Windows, ask them to open Docker Desktop from the Start menu; on Linux `sudo systemctl start docker`, and if docker then says permission denied, `sudo usermod -aG docker $USER` and ask them to log out and back in; if Docker or Git is missing, stop and tell the participant what to install. The checks about the sign-in, the roster, the repository, the clone and the app fail at this point, that is expected.
 4. Ask for their email address, exactly like this: "Which email address have you been using with Antasphere? It is the one our emails, your invitation and the briefing call were sent to." Never guess it. The roster knows them by that address only.
 5. Tell them: "I am sending a sign-in code to that address now. Paste it here when it arrives." Then run:
    hackathon login --email <their email> --send-only
@@ -93,11 +96,11 @@ PHASE 2: THE APP RUNNING ON THIS MACHINE
 
 1. Propose the folder the CLI suggests (by default ~/Antasphere/hackathon/<team>) and let them change it. Then clone without starting:
    hackathon setup --no-start --json
-2. In the clone, create the .env file: run `scripts/env.sh` if it exists; otherwise copy .env.example to .env, set POSTGRES_PASSWORD to a random value (`openssl rand -hex 16`), and `chmod 600 .env`. Leave GRADIUM_API_KEY and HAI_API_KEY empty for now: phase 3 fills them.
-3. Check that port 3000 is free (`lsof -nP -iTCP:3000 -sTCP:LISTEN`). If something holds it, show them what it is and ask before you stop it.
+2. In the clone, create the .env file: run `scripts/env.sh` if it exists; on Windows without Git Bash, or if it does not exist, copy .env.example to .env and set POSTGRES_PASSWORD to a long random value from `node -e "console.log(require('crypto').randomBytes(16).toString('hex'))"` (it works on every system), then `chmod 600 .env` on macOS and Linux only. Leave GRADIUM_API_KEY and HAI_API_KEY empty for now: phase 3 fills them.
+3. `hackathon setup` checks that port 3000 is free; if it reports it taken, show the participant what holds it and ask before stopping it.
 4. Start the build in the background: `hackathon setup --json` from the clone (it runs docker compose up --build and waits for the app). The first build takes several minutes. Tell them: "The app is building, it takes a few minutes. Meanwhile, let's set up your H and Gradium accounts." and go straight to phase 3. Come back here when the build has finished.
-5. When the app is ready (http://127.0.0.1:3000), it asks to be claimed on first boot. Find the claim token with `docker compose -p hackathon-<team> logs app | grep 'claim the instance'`, open http://127.0.0.1:3000 for them, and tell them to claim it with that token and create their own account on their local app.
-6. Put the `starter` command-line client on this machine, because agents drive the tool through it: run `scripts/link-cli.sh` from the clone (it builds the CLI and links it as `starter`). Then ask them to create an API key on their local dashboard (the API keys page) and paste it, and run `starter login --api-url http://127.0.0.1:3000 --api-key <key>`. Check with `starter --help`.
+5. When the app is ready (http://127.0.0.1:3000), it asks to be claimed on first boot. Find the claim token with `docker compose -p hackathon-<team> logs app | grep 'claim the instance'`, open http://127.0.0.1:3000 for them (`open` on macOS, `start` on Windows, `xdg-open` on Linux), and tell them to claim it with that token and create their own account on their local app.
+6. Put the `starter` command-line client on this machine, because agents drive the tool through it: run `scripts/link-cli.sh` from the clone (it builds the CLI and links it as `starter`; on Windows run it from Git Bash, and without Git Bash build and link by hand: `corepack enable`, `pnpm install`, `pnpm turbo build --filter=@antasphere/starter`, then `npm link` inside packages/cli). Then ask them to create an API key on their local dashboard (the API keys page) and paste it, and run `starter login --api-url http://127.0.0.1:3000 --api-key <key>`. Check with `starter --help`.
 7. Run `hackathon doctor --directory . --json`: every check must pass now.
 
 PHASE 3: THE H AND GRADIUM KEYS (during the build)
