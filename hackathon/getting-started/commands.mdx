@@ -140,22 +140,21 @@ After a push, check the last received revision against `git rev-parse HEAD`.
 ```bash
 hackathon decks link --demo <url> --pitch <url> --vote <url>   # set your team's deck links
 hackathon decks show                              # your team's three links
-hackathon decks gallery                           # one line per team
 ```
 
-`hackathon decks link` sets your team's demo deck, presentation and vote presentation links. Each one is a
-Slideless share link.
+`hackathon decks link` sets your team's demo deck, jury presentation and community presentation links. Each
+one is a Slideless share link. You can change them until the repositories freeze; after that, only an
+organizer can replace a link.
 
 - `--demo <url>` is the demo deck, an https Slideless share link (`/v/<token>/`).
-- `--pitch <url>` is the presentation deck, an https Slideless share link (`/v/<token>/`).
-- `--vote <url>` is the vote presentation, the deck the other participants watch on the Vote page and rank,
+- `--pitch <url>` is the jury presentation, an https Slideless share link (`/v/<token>/`).
+- `--vote <url>` is the community presentation, the deck the other participants watch on the Vote page and rank,
   an https Slideless share link (`/v/<token>/`).
 - `--team <team>` is the team's name or id. An organizer passes it. A participant gets their own team by
   default.
 
-`hackathon decks show` shows your team's demo deck, presentation and vote presentation links. `hackathon decks gallery` prints
-one line per team, with the jury deck, the community deck and the view of each released one. How the decks are
-used is in [Decks and the community vote](/hackathon/concepts/decks-and-voting).
+`hackathon decks show` shows your team's three links. How the decks are used is in
+[Decks and the community vote](/hackathon/concepts/decks-and-voting).
 
 ## Chats and help requests
 

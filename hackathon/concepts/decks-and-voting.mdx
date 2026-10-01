@@ -1,6 +1,6 @@
 ---
 title: "Decks and the community vote"
-description: "Every team hands in three links, a demo deck and a presentation for the jury and a vote presentation for the other participants, and when the organizers open the vote, participants rank the other teams. The jury's own scoring is on paper, not in the application."
+description: "Every team hands in three links, a demo deck, a jury presentation and a community presentation for the other participants, and when the organizers open the vote, participants rank the other teams. The jury's own scoring is on paper, not in the application."
 ---
 
 {/* GENERATED from antasphere/hackathon docs/concepts/decks-and-voting.md — edit there, then run `npm run sync`. */}
@@ -15,7 +15,7 @@ import { HeroBand } from "/snippets/HeroBand.jsx";
   compact={true}
 />
 
-Every team hands in three links, a demo deck and a presentation for the jury and a vote presentation for the other participants, and when the organizers open the vote, participants rank the other teams. The jury's own scoring is on paper, not in the application.
+Every team hands in three links, a demo deck, a jury presentation and a community presentation for the other participants, and when the organizers open the vote, participants rank the other teams. The jury's own scoring is on paper, not in the application.
 
 ## The jury result is on paper
 
@@ -29,8 +29,8 @@ the organizers published in the organization's Slideless workspace:
 
 - **the demo deck** (the `hackathon-deck-demo` skill): what you built shown working, in one to three episodes of real
   screenshots of your running app, so the jury can follow it alone;
-- **the presentation** (the `hackathon-deck-pitch` skill): the pitch you give on stage, three to five minutes;
-- **the vote presentation** (the `hackathon-deck-vote` skill): your elevator pitch with the gaps filled, the deck the other
+- **the jury presentation** (the `hackathon-deck-pitch` skill): the pitch you give on stage, three to five minutes;
+- **the community presentation** (the `hackathon-deck-vote` skill): your elevator pitch with the gaps filled, the deck the other
   participants read on the Vote page and rank. A team is a vote candidate once it is set.
 
 The skills publish each deck and set its link. From the command line, one at a time or all at once:
@@ -42,8 +42,11 @@ hackathon decks show        # what the platform holds for your team
 
 The team is the one of the signed-in participant. A link that is not a Slideless share link is refused, and
 so is a link on a host the platform does not frame.
-The **Teams** page shows every team's three links, `Demo deck`, `Presentation` and `Vote presentation`, and `hackathon decks
-gallery` prints one line per team.
+The **Teams** page shows every team's three links.
+
+The presentations freeze with the repositories. Once the build has ended and the grace has passed, a
+participant can no longer change a link: what the jury and the other participants see is what your team had
+set at the gong. An organizer can still replace a link.
 
 ## The community vote
 
@@ -106,11 +109,3 @@ ballots and a solo team one. None of them can rank their own team.
 The vote closes at its closing time, or earlier when an organizer closes it. An organizer then calculates the
 result and releases it, and it appears on the **Vote** page for every participant. A later calculation stays
 unreleased until an organizer releases it.
-
-## Generated decks
-
-When the Vote section is on, the platform can also generate two decks per team from the frozen submission,
-a jury deck for a five-minute presentation and a community deck for a quick comparison of the teams. An
-organizer reviews each one and releases it; a released deck opens as a read-only view from the **Teams**
-page, and a deck not released yet shows as pending. Every claim on a generated deck cites the file it comes
-from, or is marked unverified, and the generation never runs the team's code.

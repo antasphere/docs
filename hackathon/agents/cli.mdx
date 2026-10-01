@@ -544,12 +544,9 @@ hackathon event vote --on
 ```
 
 **`event vote --on|--off`** turns the Vote section on or off. It is off by
-default. While it is off, every `community` command and the deck generation
-(`decks generate`, `decks runs`, `decks run`, `decks list`,
-`decks show <deckId>`, `decks review`, `decks release`, `decks templates`) are
-refused with `vote_off` and change nothing, and the dashboard hides the Vote
-page. `decks gallery`, `decks link` and `decks show` without a deck id still
-work. Exactly one of `--on` or `--off` (neither or both is a usage error,
+default. While it is off, every `community` command is refused with
+`vote_off` and changes nothing, and the dashboard hides the Vote page.
+`decks link`, `decks show` and `showcase` still work. Exactly one of `--on` or `--off` (neither or both is a usage error,
 exit 2). It is for an organizer.
 
 ```bash
@@ -612,13 +609,11 @@ hackathon submissions list                         # the intake and one line per
 hackathon submissions show <project>               # repository, receipts, frozen evidence, exceptions
 hackathon submissions failures                     # what an organizer must act on
 hackathon submissions reconcile                    # run the freeze sweep now
-hackathon submissions exception <project> --reason "Wrong branch" --sha <40-hex> --invalidate-decks
+hackathon submissions exception <project> --reason "Wrong branch" --sha <40-hex>
 hackathon submissions exception <project> --reason "Withdrawn" --missing
 hackathon submissions artifact <project> --dir ./evidence
 hackathon admin provision --dry-run                # the plan, nothing written
 hackathon admin provision --key run-1 --sample <projectId>
-hackathon admin generate-all-presentations         # the same as decks generate (see Decks)
-hackathon admin generation-status --run <runId>    # the same as decks run (see Decks)
 ```
 
 **`submissions list`** prints the intake sentence (`Intake is open…`,
@@ -654,8 +649,8 @@ never a later HEAD.
 **`submissions exception <project>`** records an organizer exception after
 the freeze and before voting opens: `--reason <text>` (required) and exactly
 one of `--sha <sha>` (the full 40-hex sha to freeze instead, captured now) or
-`--missing` (mark the project missing on purpose); `--invalidate-decks` and
-`--invalidate-voting` state what the correction invalidates. Refused with
+`--missing` (mark the project missing on purpose); `--invalidate-voting`
+states that the ballots naming the project are invalidated. Refused with
 `event_not_closed` before the freeze, `judging_started` once the eligibility
 is locked or voting opened (unlock the eligibility first, before the open),
 and `capture_failed` when GitHub cannot produce the sha (nothing recorded).
@@ -679,35 +674,27 @@ refused (`plan_conflicts`) with every conflict listed. Every command takes
 
 ## Decks
 
-Two decks per team, generated from the frozen submission: a jury deck (a
-five-minute live presentation, six to eight screens) and a community deck (a
-quick, consistent comparison, three to four screens). A generation run reads
-every team with frozen evidence, fills both templates from a structured
-summary of the archive (every claim cites its evidence or is marked
-unverified), publishes each deck as an exact version and validates it. An
-organizer reviews every deck, then releases a team's approved decks to the
-gallery; nothing reaches the gallery unreviewed.
+Each team has three links of its own, each a Slideless share link the team
+made (`https://<host>/v/<token>/`): the demo deck (`--demo`), the jury
+presentation (`--pitch`) and the community presentation (`--vote`). The
+community presentation is the deck the other participants watch on the Vote
+page and rank, made with the `hackathon-deck-vote` skill; a team is a vote candidate once it
+is set. The Teams page shows the three as plain links. The platform generates
+no deck: the team makes its own.
 
-A key needs `hackathon:read` for `decks gallery`, `decks templates`, `decks runs`,
-`decks run`, `decks list`, `decks show` and `admin generation-status`, and
-`hackathon:write` for `decks link`, `decks generate`, `decks review`, `decks release` and
-`admin generate-all-presentations`. The generation, the review and the release
-are refused with `vote_off` while the Vote section is off (`event vote`). Every roster role reads the gallery (a
-participant or a jury viewer sees `pending` for a deck not released yet);
-everything else is for an organizer, and a participant is refused with
-`insufficient_event_role`: `This needs an organizer of the event.`
+The presentations freeze with the repositories: once the build has ended and
+the grace has passed (the instant the submissions freeze), a participant
+changes no link, and `decks link` is refused 409 `deck_links_frozen` (exit 1):
+`The repositories are frozen and so are the presentations: an organizer can
+still replace a link.` An organizer is never refused by the clock.
 
-Each team also has three links of its own: a demo deck, a presentation deck and
-a vote presentation, each a Slideless share link the team made
-(`https://<host>/v/<token>/`). The Teams page shows them as plain links,
-`Demo deck`, `Presentation` and `Vote presentation`. The vote presentation is
-the deck the other participants watch on the Vote page and rank, made with
-the `hackathon-deck-vote` skill; a team is a vote candidate once it is set.
+A key needs `hackathon:read` for `decks show` and `hackathon:write` for
+`decks link`.
 
 ```bash
 hackathon decks link --demo https://share.example.com/v/abc123/ --pitch https://share.example.com/v/def456/
 hackathon decks link --pitch https://share.example.com/v/def456/            # either link alone
-hackathon decks link --vote https://share.example.com/v/ghi789/             # the vote presentation
+hackathon decks link --vote https://share.example.com/v/ghi789/             # the community presentation
 hackathon decks link --team "Team Alpha" --demo https://share.example.com/v/abc123/   # an organizer
 hackathon decks link --clear vote                                           # clear a link (repeatable)
 hackathon decks show                                                        # your team's three links
@@ -715,23 +702,23 @@ hackathon decks show --team "Team Alpha"                                    # an
 ```
 
 **`decks link --demo <url> --pitch <url> --vote <url> [--clear <link>] [--team <team>]`** sets
-the team's demo deck, presentation and vote presentation links; any flag alone
-sets that link and keeps the others. `--clear demo|pitch|vote` (repeatable)
-clears that link instead; a team whose vote presentation is cleared is no
-longer a vote candidate until it sets one again. Who acts is read from the signed-in account: a participant sets
+the team's demo deck, jury presentation and community presentation links; any
+flag alone sets that link and keeps the others. `--clear demo|pitch|vote`
+(repeatable) clears that link instead; a team whose community presentation is
+cleared is no longer a vote candidate until it sets one again. Who acts is read from the signed-in account: a participant sets
 their own team's links (no `--team`; naming another team is refused 403
 `not_your_team`); an organizer names the team by its name or id (without
 `--team`: `You are not on a team; pass --team <team>.`); a coach (advisor) or
 a jury viewer is refused 403. A link that is not an https Slideless share
 link, path `/v/<token>/`, is refused (exit 2 before the request), and so is a
 link on a host the instance does not allow (400 `invalid_deck_link` from the
-server, whose sentence names the allowed Slideless hosts). Once voting has
-opened, a participant's `--vote` is refused 409 `vote_link_frozen` (exit 1): the
-vote presentation is fixed, and only an organizer can replace it. It prints the team
-and its three links, and works whatever the Vote section says.
+server, whose sentence names the allowed Slideless hosts). Once the
+repositories are frozen, a participant is refused 409 `deck_links_frozen`
+(exit 1); an organizer can still replace a link. It prints the team and its
+three links, and works whatever the Vote section says.
 
-**`decks show [--team <team>]`**, without a deck id, prints the team's three
-links, `-` for one not set yet, with the same rules as `decks link`.
+**`decks show [--team <team>]`** prints the team's three links, `-` for one
+not set yet, with the same rules as `decks link`.
 
 ### Showcase
 
@@ -758,81 +745,6 @@ its `--clear-…` flag removes it. Nothing to set, a value beside its clear, or 
 field over its cap is a usage error (exit 2 before the request). **`showcase
 show [--team <team>]`** prints the team, its product name, its tagline and its description, `-`
 for one not set. Both take `--json`.
-
-```bash
-hackathon decks gallery                            # one line per team: jury and community
-hackathon decks templates                          # the two contracts and the current pins
-hackathon decks generate                           # start a run; completed work is skipped
-hackathon decks generate --new-revision            # generate every team again
-hackathon decks runs                               # the runs, newest first
-hackathon decks run <runId> --log                  # one run, one line per job, the private log
-hackathon decks list                               # every deck, every version
-hackathon decks show <deckId>                      # the head, the validation, every screen's claims
-hackathon decks review <deckId> --approve
-hackathon decks review <deckId> --reject --note "The journey screen invents a feature"
-hackathon decks release <projectId>
-hackathon admin generate-all-presentations --new-revision
-hackathon admin generation-status --run <runId>
-```
-
-**`decks gallery`** prints one line per team: `<team>  jury: <state>
-community: <state>`, the state `none`, `generating`, `review`, `failed`,
-`invalidated`, `evidence_changed`, `pending` or `released vN` (followed by
-`(evidence changed)` when the released deck is not of the project's current
-frozen evidence); a released deck prints its read-only view on the next
-indented line. While a kind is not released, the gallery ends with the
-next useful action.
-
-**`decks templates`** prints the two template contracts (the kind, the schema
-version, the screen count range, the screen headings) and the Slideless
-reference each kind is pinned to now, with its version.
-
-**`decks generate`** starts a generation run over every team with a frozen
-submission, both kinds, and prints `Run <id> started at revision <n>: <n>
-pending, <n> skipped` and one line per skipped job with its reason. Work
-already completed at the current revision is skipped; `--new-revision`
-generates every team again, the old decks kept. Refused with
-`event_not_closed` before the freeze, `run_in_progress` while a run is still
-processing, and `content_pinned` for a new revision once the eligibility lock
-or the open vote pinned a deck.
-
-**`decks runs`** prints the current revision, then one line per run: the id,
-the revision, the status (`running`, `done`), the creation time and the
-counts (pending, running, review, failed, skipped).
-
-**`decks run <runId>`** prints the run head, then one line per job: the team,
-the kind, the status (`pending`, `running`, `review`, `failed`, `skipped`),
-the attempts, and the last error or the deck's version. `--log` also prints
-each job's private generation log, indented. `run_not_found` for an unknown
-run.
-
-**`decks list`** prints every deck of the event, every version: the id, the
-kind, the version, the review state (`pending`, `approved`, `rejected`), the
-release (`released`, `superseded`, `not released`) and the team.
-
-**`decks show <deckId>`** prints one deck: the team, the kind, the version,
-the template it was filled from, the review, the release and the read-only
-view, the validation findings when there are any, then each screen's heading
-and its claims, an unverified claim prefixed `[unverified]`. `deck_not_found`
-for an unknown deck.
-
-**`decks review <deckId>`** takes exactly one of `--approve` or `--reject`
-(neither or both is a usage error, exit 2) and an optional `--note <text>`
-kept on the review record. A released deck the vote pinned cannot be rejected
-(`content_pinned`).
-
-**`decks release <projectId>`** releases the newest approved deck of each kind
-of the team's current frozen evidence to the gallery and prints what it
-released and what it superseded. Refused with `not_approved` when a kind has
-neither a released deck nor an approved one, or when its deck of the current
-evidence still awaits approval, `content_pinned` once the eligibility lock or the
-open vote pinned the released deck, and `evidence_replaced` when the approved
-deck is not of the project's current frozen snapshot (an exception replaced the
-evidence it was generated from).
-
-**`admin generate-all-presentations`** is `decks generate` under another name, `--new-revision` included. **`admin generation-status
---run <id>`** is `decks run <id>`, `--log` included. Every command takes
-`--json`.
 
 ## Chats
 
