@@ -24,7 +24,7 @@ You build a tool for an agent that uses a computer, in one day, with your team o
 You work with two tools, both installed by the setup below:
 
 - **Hackathon**, a command line and the app at [app.hackathon.antasphere.com](https://app.hackathon.antasphere.com): your team, the clock, the chats with your team, the coaches and the organizers, your deliverables and the vote.
-- **Slideless**, a command line and a dashboard: it hosts HTML pages and HTML presentations and shares them with a link.
+- **Slideless**, a command line and a dashboard at [slideless.antasphere.com](https://slideless.antasphere.com): it hosts HTML pages and HTML presentations and shares them with a link. The organizers' layouts for your three presentations are in the event's workspace there.
 
 ## What you deliver
 
@@ -79,12 +79,13 @@ PHASE 1: CONNECTED
    When they paste the code:
    hackathon login --email <their email> --code <the code>
    It prints "Signed in as ...". If the code is refused, it expired: send a new one with --send-only. If their CLI has no --send-only option, run `hackathon login --email <their email>` and pass the code on its standard input when they give it to you.
-6. Run `hackathon connect --json`. Read their role (participant or coach), their team and their repository. If it refuses them, show them its message and tell them to contact an organizer: only the organizers can add someone to the roster.
-7. Ask for their GitHub username: "What is your GitHub username? The organizers' system invites it to your team's repository." Then run:
+6. Check Slideless, the tool the three presentations are published with: it signs in through the same Antasphere login, so `slideless whoami --json` must answer with their email, with no second sign-in. Then `slideless workspaces --json` must list the event's workspace (the one named like `workspace.name` in `hackathon whoami --json`): the organizers' layouts for the pitch, the vote and the demo are there (`slideless --workspace <its id> template list`). If Slideless still asks to sign in, run `slideless login --email <their email>` and pass the new code it mails on its standard input.
+7. Run `hackathon connect --json`. Read their role (participant or coach), their team and their repository. If it refuses them, show them its message and tell them to contact an organizer: only the organizers can add someone to the roster.
+8. Ask for their GitHub username: "What is your GitHub username? The organizers' system invites it to your team's repository." Then run:
    hackathon connect --github <username> --json
    GitHub sends an invitation to that account. If the GitHub CLI is signed in as that user (`gh auth status`), accept it yourself: list it with `gh api /user/repository_invitations`, accept it with `gh api -X PATCH /user/repository_invitations/<id>`. Otherwise give them the invitation link the command printed and wait until they say it is accepted.
-8. Make sure git can push to GitHub from this machine: `gh auth status`, or an SSH key that GitHub accepts (`ssh -T git@github.com`). If neither works, help them run `gh auth login`. Make sure `git config user.name` and `git config user.email` are set, and ask for the values if not.
-9. Run `hackathon doctor --json`. Every check must pass except the ones about the clone (directory, push, installer, app), which come in phase 2.
+9. Make sure git can push to GitHub from this machine: `gh auth status`, or an SSH key that GitHub accepts (`ssh -T git@github.com`). If neither works, help them run `gh auth login`. Make sure `git config user.name` and `git config user.email` are set, and ask for the values if not.
+10. Run `hackathon doctor --json`. Every check must pass except the ones about the clone (directory, push, installer, app), which come in phase 2.
 
 For a coach, stop here: their GitHub account gets read access to every team's repository, the chats are on https://app.hackathon.antasphere.com, and the coach guide is at https://docs.antasphere.com/hackathon/getting-started/coaches-and-jury. Offer to clone one team's repository read-only if they want to look at a team's code. In a new session, the hackathon-coach-brief skill reads the teams' chats and requests for them, and hackathon-coach-help helps answer one.
 
