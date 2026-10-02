@@ -95,6 +95,12 @@ hackathon setup --timeout <seconds>      # wait longer for the app to be ready
 - `--no-start` clones and installs the files. It does not build or start the app.
 - `--timeout <seconds>` is how long to wait for the readiness probe. The default is 180.
 
+When the app's compose file requires a value and neither your environment nor `.env` sets it, `setup` writes
+`.env`, from `.env.example` when there is none yet, and generates the local secrets it needs (a name ending in
+`PASSWORD` or `SECRET`). It never changes a value already set, and it stops, naming the variable, for a
+required value it may not invent, such as an API key. With `--port`, it also writes the port into `.env` and
+moves a local `PUBLIC_BASE_URL` to it, so the app stays on that port when you restart it yourself.
+
 ### doctor
 
 ```bash

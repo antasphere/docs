@@ -96,10 +96,11 @@ name the folder: `hackathon setup --directory ~/code/my-team`. It prints each co
 6. starts the app with Docker Compose and waits until it is ready;
 7. prints the local app URL, the dashboard URL and a summary.
 
-Running `setup` again is safe. It resumes where it stopped and keeps your work. A repository that needs an
-environment file before it starts, as the Malt × Antasphere starter does, is set up in two runs:
-`hackathon setup --no-start` clones and installs without starting, you write the file, then `hackathon setup`
-again builds and starts the app ([the Malt × Antasphere page](/hackathon/events/malt-antasphere-2026)).
+Running `setup` again is safe. It resumes where it stopped and keeps your work. A repository whose app needs
+a local secret to start, as the Malt × Antasphere starter's database password, gets its `.env` written by
+`setup`: the lines of `.env.example`, with that secret generated (readable by you only). A value already set
+in `.env` is never changed. Your own API keys stay yours to add to `.env`; restart the app after
+(`docker compose -p hackathon-<team> up -d`).
 
 ## 4. Check your machine
 

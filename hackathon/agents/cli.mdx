@@ -423,7 +423,14 @@ validated: `version` 1, `app.compose` a file name in the repository root,
 `app.service` a compose service name, `app.port` an integer between 1024 and
 65535, `app.readyPath` an absolute path. Nothing in it is a command: the
 installer runs exactly `docker compose -f <file> -p <project> up -d --build`
-with `HACKATHON_APP_PORT` set to the port, and polls the path.
+with `HACKATHON_APP_PORT` and `APP_PORT` set to the port, and polls the path.
+Before it, a variable the compose file requires (`${NAME:?…}`) that neither the
+environment nor `.env` sets is generated into `.env` (from `.env.example` when
+there is no `.env`, mode 0600) when its name ends in `PASSWORD` or `SECRET`;
+any other one stops the setup with exit 4, naming it. A value already set is
+never changed. With `--port`, the port variables the compose file reads
+(`APP_PORT`, `HACKATHON_APP_PORT`) and a loopback `PUBLIC_BASE_URL` are written
+into `.env` on that port, so a restart by hand keeps it.
 
 ### Exit codes
 
@@ -589,8 +596,8 @@ programme as `show` does.
 
 What each team pushed, what the platform received, and what it froze at the
 deadline. A push reaches the platform through the signed GitHub webhook
-(`POST /webhooks/github/{eventId}`, configured by the organizer on the
-organization); the eligible submission is the last accepted push of the
+(the GitHub App's one webhook, `POST /webhooks/github`, set on the App and
+never by the organizer); the eligible submission is the last accepted push of the
 designated branch RECEIVED before the freeze, by receipt order, never by
 commit time: push early and verify the received revision before the deadline.
 At the freeze a sweep (every minute, at boot, and on demand) captures the
