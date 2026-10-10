@@ -94,7 +94,8 @@ so. No organization choice is kept in the profile: `login` records the organizat
 
 `antasphere tools` prints one row per Antasphere tool: `NAME  SLUG  URL  OPEN IN  CONNECTED`.
 `OPEN IN` lists the organizations of yours that open the tool to you (a tool Antasphere opens
-to organizations itself reads `restricted` with how many of yours have it). `CONNECTED` says
+to organizations itself reads `restricted` with how many of yours have it, and is listed only
+when the organization the command runs in holds it). `CONNECTED` says
 whether this machine holds a key for the tool minted through the current login, the key the
 tool's own CLI keeps in its file under `~/.config/antasphere/tools/`; the tool is recognised by
 its address, so a self-hosted instance of a tool is never confused with the cloud one. `--json`
