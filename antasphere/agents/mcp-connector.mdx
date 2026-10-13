@@ -24,6 +24,20 @@ argument, and without it the request goes to your default organization (set in t
 else your oldest membership. Naming an organization you do not belong to is refused, and `get_me`
 lists the ones the connector can name.
 
+## Every tool through the one connector
+
+On an instance where the gateway is on (the team hub first), the same address also lists the tools of
+every Antasphere tool your organizations let you use. Each tool's tools appear under its name:
+`finance_list_invoices`, `meet_list_meetings`. Nothing to add per tool: the connector you already
+have sees a new tool at its next listing, and a tool you lose access to disappears from it.
+
+- A call runs as you, on the tool, with the same rights you have there. Credits, when a tool counts
+  them, are the tool's and are counted once, by the tool.
+- The first call to a tool makes you a key on that tool, named `Antasphere CLI <date>` on its API keys
+  page. Disconnecting the connector, or losing access to the tool, revokes that key.
+- A tool that does not answer shows one entry, `<tool>_unavailable`; call it to try again.
+- Your account tools (`get_me`, `list_files`) keep their names.
+
 ## Claude Code / CLIs (API key)
 
 The same endpoint accepts your API keys directly, no OAuth dance:
