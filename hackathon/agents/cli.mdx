@@ -204,7 +204,7 @@ The flow needs the instance to have a delivering email driver
 (`EMAIL_DRIVER=smtp|resend|brevo`); it signs in **existing accounts only** —
 sign-up stays closed (accounts enter via setup or workspace invitations). It
 mints an `hck_` API key server-side (scopes `hackathon:read` +
-`hackathon:write`, never `data:export`) and saves it on the instance's
+`hackathon:write` and `webhooks:manage`, never `data:export`) and saves it on the instance's
 profile. Once that profile is active, `hackathon login` alone signs in there
 again. Accounts with 2FA enabled are refused (`two_factor_required`), and an
 instance with no email driver has no email code at all. For those, mint a key
@@ -1108,6 +1108,67 @@ answer verbatim). A team from the Antasphere account site is marked
 admin manages teams.`, `Teams of this workspace are managed on the Antasphere
 account site: <link>`, `A team of this workspace already uses the slug
 "design".`, and `ada@acme.co is already in this team.`
+
+## Webhooks
+
+A webhook is a URL the workspace registers to be told, by a signed `POST`, when something happens:
+a person joining, a team's project created or archived, an API key made or revoked. The event types
+today are the workspace's own, the same in every Antasphere tool; `hackathon webhooks events` lists
+them with their fields.
+
+```bash
+hackathon webhooks events                       # the catalog: every event type, its subjects, what it means
+hackathon webhooks list                         # the workspace's endpoints (every page)
+hackathon webhooks create https://hooks.example.com/hackathon --event project.created --filter project=<id>
+hackathon webhooks create https://hooks.example.com/all --event 'project.*' --event member.joined \
+  --description "CRM sync" --filter project=<projectId> --filter project=<otherProjectId>
+hackathon webhooks create https://hooks.example.com/later --event '*' --disabled   # registered switched off
+hackathon webhooks get <id>                     # one endpoint: events, filters, failures, last delivery
+hackathon webhooks update <id> --endpoint-url https://hooks.example.com/v2
+hackathon webhooks update <id> --event project.created --event project.archived   # replaces the events
+hackathon webhooks update <id> --filter project=<projectId>                       # replaces the filters
+hackathon webhooks update <id> --clear-filters --description "Everything"
+hackathon webhooks update <id> --disable        # pause it; --enable switches it back on
+hackathon webhooks test <id>                    # a signed webhook.ping now; exit 1 when not delivered
+hackathon webhooks rotate-secret <id>           # a new secret, printed once; the old one signs 24 h more
+hackathon webhooks deliveries <id>              # one page of deliveries, newest first
+hackathon webhooks deliveries <id> --status held --limit 20
+hackathon webhooks deliveries <id> --cursor <cursor>   # the next page, as the previous one printed it
+hackathon webhooks delivery <id> <deliveryId>   # one delivery (--json: the payload as sent)
+hackathon webhooks redeliver <id> <deliveryId>  # the same event again, same event id, as a new delivery
+hackathon webhooks delete <id>                  # the endpoint and its delivery history
+```
+
+**Who.** An owner or an admin manages the webhooks; every member reads the catalog
+(`webhooks events`). The key `hackathon login` makes carries the `webhooks:manage` scope these
+commands need; a key from the API keys page needs it among its scopes. A refusal reads as a
+sentence: `Only an owner or an admin manages webhooks.`, `This key cannot manage webhooks: create
+one with the webhooks:manage scope on the API keys page.`
+
+**create** takes the URL as its argument and at least one `--event`: an exact type
+(`project.created`), a family (`project.*`) or everything (`*`), repeatable; quote the ones with a
+`*` so the shell leaves them alone. `--filter <subject>=<id>` narrows the endpoint to a `project`,
+repeatable: several ids on the same subject match any of them. `--description` is a note for the
+people who manage it, and `--disabled` registers it switched off. The answer prints the signing
+secret (`whsec_…`) **once**: store it then, it is never shown again.
+
+**update** changes only what is passed. The endpoint's address is `--endpoint-url` here (the
+program's own `--api-url`, alias `--url`, names the instance), `--event` and `--filter` replace the whole list,
+`--clear-filters` removes every filter, and `--enable` / `--disable` switch it on and off. Switching
+on an endpoint the instance switched off after repeated failures clears its failure count.
+
+**test** sends a signed `webhook.ping` at once and prints the outcome (`Ping delivered, HTTP 204`);
+when the ping was not delivered, the command exits 1, so a script can gate on it. **rotate-secret**
+prints the new secret once and the date until which the previous one keeps signing.
+
+**deliveries** lists one page of an endpoint's deliveries, newest first: `--status` keeps one of
+`pending`, `delivered`, `failed`, `held`, `--limit` sets the page size (1 to 100, 50 by default),
+and `--cursor` resumes from the `More: --cursor …` line the previous page printed. **delivery**
+shows one, and **redeliver** queues its event again as a new delivery with the same event id, which
+is the receiver's dedupe key.
+
+Every command takes `--json`: the API's answer verbatim, the secret included on `create` and
+`rotate-secret`.
 
 ## Demo links
 

@@ -37,7 +37,8 @@ claude mcp add --transport http hackathon https://hackathon.example.com/mcp \
 ```
 
 Mint keys in the dashboard (API keys → Create key). Scopes gate what tools can do:
-`hackathon:read` for reads, `hackathon:write` for mutations.
+`hackathon:read` for reads, `hackathon:write` for mutations, `webhooks:manage` for the
+webhook tools (the key `hackathon login` mints carries all three).
 
 ## Verify an instance
 
@@ -52,12 +53,14 @@ one call.
 
 ## The tool set
 
-The endpoint lists 68 tools: the two every instance of the platform serves
-(`get_me`, `list_files`) and the 66 under the tool's prefix: `hackathon_whoami`
+The endpoint lists 79 tools: the two every instance of the platform serves
+(`get_me`, `list_files`) and the 77 under the tool's prefix: `hackathon_whoami`
 (registered by the platform under that prefix), the eleven project tools and the two team reads every
 Antasphere tool serves (registered by the platform too: a project is a subgroup
 of the workspace, a project being a subgroup of the workspace; in the hackathon
-each team is one), the nine event tools
+each team is one), the eleven webhook tools the platform registers because the
+tool's identity declares a `webhooks` scope (an owner's or an admin's: the URLs
+the workspace's events are sent to, signed), the nine event tools
 (the hackathon's clock, phase, deadlines, roster, the GitHub organization and template of the teams, and the Vote section's switch), the one bootstrap tool
 (a participant's own place, team, repository and installer), the eight
 submission tools (what each team pushed, received and froze, and the
@@ -70,7 +73,11 @@ team's three presentation links, its showcase, and the list of every team with t
 team's help requests to the advisors). All act as the
 connected user: identity always comes from the verified credential (OAuth token
 or API key), never from a tool parameter. A read tool needs `hackathon:read`, a
-write tool `hackathon:write`; the API's fail-closed allowlist applies unchanged.
+write tool `hackathon:write`, and the webhook tools `webhooks:manage` (the event
+catalog, `hackathon_webhook_events`, is a read); the API's fail-closed allowlist
+applies unchanged. `webhooks:manage` opens the family on an owner's or an admin's
+key only (a plain member's key holding it is still refused), the family stays
+closed to every key without it, and the catalog is open to every key that reads.
 Start with `hackathon_whoami`.
 
 | Tool                                | Scope             | Does                                                                                                                                                                                                                          |
@@ -91,6 +98,17 @@ Start with `hackathon_whoami`.
 | `hackathon_remove_project_team`     | `hackathon:write` | Takes a team off a project (manager). Its people keep their own entries; the team stays in the workspace. Destructive, confirm-first                                                                                          |
 | `hackathon_list_teams`              | `hackathon:read`  | The workspace's teams (named groups of its members), with a `nextCursor`. On a workspace managed by the Antasphere account site they come from there; teams are shaped on the People page or the account site, never over MCP |
 | `hackathon_list_team_members`       | `hackathon:read`  | One team's members, with a `nextCursor` (`role` is their workspace role)                                                                                                                                                      |
+| `hackathon_webhook_events`          | `hackathon:read`  | The event catalog: every event type the instance delivers, the subjects it carries (what a filter matches on) and the JSON Schema of its `data`. Every member, guests excepted, reads it                                      |
+| `hackathon_list_webhooks`           | `webhooks:manage` | The workspace's webhook endpoints, cursor-paginated, never with a secret; `disabledAt` is set on one the instance switched off after failing too long (owner or admin, reads included)                                        |
+| `hackathon_create_webhook`          | `webhooks:manage` | Register an endpoint: `url`, `events` (a type, a family `project.*`, or `*`), optional `filters`, `description`, `enabled`. Answers the signing `secret` (`whsec_…`) once (owner or admin)                                    |
+| `hackathon_get_webhook`             | `webhooks:manage` | One endpoint, without its secret (owner or admin)                                                                                                                                                                             |
+| `hackathon_update_webhook`          | `webhooks:manage` | Change the URL, description, events, filters or the enabled switch; `events` and `filters` replace the whole value; `enabled: true` resumes an endpoint the instance switched off (owner or admin)                            |
+| `hackathon_delete_webhook`          | `webhooks:manage` | Delete an endpoint and its delivery history (destructive; owner or admin)                                                                                                                                                     |
+| `hackathon_rotate_webhook_secret`   | `webhooks:manage` | A new signing secret, answered once; the previous one keeps signing until `previousSecretExpiresAt`, 24 hours later (owner or admin)                                                                                          |
+| `hackathon_test_webhook`            | `webhooks:manage` | Send a signed `webhook.ping` now, once, and answer the delivery: `delivered` on a 2xx, `failed` with the status code and the error otherwise. Never retried                                                                   |
+| `hackathon_list_webhook_deliveries` | `webhooks:manage` | An endpoint's deliveries, newest first, by `status` (`pending`, `delivered`, `failed`, `held`), each with its `eventId` (the receiver's dedupe key) and the payload as sent                                                   |
+| `hackathon_get_webhook_delivery`    | `webhooks:manage` | One delivery: the payload as sent, the latest attempt's status code and error                                                                                                                                                 |
+| `hackathon_redeliver_webhook`       | `webhooks:manage` | Queue a delivery's event again as a new delivery, the same `eventId` and payload (owner or admin)                                                                                                                             |
 
 | `hackathon_get_event_status` | `hackathon:read` | GetEventStatus: `serverTime`, the `phase` (scheduled, building, grace, closed), the event with its deadlines (`freezeAt` = `buildEndsAt` + 900 s) and `configVersion`, the `nextDeadline`, the notice schedule, `me` (role, project) and the teams you may see with their submission state. `event_not_configured`, `not_on_roster` |
 | `hackathon_configure_event` | `hackathon:write` | ConfigureEvent (organizer): creates the event with `expectedVersion` 0 or reschedules it with the version read; once started the start is fixed and moving `buildEndsAt` needs a `reason`; after the freeze both are fixed; before the start a new schedule starts ahead of now; once voting was opened the vote window is fixed. `version_conflict`, `event_started`, `event_closed`, `reason_required`, `starts_past`, `vote_window_locked`. Confirm-first |
