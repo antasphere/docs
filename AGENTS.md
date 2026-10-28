@@ -130,9 +130,10 @@ what it does not, and Mintlify loads it on every page with no reference from
   you". On a band page Mintlify's own title and subtitle are hidden and its
   Copy page menu sits in the band's top-right corner.
 
-`style.css` USED to be a byte-identical sibling of
-`labs/products/exos/exos/docs/style.css`; the two diverged on 2026-09-22 (the
-Exos docs keep the company skin). Port nothing between them by reflex.
+`style.css` USED to be a byte-identical sibling of the Exos docs' `style.css`
+(`company/erp/tools/exos/exos/docs/style.css`, the Exos repository
+`antasphere/exos-tool`); the two diverged on 2026-09-22 (the Exos docs keep the
+company skin). Port nothing between them by reflex.
 
 Assets: `logo/{light,dark}.svg` is the lockup generated from the brand's mark
 module (`company/brand/src/lib/mark.js`, `assetSvg('lockup', tone)`) with the
